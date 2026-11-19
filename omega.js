@@ -167,22 +167,25 @@ const saxo = {
     location.href = u.toString();
   },
   async handleRedirect() {
-    const p = new URLSearchParams(location.search); const code = p.get('code'), st = p.get('state'); if (!code) return;
+    const p = new URLSearchParams(location.search); const code = p.get('code'), st = p.get('state');
+    const err = p.get('error'); if (err) { history.replaceState(null, '', redirectUri()); this.fail('Saxo meldet: ' + err + (p.get('error_description') ? ' – ' + p.get('error_description') : '')); return; }
+    if (!code) return;
     history.replaceState(null, '', redirectUri());
     let pk = null; try { pk = JSON.parse(sessionStorage.getItem('omega-pkce') || localStorage.getItem('omega-pkce') || 'null'); } catch (e) {}
-    if (!pk || pk.st !== st) { J.toast('Saxo-Login: Sicherheitsprüfung fehlgeschlagen (state).'); return; }
+    if (!pk || pk.st !== st) { this.fail('Sicherheitsprüfung fehlgeschlagen (state). Bitte den Login in Safari starten, nicht über das Home-Symbol.'); return; }
     status.saxo = 'busy'; renderStatus();
     try {
       await this.tokenReq({ grant_type: 'authorization_code', code, redirect_uri: redirectUri(), client_id: cfg.saxoAppKey, code_verifier: pk.v }, pk.v);
       J.toast('Saxo verbunden (' + cfg.saxoEnv.toUpperCase() + ')'); J.go('port');
-    } catch (e) { status.saxo = 'err'; renderStatus(); J.toast('Saxo-Login fehlgeschlagen: ' + e.message); }
+    } catch (e) { status.saxo = 'err'; renderStatus(); this.fail('Token-Abruf fehlgeschlagen: ' + e.message); }
     sessionStorage.removeItem('omega-pkce'); localStorage.removeItem('omega-pkce');
   },
+  fail(msg) { try { localStorage.setItem('omega-saxo-err', new Date().toLocaleTimeString('de-CH') + ' · ' + msg); } catch (e) {} J.toast('Saxo: ' + msg); try { J.go('port'); } catch (e) {} renderSaxo(); },
   async tokenReq(body, verifier) {
     const r = await fetch(SAXO[cfg.saxoEnv].auth + '/token', { method: 'POST', headers: { 'Content-Type': 'application/x-www-form-urlencoded' }, body: new URLSearchParams(body) });
-    if (!r.ok) throw new Error('Token ' + r.status);
+    if (!r.ok) { let t = ''; try { t = (await r.text()).slice(0, 160); } catch (e) {} throw new Error('Token ' + r.status + (t ? ' ' + t : '')); }
     const j = await r.json(); this.token = j.access_token; this.refresh = j.refresh_token || this.refresh; this.exp = Date.now() + (j.expires_in || 1200) * 1000 - 30000; if (verifier) this.verifier = verifier;
-    this.persist(); status.saxo = 'on'; renderStatus(); renderSaxo();
+    this.persist(); try { localStorage.removeItem('omega-saxo-err'); } catch (e) {} status.saxo = 'on'; renderStatus(); renderSaxo();
   },
   async ensure() {
     if (!this.token) throw new Error('Saxo ist nicht verbunden.');
@@ -207,7 +210,7 @@ const saxo = {
 };
 async function renderSaxo() {
   const el = $('#sxOut'); if (!el) return;
-  if (!saxo.token) { el.innerHTML = `<div class="note">Nicht verbunden. ${cfg.saxoAppKey ? '' : 'Trage zuerst im Hub deinen Saxo AppKey ein. '}Zum Start empfiehlt sich das <b>Demo-Konto (SIM)</b>: Dort wird mit Spielgeld gehandelt.</div><button class="btn" id="sxLogin" style="width:100%;margin-top:10px">Mit Saxo verbinden (${cfg.saxoEnv.toUpperCase()})</button>`; $('#sxLogin').onclick = () => saxo.login(); return; }
+  if (!saxo.token) { let le = ''; try { le = localStorage.getItem('omega-saxo-err') || ''; } catch (e) {} el.innerHTML = (le ? `<div class="note" style="color:#ff8a8a;margin-bottom:8px">Letzter Fehler: ${le.replace(/</g,'&lt;')}</div>` : '') + `<div class="note">Nicht verbunden. ${cfg.saxoAppKey ? '' : 'Trage zuerst im Hub deinen Saxo AppKey ein. '}Zum Start empfiehlt sich das <b>Demo-Konto (SIM)</b>: Dort wird mit Spielgeld gehandelt.</div><button class="btn" id="sxLogin" style="width:100%;margin-top:10px">Mit Saxo verbinden (${cfg.saxoEnv.toUpperCase()})</button>`; $('#sxLogin').onclick = () => saxo.login(); return; }
   el.innerHTML = '<div class="note">Lade Saxo-Konto …</div>';
   try {
     const s = await saxo.snapshot();
