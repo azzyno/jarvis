@@ -7,7 +7,7 @@ const esc = s => String(s ?? '').replace(/[&<>"]/g, c => ({'&':'&amp;','<':'&lt;
 /* ============ CONFIG ============ */
 const CFG_KEY = 'omega-config';
 const DEFAULT_AGENT = 'agent_7801m7r749fcfc2s7xe473y90x39';
-const TOKEN_PROXY = ''; // wird nach dem Vercel-Deploy gesetzt
+const TOKEN_PROXY = 'https://jarvis-iota-weld.vercel.app/api/saxo-token'; // wird nach dem Vercel-Deploy gesetzt
 const DEFAULT_SAXO = '0ffb385c5cdf4eb9aff2ec1391a9c999';
 let cfg = { agentId: DEFAULT_AGENT, finnhubKey: '', saxoAppKey: DEFAULT_SAXO, saxoEnv: 'sim', volume: 1, transcript: true };
 try { Object.assign(cfg, JSON.parse(localStorage.getItem(CFG_KEY) || '{}')); } catch (e) {}
