@@ -7,6 +7,7 @@ const esc = s => String(s ?? '').replace(/[&<>"]/g, c => ({'&':'&amp;','<':'&lt;
 /* ============ CONFIG ============ */
 const CFG_KEY = 'omega-config';
 const DEFAULT_AGENT = 'agent_7801m7r749fcfc2s7xe473y90x39';
+const TOKEN_PROXY = ''; // wird nach dem Vercel-Deploy gesetzt
 const DEFAULT_SAXO = '0ffb385c5cdf4eb9aff2ec1391a9c999';
 let cfg = { agentId: DEFAULT_AGENT, finnhubKey: '', saxoAppKey: DEFAULT_SAXO, saxoEnv: 'sim', volume: 1, transcript: true };
 try { Object.assign(cfg, JSON.parse(localStorage.getItem(CFG_KEY) || '{}')); } catch (e) {}
@@ -182,7 +183,7 @@ const saxo = {
   },
   fail(msg) { try { localStorage.setItem('omega-saxo-err', new Date().toLocaleTimeString('de-CH') + ' · ' + msg); } catch (e) {} J.toast('Saxo: ' + msg); try { J.go('port'); } catch (e) {} renderSaxo(); },
   async tokenReq(body, verifier) {
-    const r = await fetch(SAXO[cfg.saxoEnv].auth + '/token', { method: 'POST', headers: { 'Content-Type': 'application/x-www-form-urlencoded' }, body: new URLSearchParams(body) });
+    const r = await fetch(TOKEN_PROXY ? TOKEN_PROXY + '?env=' + cfg.saxoEnv : SAXO[cfg.saxoEnv].auth + '/token', { method: 'POST', headers: { 'Content-Type': 'application/x-www-form-urlencoded' }, body: new URLSearchParams(body) });
     if (!r.ok) { let t = ''; try { t = (await r.text()).slice(0, 160); } catch (e) {} throw new Error('Token ' + r.status + (t ? ' ' + t : '')); }
     const j = await r.json(); this.token = j.access_token; this.refresh = j.refresh_token || this.refresh; this.exp = Date.now() + (j.expires_in || 1200) * 1000 - 30000; if (verifier) this.verifier = verifier;
     this.persist(); try { localStorage.removeItem('omega-saxo-err'); } catch (e) {} status.saxo = 'on'; renderStatus(); renderSaxo();
