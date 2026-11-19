@@ -83,8 +83,10 @@ async function sendText(t) {
   try { conv.sendUserMessage(t); } catch (e) { J.toast('Senden fehlgeschlagen'); }
 }
 
+window.__saxoRefresh = async () => { if (!saxo.token) { window.__saxoSnap = null; return; } try { window.__saxoSnap = await saxo.snapshot(); } catch (e) {} };
+
 /* ============ CLIENT TOOLS (called by the agent) ============ */
-const VIEWS = { core: 'cockpit', finance: 'port', market: 'invest', realestate: 'calc', world: 'welt', hub: 'hub' };
+const VIEWS = { core: 'cockpit', office: 'office', finance: 'port', market: 'invest', realestate: 'calc', world: 'welt', hub: 'hub' };
 const clientTools = {
   jarvis_show_module: async ({ module }) => { const ok = J.go(VIEWS[module] || module); return ok ? `Modul ${module} geöffnet.` : `Unbekanntes Modul ${module}.`; },
   jarvis_set_avatar: async ({ mode }) => { J.holo.auto = false; J.holo.setDim(mode); return 'ok'; },
@@ -214,7 +216,7 @@ async function renderSaxo() {
   if (!saxo.token) { let le = ''; try { le = localStorage.getItem('omega-saxo-err') || ''; } catch (e) {} el.innerHTML = (le ? `<div class="note" style="color:#ff8a8a;margin-bottom:8px">Letzter Fehler: ${le.replace(/</g,'&lt;')}</div>` : '') + `<div class="note">Nicht verbunden. ${cfg.saxoAppKey ? '' : 'Trage zuerst im Hub deinen Saxo AppKey ein. '}Zum Start empfiehlt sich das <b>Demo-Konto (SIM)</b>: Dort wird mit Spielgeld gehandelt.</div><button class="btn" id="sxLogin" style="width:100%;margin-top:10px">Mit Saxo verbinden (${cfg.saxoEnv.toUpperCase()})</button>`; $('#sxLogin').onclick = () => saxo.login(); return; }
   el.innerHTML = '<div class="note">Lade Saxo-Konto …</div>';
   try {
-    const s = await saxo.snapshot();
+    const s = await saxo.snapshot(); window.__saxoSnap = s;
     el.innerHTML = `<div class="two"><div class="bi"><span>Gesamtwert</span><b>${Number(s.gesamtwert || 0).toLocaleString('de-CH', { maximumFractionDigits: 0 })} ${esc(s.waehrung || '')}</b></div><div class="bi"><span>Cash</span><b>${Number(s.cash || 0).toLocaleString('de-CH', { maximumFractionDigits: 0 })} ${esc(s.waehrung || '')}</b></div></div>
       ${s.positionen.length ? s.positionen.map(p => `<div class="row"><span>${esc(p.titel || p.symbol)}<br><small class="mono" style="color:var(--mut)">${esc(p.symbol || '')} · ${p.menge}</small></span><b>${Number(p.marktwert || 0).toLocaleString('de-CH', { maximumFractionDigits: 0 })}</b></div>`).join('') : '<div class="note">Keine offenen Positionen.</div>'}
       <div style="display:flex;gap:8px;margin-top:10px"><button class="btn gh sm" id="sxRef">Aktualisieren</button><button class="btn gh sm" id="sxOff" style="color:var(--r)">Trennen</button></div><div class="note">Umgebung: <b>${esc(s.umgebung)}</b>${s.umgebung === 'SIM' ? ' (Demo, Spielgeld)' : ' (ECHTES GELD)'}</div>`;
@@ -327,5 +329,5 @@ function wire() {
 }
 saxo.load(); wire(); renderStatus(); renderSaxo(); renderOrders(); syncType(); setVoiceUI('off');
 saxo.handleRedirect();
-J.onBoot(() => startVoice());
+// Kein automatischer Start: JARVIS spricht erst, wenn der Boss auf den Kern tippt.
 window.omega = { startVoice, endVoice, sendText, market, saxo, order, cfg };

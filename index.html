@@ -228,6 +228,23 @@ body.hero.scrolled #stage:not(.fs){opacity:.4;filter:blur(1px)}
 body.miclive #micInd{display:flex}
 .pill.g{background:rgba(61,255,154,.14);color:var(--g)}.pill.r{background:rgba(255,77,106,.16);color:var(--r)}.pill.o{background:rgba(255,154,60,.16);color:var(--o)}
 input[type=range]{-webkit-appearance:auto;appearance:auto;padding:0;height:28px;background:none;border:none;accent-color:#5ad1ff}
+
+/* ===== BÜRO ===== */
+#v-office{padding:0;max-width:none;margin:0}
+#v-office.on{position:absolute;inset:0}
+#officeStage{position:absolute;inset:0;overflow:hidden;background:#02040a}
+#officeStage canvas{position:absolute;inset:0;width:100%!important;height:100%!important;display:block}
+.otag{position:absolute;left:0;top:0;z-index:3;opacity:0;transition:opacity .5s;pointer-events:auto;display:flex;flex-direction:column;align-items:center;gap:4px;background:none;border:none;cursor:pointer;color:#e6f2ff;font:700 10.5px 'JetBrains Mono',ui-monospace,monospace;letter-spacing:.18em;text-shadow:0 0 10px rgba(90,209,255,.9)}
+.otag b{padding:6px 10px;border-radius:999px;border:1px solid rgba(90,209,255,.55);background:rgba(2,10,24,.62);backdrop-filter:blur(8px);-webkit-backdrop-filter:blur(8px);font-weight:700;white-space:nowrap;box-shadow:0 0 18px rgba(90,209,255,.25)}
+.otag.o b{border-color:rgba(255,179,107,.7);box-shadow:0 0 18px rgba(255,179,107,.3);text-shadow:0 0 10px rgba(255,179,107,.9)}
+.otag i{width:1px;height:16px;background:linear-gradient(rgba(90,209,255,.9),transparent)}
+.ohud{position:absolute;left:14px;top:12px;z-index:3;pointer-events:none;font:600 10px 'JetBrains Mono',monospace;letter-spacing:.22em;color:rgba(180,215,245,.8)}
+.ohud b{display:block;font:700 15px Inter,system-ui;letter-spacing:.24em;color:#fff;margin-bottom:3px;text-shadow:0 0 14px rgba(90,209,255,.7)}
+.obar{position:absolute;left:10px;right:10px;bottom:10px;z-index:3;display:flex;gap:8px;overflow-x:auto;scrollbar-width:none}
+.obar::-webkit-scrollbar{display:none}
+.obar button{flex:1 0 auto;padding:11px 14px;border-radius:14px;border:1px solid rgba(90,209,255,.35);background:rgba(2,10,24,.7);backdrop-filter:blur(10px);-webkit-backdrop-filter:blur(10px);color:#dff1ff;font:600 12.5px Inter,system-ui;cursor:pointer}
+.obar button.o{border-color:rgba(255,179,107,.6);color:#ffd2a6}
+@media (max-width:899px){.otag{font-size:9px;letter-spacing:.14em}.otag b{padding:5px 8px}.ohud b{font-size:13px}.ohud{font-size:8.5px}}
 </style>
 </head>
 <body class="hero">
@@ -282,6 +299,19 @@ input[type=range]{-webkit-appearance:auto;appearance:auto;padding:0;height:28px;
       <div class="card"><div class="ct">TOP-LÄNDER <small>dein Engagement</small></div><div id="topC"></div>
         <button class="btn gh sm" data-go="welt" style="margin-top:10px;width:100%">Weltkarte öffnen</button></div>
     </div>
+  </div>
+</section>
+
+<!-- ===== BÜRO ===== -->
+<section class="view" id="v-office">
+  <div id="officeStage">
+    <div class="ohud"><b>INVESTMENT-BÜRO</b>ZIEHEN ZUM UMSEHEN · ANTIPPEN ZUM ÖFFNEN</div>
+    <button class="otag" data-a="port" data-go="port"><b>PORTFOLIO</b><i></i></button>
+    <button class="otag o" data-a="order" data-go="port"><b>ORDER</b><i></i></button>
+    <button class="otag" data-a="invest" data-go="invest"><b>MARKT</b><i></i></button>
+    <button class="otag" data-a="welt" data-go="welt"><b>WELT</b><i></i></button>
+    <button class="otag o" data-a="calc" data-go="calc"><b>IMMOBILIEN</b><i></i></button>
+    <div class="obar"><button class="o" data-go="port">📈 Investieren</button><button data-go="invest">🔎 Markt</button><button data-go="welt">🌍 Welt</button><button data-go="calc">🏠 Immobilien</button><button data-go="cockpit">◉ JARVIS</button></div>
   </div>
 </section>
 
@@ -442,6 +472,7 @@ input[type=range]{-webkit-appearance:auto;appearance:auto;padding:0;height:28px;
 
 <nav id="nav">
   <button class="on" data-v="cockpit"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><circle cx="12" cy="12" r="9"/><circle cx="12" cy="12" r="3"/><path d="M12 3v3M21 12h-3M12 21v-3M3 12h3"/></svg>Core</button>
+  <button data-v="office"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M3 21h18M5 21V8l7-4 7 4v13"/><path d="M9 21v-4h6v4M9 10h.01M15 10h.01M9 13.5h.01M15 13.5h.01"/></svg>Büro</button>
   <button data-v="port"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><rect x="3" y="7" width="18" height="13" rx="2"/><path d="M8 7V5a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2M3 13h18"/></svg>Finance</button>
   <button data-v="invest"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M3 17l6-6 4 4 8-8"/><path d="M15 7h6v6"/></svg>Markt</button>
   <button data-v="calc"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M3 11l9-7 9 7M5 10v10h14V10"/><path d="M10 20v-5h4v5"/></svg>Immo</button>
@@ -913,7 +944,7 @@ const holo=(()=>{
  const t0=performance.now();const ORDER=Object.keys(DIMS);
  const tdata=new Uint8Array(1024);
  const hudEl=document.getElementById('hud'),hv=new THREE.Vector3(),hv2=new THREE.Vector3();let hudF=0;
- (function loop(now){requestAnimationFrame(loop);if(document.hidden)return;const T=(now-t0)/1000;const D=DIMS[api.dim];
+ (function loop(now){requestAnimationFrame(loop);if(document.hidden||window.__holoPause)return;const T=(now-t0)/1000;const D=DIMS[api.dim];
   // auto-cycle dimensions
   if(api.auto&&dimT&&now-dimT>16000&&now-lastUser>8000&&!api.speaking&&!api.thinking){api.setDim(ORDER[(ORDER.indexOf(api.dim)+1)%ORDER.length],true)}
   let goal=0;if(api.levelFn){goal=api.levelFn()||0}else if(api.speaking){if(api.analyser){api.analyser.getByteTimeDomainData(tdata);let s=0;for(let i=0;i<tdata.length;i++){const v=(tdata[i]-128)/128;s+=v*v}goal=Math.min(1.2,Math.sqrt(s/tdata.length)*5)}else goal=.55+.45*Math.abs(Math.sin(T*9.3)*Math.sin(T*3.7+1))}
@@ -1041,9 +1072,10 @@ initStore();
 const bootCbs=[];$('#boot').addEventListener('click',()=>{sfx.init();setTimeout(()=>bootCbs.forEach(f=>{try{f()}catch(e){}}),400);$('#boot').classList.add('hide');holo.setDim('jarvis',true);const h=new Date().getHours();const gr=h<11?'Guten Morgen':h<18?'Guten Tag':'Guten Abend';
  const a=analyze();const msg=S.positions.length?`${gr}, Boss. Dein Nettovermögen liegt bei ${chf(a.net)}, Diversifikation ${a.score} von 100. Was steht an?`:`${gr}, Boss. JARVIS online. Erfasse dein Vermögen oder lade ein Beispiel, dann analysiere ich alles für dich.`;
  $('#greet').textContent=msg;addMsg('j',msg);hist.push({role:'assistant',content:msg});setTimeout(preloadClips,4000);holo.burst(.3);setTimeout(()=>renderAlloc(),100)},{once:true});
-window.J={go,summary,analyze,holo,toast,addMsg,TYPES,REGIONS,DE,chf,get S(){return S},save,setTextHandler:f=>{textHandler=f},onView:f=>viewCbs.push(f),onBoot:f=>bootCbs.push(f)};
+window.J={BRIEF,go,summary,analyze,holo,toast,addMsg,TYPES,REGIONS,DE,chf,get S(){return S},save,setTextHandler:f=>{textHandler=f},onView:f=>viewCbs.push(f),onBoot:f=>bootCbs.push(f)};
 })();
 </script>
-<script type="module" src="omega.js?v=13"></script>
+<script src="office.js?v=2"></script>
+<script type="module" src="omega.js?v=14"></script>
 </body>
 </html>
