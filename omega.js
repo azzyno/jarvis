@@ -7,8 +7,10 @@ const esc = s => String(s ?? '').replace(/[&<>"]/g, c => ({'&':'&amp;','<':'&lt;
 /* ============ CONFIG ============ */
 const CFG_KEY = 'omega-config';
 const DEFAULT_AGENT = 'agent_7801m7r749fcfc2s7xe473y90x39';
-let cfg = { agentId: DEFAULT_AGENT, finnhubKey: '', saxoAppKey: '', saxoEnv: 'sim', volume: 1, transcript: true };
+const DEFAULT_SAXO = '0ffb385c5cdf4eb9aff2ec1391a9c999';
+let cfg = { agentId: DEFAULT_AGENT, finnhubKey: '', saxoAppKey: DEFAULT_SAXO, saxoEnv: 'sim', volume: 1, transcript: true };
 try { Object.assign(cfg, JSON.parse(localStorage.getItem(CFG_KEY) || '{}')); } catch (e) {}
+if (!cfg.saxoAppKey) cfg.saxoAppKey = DEFAULT_SAXO;
 const saveCfg = () => { try { localStorage.setItem(CFG_KEY, JSON.stringify(cfg)); } catch (e) {} };
 const redirectUri = () => location.origin + location.pathname;
 
