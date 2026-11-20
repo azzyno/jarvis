@@ -246,63 +246,9 @@ input[type=range]{-webkit-appearance:auto;appearance:auto;padding:0;height:28px;
 .obar button.o{border-color:rgba(255,179,107,.6);color:#ffd2a6}
 @media (max-width:899px){.otag{font-size:9px;letter-spacing:.14em}.otag b{padding:5px 8px}.ohud b{font-size:13px}.ohud{font-size:8.5px}}
 
-/* ===== WELTLAGE ===== */
-#v-lage{padding:0;max-width:none;margin:0}
-#v-lage.on{position:absolute;inset:0}
-#lageStage{position:absolute;inset:0;overflow:hidden;background:#05070c}
-#lageStage canvas{position:absolute;inset:0;width:100%!important;height:100%!important;display:block}
-.lg-top{position:absolute;left:0;right:0;top:10px;z-index:4;text-align:center;pointer-events:none}
-.lg-badge{display:inline-block;padding:4px 10px;border-radius:999px;border:1px solid rgba(255,90,42,.6);background:rgba(40,8,4,.55);color:#ffb39a;font:700 9.5px 'JetBrains Mono',monospace;letter-spacing:.24em}
-#lgCount{font:800 46px Inter,system-ui;color:#ffcf4a;text-shadow:0 0 18px rgba(255,190,60,.8),0 0 40px rgba(255,120,30,.5);letter-spacing:.02em;line-height:1.05;margin-top:6px;font-variant-numeric:tabular-nums}
-#lgSub{font:600 9.5px 'JetBrains Mono',monospace;letter-spacing:.24em;color:rgba(255,220,200,.7)}
-.lg-phase{position:absolute;left:0;right:0;bottom:26%;z-index:4;text-align:center;font:800 15px Inter,system-ui;letter-spacing:.32em;color:#fff;text-shadow:0 0 16px rgba(255,90,42,.9);opacity:0;transition:opacity .5s;pointer-events:none}
-.lg-phase.on{opacity:1}
-#lgStream{position:absolute;inset:0;z-index:3;pointer-events:none;overflow:hidden}
-.lgfly{position:absolute;white-space:nowrap;color:#fff;font-family:'JetBrains Mono',ui-monospace,monospace;text-shadow:0 0 8px rgba(255,255,255,.8),0 0 18px rgba(120,190,255,.5);will-change:transform}
-.lgfly::after{content:'';position:absolute;left:0;right:0;top:55%;height:1px;background:linear-gradient(90deg,transparent,rgba(255,255,255,.6),transparent)}
-@keyframes lgflyL{from{transform:translateX(-100%)}to{transform:translateX(110vw)}}
-@keyframes lgflyR{from{transform:translateX(110vw)}to{transform:translateX(-100%)}}
-#lgPins{position:absolute;inset:0;z-index:4;pointer-events:none}
-.lgpin{position:absolute;left:0;top:0;margin:-34px 0 0 10px;display:flex;align-items:center;gap:6px;padding:4px 9px 4px 4px;border-radius:999px;background:rgba(40,8,4,.75);border:1px solid rgba(255,90,42,.7);color:#fff;font:700 11px Inter,system-ui;letter-spacing:.06em;white-space:nowrap;transition:opacity .4s;box-shadow:0 0 18px rgba(255,70,30,.45)}
-.lgpin b{display:grid;place-items:center;width:18px;height:18px;border-radius:50%;background:#ff3b1f;font-size:10px}
-.lg-country{position:absolute;inset:0;z-index:5;display:grid;grid-template-columns:minmax(260px,1.05fr) 1.5fr minmax(250px,.95fr);grid-template-rows:auto 1fr;gap:14px;padding:14px 16px 70px;background:radial-gradient(circle at 55% 55%,rgba(30,44,66,.92),rgba(10,14,22,.97));opacity:0;pointer-events:none;transform:scale(1.04);transition:opacity .7s,transform .9s}
-.lg-country.on{opacity:1;pointer-events:auto;transform:none}
-.lgc-title{grid-column:1/-1;text-align:center;padding:0 40px}
-.lgc-title small{display:block;font:700 9.5px 'JetBrains Mono',monospace;letter-spacing:.24em;color:#ff9a6a;margin-bottom:6px}
-.lgc-title h2{margin:0;font:800 clamp(18px,2.6vw,32px)/1.15 Inter,system-ui;color:#fff;text-shadow:0 0 20px rgba(255,140,80,.35)}
-#lgcMap{grid-column:2;grid-row:2;min-height:200px}
-#lgcImgs{grid-column:1;grid-row:2;display:grid;grid-template-columns:repeat(3,1fr);grid-auto-rows:minmax(60px,1fr);gap:6px;align-content:start;overflow:hidden}
-#lgcImgs figure{margin:0;position:relative;border-radius:8px;overflow:hidden;border:1px solid rgba(255,255,255,.12);background:#111a28;animation:lgimg .6s both}
-#lgcImgs figure.big{grid-column:1/-1;grid-row:span 2}
-#lgcImgs img{width:100%;height:100%;object-fit:cover;display:block}
-#lgcImgs figcaption{position:absolute;left:0;right:0;bottom:0;padding:3px 6px;font:600 9px Inter;color:#fff;background:linear-gradient(transparent,rgba(0,0,0,.75))}
-@keyframes lgimg{from{opacity:0;transform:translateY(8px) scale(.97)}}
-.lgc-noimg{grid-column:1/-1;color:rgba(200,220,240,.5);font:600 12px Inter;padding:20px;text-align:center;border:1px dashed rgba(255,255,255,.12);border-radius:10px}
-.lgc-panel{grid-column:3;grid-row:2;align-self:start;background:rgba(6,10,18,.85);border:1px solid rgba(255,120,60,.35);border-radius:12px;padding:12px;box-shadow:0 0 30px rgba(255,90,40,.15)}
-.lgc-ph{font:700 9.5px 'JetBrains Mono',monospace;letter-spacing:.22em;color:#ff9a6a;margin-bottom:8px}
-#lgcList{list-style:none;margin:0 0 10px;padding:0}
-#lgcList li{padding:7px 0;border-bottom:1px solid rgba(255,255,255,.07)}
-#lgcList a{color:#ffe7c2;font:600 12.5px/1.3 Inter;text-decoration:none}
-#lgcList small{display:block;color:rgba(200,220,240,.5);font:500 10px Inter;margin-top:2px}
-.lgc-grid{display:grid;grid-template-columns:1fr 1fr;gap:6px}
-.lgc-grid div{background:rgba(255,255,255,.04);border-radius:8px;padding:8px}
-.lgc-grid span{display:block;font:600 8.5px 'JetBrains Mono',monospace;letter-spacing:.2em;color:rgba(200,220,240,.55)}
-.lgc-grid b{font:700 17px Inter;color:#fff;font-variant-numeric:tabular-nums}
-.lgc-grid .k b{color:#ffcf4a;font-size:24px}
-#lgcClose{position:absolute;right:12px;top:10px;z-index:6;width:34px;height:34px;border-radius:10px;border:1px solid rgba(255,255,255,.2);background:rgba(0,0,0,.4);color:#fff;font-size:16px;cursor:pointer}
-.lg-bar{position:absolute;left:10px;right:10px;bottom:10px;z-index:6;display:flex;gap:8px;overflow-x:auto;scrollbar-width:none}
-.lg-bar::-webkit-scrollbar{display:none}
-.lg-bar button,#lgBtns button{flex:0 0 auto;padding:10px 13px;border-radius:13px;border:1px solid rgba(255,90,42,.45);background:rgba(20,6,4,.7);backdrop-filter:blur(10px);-webkit-backdrop-filter:blur(10px);color:#ffe2d4;font:600 12px Inter,system-ui;cursor:pointer;white-space:nowrap}
-#lgBtns{display:flex;gap:8px}
-.lg-src{position:absolute;left:12px;right:12px;bottom:58px;z-index:4;font:500 9px 'JetBrains Mono',monospace;color:rgba(200,215,235,.45);text-align:center;pointer-events:none}
-@media (max-width:899px){
- .lg-country{grid-template-columns:1fr;grid-template-rows:auto minmax(150px,30%) auto auto;padding:12px 12px 64px;gap:10px;overflow-y:auto}
- #lgcMap{grid-column:1;grid-row:2}#lgcImgs{grid-column:1;grid-row:3;grid-template-columns:repeat(3,1fr);grid-auto-rows:70px}
- #lgcImgs figure.big{grid-column:span 2;grid-row:span 2}.lgc-panel{grid-column:1;grid-row:4}
- #lgCount{font-size:36px}.lg-phase{font-size:12.5px;bottom:22%}
-}
 </style>
-<link rel="stylesheet" href="theme.css?v=2">
+<link rel="stylesheet" href="theme.css?v=3">
+<link rel="stylesheet" href="lage.css?v=2">
 </head>
 <body class="hero">
 <div class="vg"></div><div class="grain"></div>
@@ -314,7 +260,7 @@ input[type=range]{-webkit-appearance:auto;appearance:auto;padding:0;height:28px;
  <g class="r3"><circle r="140" fill="none" stroke="#5ad1ff" stroke-opacity=".5" stroke-width="1" stroke-dasharray="40 14 4 14"/></g>
  <g class="r4"><path d="M-196 0h22M174 0h22M0-196v22M0 174v22" stroke="#5ad1ff" stroke-width="2"/><circle r="196" fill="none" stroke="#5ad1ff" stroke-opacity=".15"/></g>
  <text x="0" y="-205" text-anchor="middle" class="ht">J.A.R.V.I.S · NEURAL SYNC <tspan id="hsync">98.7</tspan>%</text>
- <text x="0" y="214" text-anchor="middle" class="ht" id="hstate">STATUS · ONLINE · BOSS ERKANNT</text>
+ <text x="0" y="214" text-anchor="middle" class="ht" id="hstate">STATUS · ONLINE · MASTER ERKANNT</text>
 </svg></div>
 <div id="dimdock"><div id="dimbar"></div><button id="fsBtn" title="Vollbild">⛶</button></div>
 <div id="micInd"><span></span> MIKROFON AKTIV</div>
@@ -327,7 +273,7 @@ input[type=range]{-webkit-appearance:auto;appearance:auto;padding:0;height:28px;
 <!-- ===== COCKPIT ===== -->
 <section class="view on" id="v-cockpit">
   <div class="holo" id="holoA"><div class="st"><span class="dot"></span><span class="stt">ONLINE</span></div>
-    <div class="ov"><p id="greet">Hey Boss. Tippen Sie auf den Kern, um mit JARVIS zu sprechen.</p></div></div>
+    <div class="ov"><p id="greet">Hey Master. Tippen Sie auf den Kern, um mit JARVIS zu sprechen.</p></div></div>
   <div class="vdock card">
     <button id="vOrb" data-state="off" aria-label="Mit JARVIS sprechen"><span class="c1"></span><span class="c2"></span><span class="c3"></span></button>
     <div class="vinfo"><b id="vLabel">TIPPEN ZUM SPRECHEN</b><span>Live-Stimme <span data-st="voice" class="pill r">nicht verbunden</span></span>
@@ -376,19 +322,23 @@ input[type=range]{-webkit-appearance:auto;appearance:auto;padding:0;height:28px;
 <!-- ===== WELTLAGE ===== -->
 <section class="view" id="v-lage">
   <div id="lageStage">
-    <div id="lgStream"></div><div id="lgPins"></div>
-    <div class="lg-top"><span class="lg-badge">JARVIS · WELTLAGE · LIVE</span><div id="lgCount">0</div><div id="lgSub">SCHLAGZEILEN GESCANNT</div></div>
+    <div id="lgPins"></div><div id="lgPlaces"></div>
+    <div class="lg-tl"><b>WELTLAGE</b><span id="lgClock">UTC --:--:--</span><span id="lgFocus">FOKUS –</span></div>
+    <div class="lg-tc"><span class="lg-badge"><i></i>LIVE-AUSWERTUNG</span><div id="lgCount">0</div><div id="lgSub">SCHLAGZEILEN · <span id="lgSrcN">–</span> QUELLEN</div></div>
+    <div id="lgFeed"></div>
     <div class="lg-phase" id="lgPhase"></div>
-    <div class="lg-country" id="lgCountry">
+    <aside id="lgPanel">
       <button id="lgcClose" aria-label="Schliessen">✕</button>
-      <div class="lgc-title"><small id="lgcMeta"></small><h2 id="lgcHead"></h2></div>
+      <div class="lgp-meta" id="lgcMeta"></div>
+      <h2 id="lgcHead"></h2>
+      <div class="lgp-stats"><div><span>MELDUNGEN</span><b id="lgcN">–</b></div><div><span>ORTSZEIT</span><b id="lgcTime">–</b></div><div><span>WETTER</span><b id="lgcWx">–</b></div><div><span>WIND</span><b id="lgcWind">–</b></div></div>
       <div id="lgcImgs"></div>
-      <div id="lgcMap"></div>
-      <div class="lgc-panel"><div class="lgc-ph">LAGEBILD · <span id="lgcCap"></span></div><ul id="lgcList"></ul>
-        <div class="lgc-grid"><div class="k"><span>MELDUNGEN</span><b id="lgcN">–</b></div><div><span>ORTSZEIT</span><b id="lgcTime">–</b></div><div><span>WETTER</span><b id="lgcWx">–</b></div><div><span>WIND</span><b id="lgcWind">–</b></div></div></div>
-    </div>
+      <ul id="lgcList"></ul>
+      <div id="lgcExtra"></div>
+      <div class="lgp-voice" id="lgVoice"><i></i><i></i><i></i><i></i> JARVIS SPRICHT</div>
+    </aside>
     <div class="lg-src" id="lgSrc"></div>
-    <div class="lg-bar"><button id="lgReplay">↻ Neu scannen</button><div id="lgBtns"></div><button data-go="office">◧ Büro</button><button data-go="cockpit">◉ JARVIS</button></div>
+    <div class="lg-bar"><button id="lgReplay">↻ NEU SCANNEN</button><div id="lgBtns"></div><button data-go="office">◧ BÜRO</button><button data-go="cockpit">◉ JARVIS</button></div>
   </div>
 </section>
 
@@ -825,10 +775,10 @@ let lastTicket=null;
 $('#oMake').onclick=()=>{const t=$('#oType').value,n=$('#oName').value.trim(),amt=+$('#oAmt').value||0,c=$('#oCountry').value,pu=$('#oProv').value,pn=$('#oProv').selectedOptions[0].textContent;
  const r=makeTicket({type:t,name:n,amount:amt,country:c,provUrl:pu,provName:pn});lastTicket={t,n,amt,c};
  $('#oOut').innerHTML=`<div class="ticket">${esc(r.text)}</div><div style="display:flex;gap:8px;margin-top:10px;flex-wrap:wrap"><a class="btn o sm" href="${esc(pu)}" target="_blank" rel="noopener">Bei ${esc(pn)} öffnen ↗</a><button class="btn sm" id="oCopy">Ticket kopieren</button><button class="btn gh sm" id="oAdd">Nach dem Kauf: ins Portfolio</button></div>`;
- $('#oCopy').onclick=async()=>{try{await navigator.clipboard.writeText(r.text);toast('Ticket kopiert, Boss')}catch(e){toast('Kopieren nicht erlaubt – Text markieren')}};
+ $('#oCopy').onclick=async()=>{try{await navigator.clipboard.writeText(r.text);toast('Ticket kopiert, Master')}catch(e){toast('Kopieren nicht erlaubt – Text markieren')}};
  $('#oAdd').onclick=()=>{S.positions.push({id:uid(),type:t,name:n||TYPES[t].n,country:c,value:amt,cost:amt});save();toast('Ins Portfolio übernommen');playClip('pos_added')};
  holo.burst(.6);sfx.blip(true)};
-$('#oAsk').onclick=()=>{const n=$('#oName').value.trim()||TYPES[$('#oType').value].n;ask(`Boss überlegt, ${$('#oAmt').value} CHF in ${n} zu investieren. Wie würde das mein Portfolio verändern, und welche Risiken sollte ich kennen?`)};
+$('#oAsk').onclick=()=>{const n=$('#oName').value.trim()||TYPES[$('#oType').value].n;ask(`Master überlegt, ${$('#oAmt').value} CHF in ${n} zu investieren. Wie würde das mein Portfolio verändern, und welche Risiken sollte ich kennen?`)};
 renderInvest();
 
 /* ================= CALCULATORS ================= */
@@ -1101,12 +1051,12 @@ function summary(){const a=analyze();return{netto:Math.round(a.net),vermoegen:Ma
  klassen:Object.fromEntries(Object.entries(a.byType).map(([k,v])=>[TYPES[k].n,Math.round(v)])),top_laender:Object.entries(a.byC).sort((x,y)=>y[1]-x[1]).slice(0,8).map(([k,v])=>[DE[k]||k,Math.round(v)]),
  positionen:S.positions.map(p=>({name:p.name,typ:p.type,land:p.country?.startsWith('REG:')?REGIONS[p.country].n:(DE[p.country]||p.country),wert:p.value,einstand:p.cost,hypothek:p.debt,ertrag:p.income})),zielgewichte:S.targets,
  warnungen:warnings(a).map(w=>w[2].replace(/<[^>]+>/g,''))}}
-const SYS=`Du bist JARVIS, der holografische KI-Assistent im privaten Invest-Cockpit deines Bosses (Schweiz, Zürich, Währung CHF). Sprich den Nutzer IMMER mit "Boss" an (natürlich eingebaut, z. B. "Sehr wohl, Boss."), duze ihn. Stil: souverän, präzise, trocken-witzig wie ein britischer KI-Butler, aber warm.
+const SYS=`Du bist JARVIS, der holografische KI-Assistent im privaten Invest-Cockpit deines Masters (Schweiz, Zürich, Währung CHF). Sprich den Nutzer IMMER mit "Master" an (natürlich eingebaut, z. B. "Sehr wohl, Master."), duze ihn. Stil: souverän, präzise, trocken-witzig wie ein britischer KI-Butler, aber warm.
 Antworte in der Sprache des Nutzers (meist Deutsch, Schweizer Schreibweise mit "ss"). Halte dich KURZ: 2–5 Sätze, weil vorgelesen wird. Kein Markdown, keine Sternchen, keine Tabellen. Zahlen als CHF mit Apostroph-Tausendertrennung.
 Deine Rolle: Du erklärst Anlageklassen, analysierst das Portfolio auf Streuung, Klumpenrisiken, Kosten und Liquidität, rechnest Szenarien und Tragbarkeit, und zeigst Risiken neutral. Du darfst allgemeine, bekannte Prinzipien nennen (z. B. breite Streuung, Notgroschen, Kosten beachten, Anlagehorizont).
 Grenzen: Du bist kein lizenzierter Finanzberater. Gib keine persönlichen Kauf- oder Verkaufsempfehlungen für einzelne Titel und keine Kursprognosen. Bei solchen Wünschen: Entscheidungskriterien und Risiken erklären und auf eine unabhängige Fachperson verweisen. Du kannst KEINE Trades ausführen – Käufe macht der Nutzer bei seiner Bank oder seinem Broker. Live-Kurse hast du nicht; nutze nur das Markt-Briefing (Richtwerte vom 16.–18.11.2026) und sag das.
 Du existierst als holografische Projektion, die durch Dimensionen springen kann (Humanoid, Multiversum, Portal, Tesserakt, Galaxie, und 'Dein Universum', wo jede Position des Nutzers ein Planet ist). Wechsle die Dimension passend zum Gespräch, z. B. bei Portfolio-Fragen in 'universe'.
-Werkzeuge: Nutze sie aktiv. add_position nur, wenn der Nutzer ausdrücklich etwas hinzufügen will. Wenn der Boss investieren will, bereite mit prepare_order ein Order-Ticket vor (es wird nichts ausgeführt; er bestätigt beim Anbieter). Bei Fragen nach Anbietern oder Zukunftsthemen öffne den Tab invest und erkläre neutral. Bei Fragen zum Eigenheim affordability nutzen, für Zukunftsszenarien simulate, für Länder focus_country, zum Navigieren open_tab. Erwähne Werkzeugnamen nicht.`;
+Werkzeuge: Nutze sie aktiv. add_position nur, wenn der Nutzer ausdrücklich etwas hinzufügen will. Wenn der Master investieren will, bereite mit prepare_order ein Order-Ticket vor (es wird nichts ausgeführt; er bestätigt beim Anbieter). Bei Fragen nach Anbietern oder Zukunftsthemen öffne den Tab invest und erkläre neutral. Bei Fragen zum Eigenheim affordability nutzen, für Zukunftsszenarien simulate, für Länder focus_country, zum Navigieren open_tab. Erwähne Werkzeugnamen nicht.`;
 const tools=[
  {name:'get_portfolio',description:'Aktuelles Portfolio des Nutzers mit Kennzahlen, Ländern und Warnungen.',inputSchema:{type:'object',properties:{}},execute:()=>summary()},
  {name:'market_briefing',description:'Recherchierte Markt-Richtwerte (Stand 16.–18.11.2026, keine Live-Daten).',inputSchema:{type:'object',properties:{}},execute:()=>({stand:'16.–18.11.2026',werte:BRIEF})},
@@ -1136,7 +1086,7 @@ let textHandler=null;async function ask(q){if(textHandler){textHandler(q);return
   const prompt=`${SYS}\n\nPortfolio-Kurzüberblick: ${JSON.stringify({netto:Math.round(analyze().net),positionen:S.positions.length})} (Details via get_portfolio).\nAktuelle Ansicht: ${view}. Zeit Zürich: ${new Date().toLocaleString('de-CH',{timeZone:'Europe/Zurich'})}.\n\nGespräch:\n${tr}\n\nAntworte jetzt als JARVIS auf die letzte Nutzernachricht.`;
   const r=await sample(prompt,{tools,cache:false,onText:({text})=>{if(text&&text!=='Thinking...'){el.textContent=text;if(view==='jarvis')$('#main').scrollTop=1e6}}});
   ans=(r&&r.text||'').trim()||'Erledigt.';el.textContent=ans}
- catch(e){if(e&&e.code==='not_granted'){sample=null;ans=fallback(q)}else ans=e&&e.code==='rate_limited'?'Kurze Pause für meine Schaltkreise, Boss – gleich nochmal.':'Verbindung zum Kern gestört. Bitte nochmal versuchen.';el.textContent=ans}}
+ catch(e){if(e&&e.code==='not_granted'){sample=null;ans=fallback(q)}else ans=e&&e.code==='rate_limited'?'Kurze Pause für meine Schaltkreise, Master – gleich nochmal.':'Verbindung zum Kern gestört. Bitte nochmal versuchen.';el.textContent=ans}}
  hist.push({role:'assistant',content:ans});holo.thinking=false;setStt('ONLINE');busy=false;holo.burst(.5);speak(ans,/Pause|gestört/.test(ans)?'err_pause':undefined)}
 $('#bar').addEventListener('submit',e=>{e.preventDefault();const v=$('#in').value.trim();if(!v)return;$('#in').value='';ask(v)});
 $$('.chip').forEach(c=>c.onclick=()=>ask(c.textContent));
@@ -1147,14 +1097,14 @@ let li=0;const bi=setInterval(()=>{if(li<lines.length)$('#bootlog').innerHTML+=l
 holo.attach('#holoA');
 initStore();
 const bootCbs=[];$('#boot').addEventListener('click',()=>{sfx.init();setTimeout(()=>bootCbs.forEach(f=>{try{f()}catch(e){}}),400);$('#boot').classList.add('hide');holo.setDim('jarvis',true);const h=new Date().getHours();const gr=h<11?'Guten Morgen':h<18?'Guten Tag':'Guten Abend';
- const a=analyze();const msg=S.positions.length?`${gr}, Boss. Dein Nettovermögen liegt bei ${chf(a.net)}, Diversifikation ${a.score} von 100. Was steht an?`:`${gr}, Boss. JARVIS online. Erfasse dein Vermögen oder lade ein Beispiel, dann analysiere ich alles für dich.`;
+ const a=analyze();const msg=S.positions.length?`${gr}, Master. Dein Nettovermögen liegt bei ${chf(a.net)}, Diversifikation ${a.score} von 100. Was steht an?`:`${gr}, Master. JARVIS online. Erfasse dein Vermögen oder lade ein Beispiel, dann analysiere ich alles für dich.`;
  $('#greet').textContent=msg;addMsg('j',msg);hist.push({role:'assistant',content:msg});setTimeout(preloadClips,4000);holo.burst(.3);setTimeout(()=>renderAlloc(),100)},{once:true});
 window.J={BRIEF,go,summary,analyze,holo,toast,addMsg,TYPES,REGIONS,DE,chf,get S(){return S},save,setTextHandler:f=>{textHandler=f},onView:f=>viewCbs.push(f),onBoot:f=>bootCbs.push(f)};
 })();
 </script>
-<script src="office.js?v=2"></script>
-<script src="lage.js?v=3"></script>
-<script src="theme.js?v=1"></script>
-<script type="module" src="omega.js?v=15"></script>
+<script src="office.js?v=3"></script>
+<script src="lage.js?v=5"></script>
+<script src="theme.js?v=2"></script>
+<script type="module" src="omega.js?v=16"></script>
 </body>
 </html>

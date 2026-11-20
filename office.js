@@ -217,7 +217,7 @@
   let scan = 0;
   function drawCmd(g) {
     const now = new Date();
-    frame(g, 'COMMAND CENTER', 'BOSS · ' + now.toLocaleDateString('de-CH', { weekday: 'short', day: '2-digit', month: '2-digit', year: 'numeric' }));
+    frame(g, 'COMMAND CENTER', 'MASTER · ' + now.toLocaleDateString('de-CH', { weekday: 'short', day: '2-digit', month: '2-digit', year: 'numeric' }));
     const hm = now.toLocaleTimeString('de-CH', { hour: '2-digit', minute: '2-digit' });
     g.fillStyle = '#ffffff'; g.font = font(110, 300); g.fillText(hm, 36, 200); const hw = g.measureText(hm).width;
     g.fillStyle = 'rgba(90,209,255,.9)'; g.font = font(44, 300); g.fillText(':' + String(now.getSeconds()).padStart(2, '0'), 36 + hw + 6, 200);

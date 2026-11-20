@@ -10,6 +10,11 @@ const FEEDS = [
   { u: 'https://news.google.com/rss/headlines/section/topic/WORLD?hl=de&gl=DE&ceid=DE:de', world: true },
   { u: 'https://news.google.com/rss?hl=de&gl=CH&ceid=CH:de', world: false },
   { u: 'https://news.google.com/rss/headlines/section/topic/BUSINESS?hl=de&gl=CH&ceid=CH:de', world: false },
+  { u: 'https://feeds.bbci.co.uk/news/world/rss.xml', world: true, src: 'BBC' },
+  { u: 'https://rss.dw.com/rdf/rss-de-all', world: true, src: 'DW' },
+  { u: 'https://www.aljazeera.com/xml/rss/all.xml', world: true, src: 'Al Jazeera' },
+  { u: 'https://news.google.com/rss/search?q=Kurdistan+OR+Rojava+OR+Kurden&hl=de&gl=CH&ceid=CH:de', world: false },
+  { u: 'https://news.google.com/rss/search?q=Kurdistan+OR+Rojava+OR+Kurdish&hl=en-US&gl=US&ceid=US:en', world: false },
 ];
 
 const dec = s => String(s || '')
@@ -20,7 +25,7 @@ const tag = (xml, t) => { const m = xml.match(new RegExp('<' + t + '(?:\\s[^>]*)
 
 export function parseRss(xml) {
   const out = [];
-  for (const m of String(xml).matchAll(/<item>([\s\S]*?)<\/item>/gi)) {
+  for (const m of String(xml).matchAll(/<item\b[^>]*>([\s\S]*?)<\/item>/gi)) {
     const it = m[1];
     let title = tag(it, 'title'); const source = tag(it, 'source');
     if (source && title.endsWith(' - ' + source)) title = title.slice(0, -(source.length + 3));
@@ -61,7 +66,7 @@ export default async function handler(req, res) {
     if (r.status !== 'fulfilled') continue;
     for (const it of r.value.items) {
       const key = it.t.toLowerCase().slice(0, 60); if (!it.t || seen.has(key)) continue; seen.add(key);
-      all.push({ ...it, world: r.value.f.world, c: countriesIn(it.t) });
+      all.push({ ...it, s: it.s || r.value.f.src || '', world: r.value.f.world, c: countriesIn(it.t) });
     }
   }
   if (!all.length) return res.status(502).json({ error: 'Keine Nachrichtenquelle erreichbar' });
@@ -90,6 +95,8 @@ export default async function handler(req, res) {
   res.setHeader('Cache-Control', 's-maxage=600, stale-while-revalidate=1800');
   return res.status(200).json({
     stand: new Date().toISOString(), quelle: 'Google News (RSS), Bilder: Bing News, Wetter: Open-Meteo',
-    total: all.length, headlines: all.slice(0, 220).map(({ t, s }) => ({ t, s })), hotspots,
+    total: all.length, headlines: all.slice(0, 320).map(({ t, s, c }) => ({ t, s, c })), hotspots,
+    counts: Object.fromEntries(COUNTRIES.map(x => [x.c, all.filter(it => it.c.includes(x.c)).length])),
+    geo: Object.fromEntries(COUNTRIES.map(x => [x.c, [x.lat, x.lon, x.n, x.en]])),
   });
 }

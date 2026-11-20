@@ -85,6 +85,15 @@ async function sendText(t) {
 
 window.__saxoRefresh = async () => { if (!saxo.token) { window.__saxoSnap = null; return; } try { window.__saxoSnap = await saxo.snapshot(); } catch (e) {} };
 
+// JARVIS spricht zu einem Klick in der App (startet die Live-Stimme falls nötig)
+window.JARVIS = {
+  async say(context) {
+    if (!conv) await startVoice();
+    if (!conv) return false;
+    try { conv.sendUserMessage('[APP-KLICK] ' + context + ' Sprich den Master direkt an und gib eine kurze gesprochene Lage in zwei bis drei Sätzen, nur aus diesen Fakten.'); return true; } catch (e) { return false; }
+  },
+};
+
 /* ============ CLIENT TOOLS (called by the agent) ============ */
 const VIEWS = { core: 'cockpit', office: 'office', weltlage: 'lage', news: 'lage', finance: 'port', market: 'invest', realestate: 'calc', world: 'welt', hub: 'hub' };
 const clientTools = {
@@ -284,7 +293,7 @@ Umgebung: ${cfg.saxoEnv.toUpperCase()}${cfg.saxoEnv === 'live' ? ' – ECHTES GE
     if (qty === 0) return { titel: ins.Description, symbol: ins.Symbol, kurs: this.price, waehrung: ins.CurrencyCode, hinweis: 'Der Betrag reicht nicht für ein ganzes Stück.' };
     if (qty) $('#otQty').value = qty;
     const pre = qty ? await this.precheck() : { hinweis: 'Stückzahl fehlt (Wechselkurs nicht verfügbar) – bitte Stückzahl nennen.' };
-    return { titel: ins.Description, symbol: ins.Symbol, waehrung: ins.CurrencyCode, kurs: this.price, stueck: qty, vorabpruefung: pre, wichtig: 'Nicht ausgeführt. Der Boss muss in der App bestätigen und selbst auf Senden tippen.' };
+    return { titel: ins.Description, symbol: ins.Symbol, waehrung: ins.CurrencyCode, kurs: this.price, stueck: qty, vorabpruefung: pre, wichtig: 'Nicht ausgeführt. Der Master muss in der App bestätigen und selbst auf Senden tippen.' };
   },
 };
 function syncType() { $('#otLimitBox').style.display = $('#otType').value === 'Limit' ? 'block' : 'none'; }
@@ -330,5 +339,5 @@ function wire() {
 }
 saxo.load(); wire(); renderStatus(); renderSaxo(); renderOrders(); syncType(); setVoiceUI('off');
 saxo.handleRedirect();
-// Kein automatischer Start: JARVIS spricht erst, wenn der Boss auf den Kern tippt.
+// Kein automatischer Start: JARVIS spricht erst, wenn der Master auf den Kern tippt.
 window.omega = { startVoice, endVoice, sendText, market, saxo, order, cfg };

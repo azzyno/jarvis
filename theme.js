@@ -77,7 +77,7 @@
         ['BROKER SAXO', async () => hasSaxo() ? ['VERBUNDEN', 'ok'] : ['NICHT VERBUNDEN', 'wn']],
         ['NACHRICHTENDIENST', async () => { await loadNews(); return live.news ? [`${live.news.total} SCHLAGZEILEN`, 'ok'] : ['NICHT ERREICHBAR', 'wn']; }],
         ['BÖRSE ZÜRICH', async () => open(MK[0]) ? ['OFFEN', 'ok'] : ['GESCHLOSSEN', 'wn']],
-        ['IDENTITÄT', async () => ['BOSS', 'ok']],
+        ['IDENTITÄT', async () => ['MASTER', 'ok']],
       ];
       for (let i = 0; i < steps.length; i++) { const [n, f] = steps[i]; let r; try { r = await f(); } catch (e) { r = ['FEHLER', 'wn']; } log(n, r[0], r[1]); $('#bootProg').style.width = ((i + 1) / steps.length * 100) + '%'; await new Promise(r => setTimeout(r, 180)); }
       const tap = $('#tap'); tap.textContent = 'ZUGRIFF · TIPPEN'; tap.style.opacity = 1;
