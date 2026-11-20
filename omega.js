@@ -86,7 +86,7 @@ async function sendText(t) {
 window.__saxoRefresh = async () => { if (!saxo.token) { window.__saxoSnap = null; return; } try { window.__saxoSnap = await saxo.snapshot(); } catch (e) {} };
 
 /* ============ CLIENT TOOLS (called by the agent) ============ */
-const VIEWS = { core: 'cockpit', office: 'office', finance: 'port', market: 'invest', realestate: 'calc', world: 'welt', hub: 'hub' };
+const VIEWS = { core: 'cockpit', office: 'office', weltlage: 'lage', news: 'lage', finance: 'port', market: 'invest', realestate: 'calc', world: 'welt', hub: 'hub' };
 const clientTools = {
   jarvis_show_module: async ({ module }) => { const ok = J.go(VIEWS[module] || module); return ok ? `Modul ${module} geöffnet.` : `Unbekanntes Modul ${module}.`; },
   jarvis_set_avatar: async ({ mode }) => { J.holo.auto = false; J.holo.setDim(mode); return 'ok'; },
@@ -97,6 +97,7 @@ const clientTools = {
     return JSON.stringify(out).slice(0, 6000);
   },
   jarvis_market_lookup: async ({ query }) => { J.go('invest'); const r = await market.lookup(query); return JSON.stringify(r).slice(0, 5000); },
+  jarvis_world_briefing: async () => { J.go('lage'); const r = window.LAGE ? await window.LAGE.briefing() : { fehler: 'Weltlage-Modul nicht geladen' }; return JSON.stringify(r).slice(0, 6000); },
   jarvis_prepare_order: async (p) => { J.go('port'); const r = await order.prepare(p); return JSON.stringify(r).slice(0, 4000); },
 };
 
