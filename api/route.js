@@ -21,8 +21,13 @@ export default async function handler(req, res) {
         ? getJson(`https://api.tomtom.com/routing/1/calculateRoute/${start.lat},${start.lon}:${ziel.lat},${ziel.lon}/json?traffic=true&travelMode=car&key=${process.env.TOMTOM_KEY}`, 8000)
           .then(j => { const s = j.routes?.[0]?.summary; return s ? { minuten_mit_verkehr: Math.round(s.travelTimeInSeconds / 60), stau_minuten: Math.round((s.trafficDelayInSeconds || 0) / 60), km: Math.round(s.lengthInMeters / 100) / 10, ankunft: s.arrivalTime, quelle: 'TomTom Live-Verkehr' } : null; }).catch(() => null)
         : Promise.resolve(null),
-      oev: getJson(`https://transport.opendata.ch/v1/connections?from=${encodeURIComponent(req.query.from || (start.name.includes('Standort') || start.name.includes('Standard') ? `${start.lat},${start.lon}` : start.name))}&to=${encodeURIComponent(ziel.name)}&limit=4`, 8000)
-        .then(j => (j.connections || []).map(c => ({ ab: c.from?.departure, an: c.to?.arrival, dauer: c.duration?.replace(/^00d/, '').slice(0, 5), umstiege: c.transfers, verspaetung_min: c.from?.delay || 0, gleis: c.from?.platform || '', produkte: (c.products || []).join(' · '), von: c.from?.station?.name, nach: c.to?.station?.name }))).catch(() => []),
+      oev: (async () => {
+        const st = async (lat, lon) => { const j = await getJson(`https://transport.opendata.ch/v1/locations?x=${lat}&y=${lon}&type=station`, 6000); const L = (j.stations || []).filter(x => x.id); return (L.find(x => x.icon === 'train') || L[0] || {}).name; };
+        const [a, b] = await Promise.all([st(start.lat, start.lon), st(ziel.lat, ziel.lon)]);
+        if (!a || !b || a === b) return [];
+        const j = await getJson(`https://transport.opendata.ch/v1/connections?from=${encodeURIComponent(a)}&to=${encodeURIComponent(b)}&limit=4`, 8000);
+        return (j.connections || []).map(c => ({ ab: c.from?.departure, an: c.to?.arrival, dauer: c.duration?.replace(/^00d/, '').slice(0, 5), umstiege: c.transfers, verspaetung_min: c.from?.delay || 0, gleis: c.from?.platform || '', produkte: (c.products || []).join(' · '), von: c.from?.station?.name, nach: c.to?.station?.name }));
+      })().catch(() => []),
       wetter: forecast(ziel.lat, ziel.lon).catch(() => null),
     };
     const out = {}; await Promise.all(Object.entries(tasks).map(async ([k, p]) => { out[k] = await p; }));
