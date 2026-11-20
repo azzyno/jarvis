@@ -107,6 +107,8 @@ const clientTools = {
   },
   jarvis_market_lookup: async ({ query }) => { J.go('invest'); const r = await market.lookup(query); return JSON.stringify(r).slice(0, 5000); },
   jarvis_world_briefing: async () => { J.go('lage'); const r = window.LAGE ? await window.LAGE.briefing() : { fehler: 'Weltlage-Modul nicht geladen' }; return JSON.stringify(r).slice(0, 6000); },
+  jarvis_route: async ({ ziel, start }) => { try { const d = await window.TRAVEL.route(ziel, start); return JSON.stringify(window.TRAVEL.short.route(d)).slice(0, 5000); } catch (e) { return 'Route nicht verfügbar: ' + e.message; } },
+  jarvis_weather: async ({ ort }) => { try { const d = await window.TRAVEL.weather(ort); return JSON.stringify(window.TRAVEL.short.weather(d)).slice(0, 5000); } catch (e) { return 'Wetter nicht verfügbar: ' + e.message; } },
   jarvis_prepare_order: async (p) => { J.go('port'); const r = await order.prepare(p); return JSON.stringify(r).slice(0, 4000); },
 };
 
