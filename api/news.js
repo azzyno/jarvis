@@ -1,6 +1,6 @@
 // Weltlage für JARVIS: echte Schlagzeilen (Google News RSS), Brennpunkte, Bilder (Bing News RSS) und Wetter (Open-Meteo).
 // Antwort wird 10 Minuten im Vercel-Cache gehalten.
-import { COUNTRIES, countriesIn, byCode } from './_countries.js';
+import { COUNTRIES, countriesIn, byCode, WATCH } from './_countries.js';
 
 const ALLOWED = ['https://azzyno.github.io'];
 const UA = 'Mozilla/5.0 (compatible; JARVIS-Omega/1.0)';
@@ -40,7 +40,7 @@ async function images(country) {
   try {
     const q = encodeURIComponent(country.n.split(' / ')[0]);
     const xml = await get(`https://www.bing.com/news/search?q=${q}&format=rss&setlang=de-CH&cc=CH`, 5000);
-    return parseRss(xml).filter(x => x.img).slice(0, 9).map(x => ({ img: x.img.replace(/&amp;/g, '&').replace(/^http:/, 'https:') + (x.img.includes('?') ? '&' : '?') + 'w=480&h=320&c=7', t: x.t, s: x.s }));
+    return parseRss(xml).filter(x => x.img).slice(0, 9).map(x => ({ u: x.u, img: x.img.replace(/&amp;/g, '&').replace(/^http:/, 'https:') + (x.img.includes('?') ? '&' : '?') + 'w=480&h=320&c=7', t: x.t, s: x.s }));
   } catch (e) { return []; }
 }
 async function weather(c) {
@@ -71,16 +71,20 @@ export default async function handler(req, res) {
   for (const it of all) for (const c of it.c) score[c] = (score[c] || 0) + (it.world ? 1 : 0.5) * (c === 'CH' ? 0.5 : 1);
   // Gaza/Israel nicht doppelt: wenn beide vorkommen, zusammenlegen auf das stärkere.
   if (score.PS && score.IL) { const k = score.IL >= score.PS ? 'IL' : 'PS', o = k === 'IL' ? 'PS' : 'IL'; score[k] += score[o] * 0.5; delete score[o]; }
-  const top = Object.entries(score).sort((a, b) => b[1] - a[1]).slice(0, 3).map(([c]) => byCode[c]);
+  const top = Object.entries(score).filter(([c]) => byCode[c]).sort((a, b) => b[1] - a[1]).slice(0, 3).map(([c]) => byCode[c]);
+  const topCodes = new Set(top.map(c => c.c));
+  const list = [...top.map(c => ({ c, watch: false })), ...WATCH.filter(w => !topCodes.has(w)).map(w => ({ c: byCode[w], watch: true }))];
 
   const used = new Set();
-  const hotspots = await Promise.all(top.map(async c => {
+  const hotspots = await Promise.all(list.map(async ({ c, watch }) => {
     const items = all.filter(it => it.c.includes(c.c) || (c.c === 'IL' && it.c.includes('PS')) || (c.c === 'PS' && it.c.includes('IL')))
       .map((it, i) => ({ it, i, k: it.c.length + (it.world ? 0 : 0.5) })).sort((a, b) => a.k - b.k || a.i - b.i).map(x => x.it);
     const lead = items.find(it => !used.has(it.t)) || items[0]; if (lead) used.add(lead.t);
     if (lead) { items.splice(items.indexOf(lead), 1); items.unshift(lead); }
     const [imgs, wx] = await Promise.all([images(c), weather(c)]);
-    return { c: c.c, n: c.n, en: c.en, cap: c.cap, lat: c.lat, lon: c.lon, tz: c.tz, box: c.box, count: items.length, headline: items[0]?.t || '', items: items.slice(0, 6).map(({ t, s, u, d }) => ({ t, s, u, d })), images: imgs, weather: wx };
+    const count = items.length;
+    if (!items.length) imgs.forEach(im => items.push({ t: im.t, s: im.s, u: im.u || '', d: '' }));
+    return { watch, c: c.c, n: c.n, en: c.en, cap: c.cap, lat: c.lat, lon: c.lon, tz: c.tz, box: c.box, count, headline: items[0]?.t || '', items: items.slice(0, 6).map(({ t, s, u, d }) => ({ t, s, u, d })), images: imgs, weather: wx };
   }));
 
   res.setHeader('Cache-Control', 's-maxage=600, stale-while-revalidate=1800');

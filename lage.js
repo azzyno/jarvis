@@ -93,11 +93,12 @@
   function setPins(hs) {
     pins.forEach(p => spin.remove(p.g)); pins = [];
     hs.forEach((h, i) => { const g = new THREE.Group(); const v = ll(h.lat, h.lon, R * 1.004); g.position.copy(v); g.lookAt(v.clone().multiplyScalar(2)); spin.add(g);
-      const dot = new THREE.Mesh(new THREE.CircleGeometry(0.035, 24), new THREE.MeshBasicMaterial({ color: 0xff3b1f })); g.add(dot);
-      const rings = [0, 1, 2].map(k => { const m = new THREE.Mesh(new THREE.RingGeometry(0.05, 0.062, 40), new THREE.MeshBasicMaterial({ color: 0xff5a2a, transparent: true, opacity: 0.8, side: THREE.DoubleSide })); g.add(m); return m; });
-      const beam = new THREE.Mesh(new THREE.CylinderGeometry(0.006, 0.006, 0.35, 8), new THREE.MeshBasicMaterial({ color: 0xff7a3a, transparent: true, opacity: 0.85 })); beam.rotation.x = Math.PI / 2; beam.position.z = 0.175; g.add(beam);
+      const col = h.watch ? 0x8fe6ff : 0xff3b1f, col2 = h.watch ? 0xbff1ff : 0xff5a2a, col3 = h.watch ? 0x8fe6ff : 0xff7a3a;
+      const dot = new THREE.Mesh(new THREE.CircleGeometry(0.035, 24), new THREE.MeshBasicMaterial({ color: col })); g.add(dot);
+      const rings = [0, 1, 2].map(k => { const m = new THREE.Mesh(new THREE.RingGeometry(0.05, 0.062, 40), new THREE.MeshBasicMaterial({ color: col2, transparent: true, opacity: 0.8, side: THREE.DoubleSide })); g.add(m); return m; });
+      const beam = new THREE.Mesh(new THREE.CylinderGeometry(0.006, 0.006, 0.35, 8), new THREE.MeshBasicMaterial({ color: col3, transparent: true, opacity: 0.85 })); beam.rotation.x = Math.PI / 2; beam.position.z = 0.175; g.add(beam);
       pins.push({ g, rings, h, i }); });
-    $('#lgPins').innerHTML = hs.map((h, i) => `<div class="lgpin" data-i="${i}"><b>${i + 1}</b>${esc(h.n)}</div>`).join('');
+    $('#lgPins').innerHTML = hs.map((h, i) => `<div class="lgpin${h.watch ? ' w' : ''}" data-i="${i}"><b>${h.watch ? '◎' : i + 1}</b>${esc(h.n)}</div>`).join('');
   }
 
   /* ---------- Kamera/Ausrichtung ---------- */
@@ -121,11 +122,13 @@
 
   /* ---------- Länder-Ansicht ---------- */
   const WX = c => c == null ? '' : c === 0 ? 'klar' : c <= 3 ? 'bewölkt' : c <= 48 ? 'Nebel' : c <= 67 ? 'Regen' : c <= 77 ? 'Schnee' : c <= 82 ? 'Schauer' : 'Gewitter';
+  // ungefähres kurdisches Siedlungsgebiet (vereinfachte Umrisslinie)
+  const KURD = [[37.0, 37.0], [38.4, 38.1], [39.8, 38.9], [41.4, 39.8], [43.4, 39.9], [44.6, 39.4], [45.3, 38.3], [46.2, 37.0], [46.9, 35.8], [46.5, 34.6], [45.6, 34.1], [44.9, 34.9], [44.0, 35.3], [43.1, 36.1], [42.3, 36.4], [41.2, 36.5], [40.0, 36.8], [38.8, 36.5], [37.7, 36.3]];
   let mapChart = null, clockT = 0;
   function showCountry(h) {
     const L = $('#lgCountry');
     $('#lgcHead').textContent = h.headline || h.n;
-    $('#lgcMeta').textContent = `BRENNPUNKT · ${h.n.toUpperCase()} · ${h.count} MELDUNGEN`;
+    $('#lgcMeta').textContent = `${h.watch ? 'BEOBACHTET' : 'BRENNPUNKT'} · ${h.n.toUpperCase()} · ${h.count ? h.count + ' MELDUNGEN' : 'KEINE WELT-SCHLAGZEILE · AKTUELLE BERICHTE'}`;
     $('#lgcCap').textContent = h.cap.toUpperCase();
     $('#lgcList').innerHTML = h.items.slice(0, 4).map(it => `<li><a href="${esc(it.u)}" target="_blank" rel="noopener">${esc(it.t)}</a><small>${esc(it.s || '')}</small></li>`).join('');
     $('#lgcImgs').innerHTML = (h.images || []).slice(0, isMobile ? 6 : 9).map((im, i) => `<figure class="${i === 0 ? 'big' : ''}"><img src="${esc(im.img)}" alt="" loading="lazy" referrerpolicy="no-referrer" onerror="this.parentNode.remove()"><figcaption>${esc(im.s || '')}</figcaption></figure>`).join('') || '<div class="lgc-noimg">Keine Bilder verfügbar</div>';
@@ -139,8 +142,9 @@
       mapChart.setOption({ backgroundColor: 'transparent', animationDurationUpdate: 1200,
         geo: { map: 'world', roam: false, silent: true, boundingCoords: [[h.box[0][0], h.box[1][1]], [h.box[1][0], h.box[0][1]]], layoutCenter: ['50%', '50%'], layoutSize: '100%',
           itemStyle: { areaColor: '#1f2d42', borderColor: 'rgba(150,180,220,.35)', borderWidth: 0.8 },
-          regions: [{ name: h.en, itemStyle: { areaColor: '#f08a4b', borderColor: '#ffd3ad', borderWidth: 1.6, shadowColor: 'rgba(255,120,60,.8)', shadowBlur: 24 } }] },
-        series: [{ type: 'effectScatter', coordinateSystem: 'geo', data: [[h.lon, h.lat]], symbolSize: 12, rippleEffect: { scale: 5, brushType: 'stroke' }, itemStyle: { color: '#fff1e6' } }] });
+          regions: h.en ? [{ name: h.en, itemStyle: { areaColor: h.watch ? '#3f9fc4' : '#f08a4b', borderColor: h.watch ? '#bff1ff' : '#ffd3ad', borderWidth: 1.6, shadowColor: h.watch ? 'rgba(143,230,255,.8)' : 'rgba(255,120,60,.8)', shadowBlur: 24 } }] : [] },
+        series: [{ type: 'effectScatter', coordinateSystem: 'geo', data: [[h.lon, h.lat]], symbolSize: 12, rippleEffect: { scale: 5, brushType: 'stroke' }, itemStyle: { color: '#fff1e6' }, z: 5 }]
+          .concat(h.c === 'KU' ? [{ type: 'custom', coordinateSystem: 'geo', data: [0], silent: true, z: 3, renderItem: (p, api) => ({ type: 'polygon', shape: { points: KURD.map(c => api.coord(c)) }, style: { fill: 'rgba(240,138,75,.88)', stroke: '#ffd3ad', lineWidth: 1.6, shadowBlur: 24, shadowColor: 'rgba(255,120,60,.8)' } }) }] : []) });
       setTimeout(() => mapChart && mapChart.resize(), 50);
     }
     L.classList.add('on');
@@ -161,7 +165,7 @@
     if (!alive()) return;
     window.__lageData = data;
     $('#lgSrc').textContent = `Quellen: ${data.quelle} · Stand ${new Date(data.stand).toLocaleTimeString('de-CH', { hour: '2-digit', minute: '2-digit' })}`;
-    $('#lgBtns').innerHTML = data.hotspots.map((h, i) => `<button data-hs="${i}">${i + 1} · ${esc(h.n)}</button>`).join('');
+    $('#lgBtns').innerHTML = data.hotspots.map((h, i) => `<button data-hs="${i}"${h.watch ? ' class="w"' : ''}>${h.watch ? '◎' : i + 1} · ${esc(h.n)}</button>`).join('');
     if (startAt == null) {
       // 1 · Scan
       phase('SCANNE WELTWEITE NACHRICHTEN'); reburst(); burstOn = 1;
@@ -169,13 +173,13 @@
       while (performance.now() - t0 < dur && alive()) { const f = (performance.now() - t0) / dur; $('#lgCount').textContent = Math.round(N * Math.min(1, f * 1.08)); for (let j = 0; j < 2; j++) flyLine(H[k++ % H.length].t); if (Math.random() < 0.3) reburst(); await sleep(140); }
       $('#lgCount').textContent = N; burstOn = 0; if (!alive()) return;
       // 2 · Brennpunkte
-      autoSpin = 0; setPins(data.hotspots); faceTo(data.hotspots[0].lat, data.hotspots[0].lon); phase(data.hotspots.length === 3 ? 'DREI BRENNPUNKTE' : 'BRENNPUNKTE'); await sleep(3200); if (!alive()) return;
+      autoSpin = 0; setPins(data.hotspots); faceTo(data.hotspots[0].lat, data.hotspots[0].lon); const nh = data.hotspots.filter(h => !h.watch).length, nw = data.hotspots.length - nh; phase((nh === 3 ? 'DREI BRENNPUNKTE' : nh + ' BRENNPUNKTE') + (nw ? ` · ${nw} BEOBACHTET` : '')); await sleep(3200); if (!alive()) return;
     } else setPins(data.hotspots);
     // 3 · Länder
     const list = startAt == null ? data.hotspots.map((_, i) => i) : [startAt];
     for (const i of list) {
       const h = data.hotspots[i]; if (!h) continue;
-      phase(`${i + 1} · ${h.n.toUpperCase()}`); autoSpin = 0; faceTo(h.lat, h.lon); await sleep(1600); if (!alive()) return;
+      phase(h.watch ? `BEOBACHTET · ${h.n.toUpperCase()}` : `${i + 1} · ${h.n.toUpperCase()}`); autoSpin = 0; faceTo(h.lat, h.lon); await sleep(1600); if (!alive()) return;
       zoomGoal = Z0() * 0.58; await sleep(900); if (!alive()) return;
       phase(''); showCountry(h); await sleep(startAt == null ? 11000 : 15000); if (!alive()) return;
       hideCountry(); zoomGoal = Z0(); await sleep(800); if (!alive()) return;

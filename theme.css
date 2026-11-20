@@ -1,0 +1,153 @@
+/* =====================================================================
+   JARVIS OMEGA · DESIGN „COMMAND“
+   Präzise, ruhig, professionell: Graphit, Haarlinien, Eckwinkel,
+   Datenschrift, gezielte Akzente. Liegt über dem Grund-CSS.
+   ===================================================================== */
+:root{
+  --c:#8fe6ff; --c2:#2f8cff; --o:#ffb547; --g:#4cf2a0; --r:#ff5a5f; --y:#ffd166;
+  --bg:#040609; --ink:#e9f2fa; --tx:#dfe9f3; --mut:#7d8ea0;
+  --panel:rgba(12,16,22,.78); --panel2:rgba(16,21,29,.86);
+  --line:rgba(160,190,220,.12); --line2:rgba(160,200,240,.22);
+  --acc:#8fe6ff; --glass:var(--panel);
+  --mono:'JetBrains Mono',ui-monospace,SFMono-Regular,Menlo,monospace;
+  --sans:Inter,'SF Pro Display',system-ui,-apple-system,sans-serif;
+}
+html,body{background:var(--bg)!important;font-family:var(--sans);letter-spacing:.005em}
+
+/* ---------- Hintergrund: Raster, Vignette, Scanstrahl ---------- */
+body:before{background:
+  radial-gradient(ellipse at 50% -20%,rgba(47,140,255,.16),transparent 60%),
+  radial-gradient(ellipse at 50% 120%,rgba(143,230,255,.06),transparent 60%)!important}
+body:after{background:
+  linear-gradient(rgba(160,200,240,.035) 1px,transparent 1px) 0 0/100% 32px,
+  linear-gradient(90deg,rgba(160,200,240,.035) 1px,transparent 1px) 0 0/32px 100%!important;
+  -webkit-mask-image:radial-gradient(ellipse at 50% 40%,#000 30%,transparent 80%);mask-image:radial-gradient(ellipse at 50% 40%,#000 30%,transparent 80%)}
+#cmdScan{position:fixed;left:0;right:0;top:0;height:120px;pointer-events:none;z-index:1;
+  background:linear-gradient(180deg,transparent,rgba(143,230,255,.05) 60%,rgba(143,230,255,.12) 98%,transparent);
+  animation:cmdScan 9s linear infinite;mix-blend-mode:screen}
+@keyframes cmdScan{0%{transform:translateY(-140px)}100%{transform:translateY(110vh)}}
+.grain{opacity:.035!important}
+
+/* ---------- Kopfzeile ---------- */
+header{background:linear-gradient(rgba(4,6,9,.96),rgba(4,6,9,.75))!important;border-bottom:1px solid var(--line)!important;
+  backdrop-filter:blur(14px)!important;-webkit-backdrop-filter:blur(14px)!important;padding-bottom:8px!important}
+.brand{font:700 14px var(--sans)!important;letter-spacing:.42em!important;color:var(--ink)!important;text-shadow:none!important}
+.brand small{font:500 8.5px var(--mono)!important;letter-spacing:.26em!important;color:var(--mut)!important;margin-top:3px}
+.brand small::before{content:'';display:inline-block;width:6px;height:6px;border-radius:50%;background:var(--g);margin-right:7px;box-shadow:0 0 8px var(--g);animation:cmdPulse 2s infinite;vertical-align:1px}
+.nw span{font:500 8.5px var(--mono)!important;letter-spacing:.24em!important;color:var(--mut)!important}
+.nw b{font:600 18px var(--mono)!important;color:var(--ink)!important;letter-spacing:.02em!important;text-shadow:none!important}
+@keyframes cmdPulse{0%,100%{opacity:1}50%{opacity:.35}}
+
+/* ---------- Live-Statusleiste ---------- */
+#cmdBar{position:fixed;left:0;right:0;top:calc(58px + env(safe-area-inset-top));z-index:19;height:24px;display:flex;align-items:center;gap:14px;
+  padding:0 12px;overflow:hidden;white-space:nowrap;font:500 9.5px var(--mono);letter-spacing:.12em;color:var(--mut);
+  background:rgba(6,9,13,.88);border-bottom:1px solid var(--line);backdrop-filter:blur(10px);-webkit-backdrop-filter:blur(10px)}
+#cmdBar b{color:var(--ink);font-weight:600}
+#cmdBar .k{display:inline-flex;align-items:center;gap:6px;flex:0 0 auto}
+#cmdBar .d{width:5px;height:5px;border-radius:50%;background:var(--mut)}
+#cmdBar .d.on{background:var(--g);box-shadow:0 0 6px var(--g)}
+#cmdBar .d.warn{background:var(--o);box-shadow:0 0 6px var(--o)}
+#cmdBar .d.off{background:var(--r)}
+#cmdBar .sep{width:1px;height:10px;background:var(--line2);flex:0 0 auto}
+#cmdBar .run{display:inline-flex;gap:14px;animation:cmdRun 40s linear infinite}
+@keyframes cmdRun{from{transform:translateX(0)}to{transform:translateX(-50%)}}
+main{top:calc(82px + env(safe-area-inset-top))!important}
+#dimdock{top:calc(82px + env(safe-area-inset-top))!important}
+
+/* ---------- Navigation ---------- */
+nav{background:rgba(6,9,13,.94)!important;border-top:1px solid var(--line)!important}
+nav button{font:600 8.5px var(--mono)!important;letter-spacing:.16em!important;text-transform:uppercase;border-radius:6px!important;position:relative}
+nav button svg{width:20px!important;height:20px!important;stroke-width:1.5}
+nav button.on{color:var(--ink)!important;background:transparent!important;text-shadow:none!important}
+nav button.on svg{filter:none!important;color:var(--acc)}
+nav button.on::before{content:'';position:absolute;left:28%;right:28%;top:-6px;height:2px;background:var(--acc);box-shadow:0 0 12px var(--acc);border-radius:2px}
+
+/* ---------- Panels ---------- */
+.card,.kpi,.vdock{background:linear-gradient(180deg,var(--panel2),var(--panel))!important;border:1px solid var(--line)!important;border-radius:6px!important;
+  box-shadow:0 18px 50px rgba(0,0,0,.45),inset 0 1px 0 rgba(255,255,255,.035)!important;backdrop-filter:blur(14px)!important;-webkit-backdrop-filter:blur(14px)!important}
+.card::before,.kpi::before{content:'';position:absolute;inset:-1px;height:auto;width:auto;pointer-events:none;border-radius:6px;
+  background:
+   linear-gradient(var(--acc),var(--acc)) 0 0/12px 1px no-repeat,linear-gradient(var(--acc),var(--acc)) 0 0/1px 12px no-repeat,
+   linear-gradient(var(--acc),var(--acc)) 100% 100%/12px 1px no-repeat,linear-gradient(var(--acc),var(--acc)) 100% 100%/1px 12px no-repeat;opacity:.7}
+.card::after{content:'';position:absolute;left:0;top:0;height:1px;width:40%;background:linear-gradient(90deg,transparent,rgba(143,230,255,.7),transparent);animation:cmdTrace 6s ease-in-out infinite;pointer-events:none}
+@keyframes cmdTrace{0%{transform:translateX(-100%)}60%,100%{transform:translateX(260%)}}
+.ct{font:600 9.5px var(--mono)!important;letter-spacing:.26em!important;color:var(--mut)!important;text-transform:uppercase;padding-bottom:9px;border-bottom:1px solid var(--line);margin-bottom:12px!important}
+.ct small{font:500 8.5px var(--mono)!important;letter-spacing:.14em;color:rgba(125,142,160,.75)!important;text-transform:uppercase}
+.ct::before{content:attr(data-idx);color:var(--acc);margin-right:2px}
+.kpi span{font:500 8.5px var(--mono)!important;letter-spacing:.22em!important;text-transform:uppercase;color:var(--mut)!important}
+.kpi b{font:600 20px var(--mono)!important;color:var(--ink)!important;text-shadow:none!important;letter-spacing:-.01em!important}
+.note{color:var(--mut)!important;font-size:12.5px!important;line-height:1.5}
+
+/* ---------- Bedienelemente ---------- */
+.btn{border-radius:4px!important;font:600 10.5px var(--mono)!important;letter-spacing:.16em!important;text-transform:uppercase;padding:12px 14px!important;
+  background:var(--ink)!important;color:#05070a!important;box-shadow:none!important;border:1px solid var(--ink)!important;position:relative;overflow:hidden}
+.btn::after{content:'';position:absolute;top:0;bottom:0;width:30%;left:-40%;background:linear-gradient(90deg,transparent,rgba(255,255,255,.55),transparent);transform:skewX(-20deg);transition:none}
+.btn:hover::after,.btn:active::after{left:120%;transition:left .6s ease}
+.btn.gh{background:transparent!important;color:var(--ink)!important;border:1px solid var(--line2)!important}
+.btn.o{background:var(--o)!important;border-color:var(--o)!important}
+.btn.sm{padding:8px 10px!important;font-size:9.5px!important}
+.btn:disabled{opacity:.35}
+input,select,textarea{border-radius:4px!important;background:rgba(4,6,9,.8)!important;border:1px solid var(--line2)!important;color:var(--ink)!important;font-family:var(--mono)!important}
+input:focus,select:focus,textarea:focus{outline:none!important;border-color:var(--acc)!important;box-shadow:0 0 0 3px rgba(143,230,255,.12)!important}
+.pill{border-radius:3px!important;font:600 8.5px var(--mono)!important;letter-spacing:.16em!important;text-transform:uppercase;padding:3px 7px!important}
+.pill.g{background:rgba(76,242,160,.1)!important;color:var(--g)!important;border:1px solid rgba(76,242,160,.35)}
+.pill.r{background:rgba(255,90,95,.08)!important;color:#ff8f93!important;border:1px solid rgba(255,90,95,.3)}
+.pill.o{background:rgba(255,181,71,.08)!important;color:var(--o)!important;border:1px solid rgba(255,181,71,.3)}
+.pill.g::before,.pill.r::before,.pill.o::before{content:'';display:inline-block;width:5px;height:5px;border-radius:50%;background:currentColor;margin-right:6px;vertical-align:1px;animation:cmdPulse 1.6s infinite}
+
+/* ---------- Sprach-Dock ---------- */
+#vOrb{filter:saturate(.9)}
+#vLabel{font:700 11px var(--mono)!important;letter-spacing:.26em!important;color:var(--ink)!important}
+.vform input{border-radius:4px!important;font-size:13px!important}
+.ib.send{border-radius:4px!important;background:var(--ink)!important;color:#05070a!important}
+#vLog .m{border-radius:4px!important;font-size:13px}
+
+/* ---------- Auftritt-Animationen ---------- */
+.cmd-in{animation:cmdIn .7s cubic-bezier(.2,.7,.2,1) both}
+@keyframes cmdIn{0%{opacity:0;transform:translateY(14px);clip-path:inset(0 0 100% 0)}60%{opacity:1}100%{opacity:1;transform:none;clip-path:inset(0 0 0 0)}}
+#cmdWipe{position:fixed;inset:0;z-index:30;pointer-events:none;opacity:0;
+  background:linear-gradient(90deg,transparent 0%,rgba(143,230,255,.0) 40%,rgba(143,230,255,.35) 49.6%,#fff 50%,rgba(143,230,255,.35) 50.4%,rgba(143,230,255,0) 60%,transparent 100%) no-repeat;
+  background-size:260% 100%}
+#cmdWipe.go{animation:cmdWipe .55s ease-out}
+@keyframes cmdWipe{0%{opacity:1;background-position:120% 0}100%{opacity:0;background-position:-20% 0}}
+
+/* ---------- Boot ---------- */
+#boot{background:radial-gradient(circle at 50% 42%,#0b1422,#030406 70%)!important}
+#boot .bx{width:min(360px,86vw)}
+#boot h1{font:700 22px var(--sans)!important;letter-spacing:.6em!important;color:var(--ink)!important;text-shadow:none!important;margin-top:22px}
+#boot p{font:500 9px var(--mono)!important;letter-spacing:.32em!important;color:var(--mut)!important}
+#bootlog{font:500 10px/1.9 var(--mono)!important;color:var(--mut)!important;text-align:left!important;margin:22px auto 0;width:100%}
+#bootlog .ok{color:var(--g)} #bootlog .wn{color:var(--o)}
+#tap{font:600 10px var(--mono)!important;letter-spacing:.32em!important;color:#05070a!important;background:var(--ink);padding:13px 16px;border-radius:4px;margin-top:22px;animation:none!important}
+.cmd-id{position:relative;width:150px;height:150px;margin:0 auto}
+.cmd-id svg{width:100%;height:100%;overflow:visible}
+.cmd-id .sc{position:absolute;left:12%;right:12%;height:2px;background:linear-gradient(90deg,transparent,var(--acc),transparent);box-shadow:0 0 14px var(--acc);animation:cmdIdScan 1.8s ease-in-out infinite}
+@keyframes cmdIdScan{0%,100%{top:16%}50%{top:82%}}
+.cmd-prog{height:2px;background:rgba(160,200,240,.12);margin-top:14px;overflow:hidden}
+.cmd-prog i{display:block;height:100%;width:0;background:var(--acc);box-shadow:0 0 10px var(--acc);transition:width .4s}
+
+/* ---------- Büro & Weltlage Feinschliff ---------- */
+.obar button,.lg-bar button,#lgBtns button{border-radius:4px!important;font:600 10px var(--mono)!important;letter-spacing:.14em!important;text-transform:uppercase}
+.otag b,.lgpin{border-radius:3px!important;font-family:var(--mono)!important}
+.lg-country{background:radial-gradient(circle at 55% 55%,rgba(18,26,38,.94),rgba(5,7,10,.98))!important}
+.lgc-panel{border-radius:6px!important}
+.lgc-title h2{font-family:var(--sans)!important;letter-spacing:-.01em}
+
+/* ---------- Ruhiger bei reduzierter Bewegung ---------- */
+@media (prefers-reduced-motion:reduce){#cmdScan,.card::after,#cmdBar .run{animation:none!important}}
+
+.lgpin.w{background:rgba(4,20,30,.8)!important;border-color:rgba(143,230,255,.7)!important;box-shadow:0 0 18px rgba(143,230,255,.35)!important}
+.lgpin.w b{background:#2a8fb3!important}
+#lgBtns button.w{border-color:rgba(143,230,255,.5)!important;background:rgba(4,20,30,.75)!important;color:#d6f6ff!important}
+#bootlog{height:auto!important;min-height:0}
+.ct{justify-content:flex-start!important;flex-wrap:nowrap}
+.ct::before{flex:0 0 auto}
+.ct small{margin-left:auto;text-align:right}
+.ct .pill{margin-left:auto}
+.dimchip{border-radius:3px!important;font:600 9px var(--mono)!important;letter-spacing:.16em!important;text-transform:uppercase;background:rgba(6,9,13,.7)!important;border:1px solid var(--line2)!important;color:var(--mut)!important;box-shadow:none!important}
+.dimchip.on{background:var(--ink)!important;color:#05070a!important;border-color:var(--ink)!important}
+.seg{border-radius:4px!important;background:rgba(6,9,13,.7)!important;border:1px solid var(--line)!important}
+.seg button{border-radius:3px!important;font:600 9.5px var(--mono)!important;letter-spacing:.14em!important;text-transform:uppercase}
+.seg button.on{background:var(--ink)!important;color:#05070a!important;box-shadow:none!important}
+.holo .st{font-family:var(--mono)!important}
+#greet{font-weight:500;letter-spacing:.005em;text-shadow:0 2px 12px rgba(0,0,0,.8)}

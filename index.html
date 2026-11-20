@@ -302,6 +302,7 @@ input[type=range]{-webkit-appearance:auto;appearance:auto;padding:0;height:28px;
  #lgCount{font-size:36px}.lg-phase{font-size:12.5px;bottom:22%}
 }
 </style>
+<link rel="stylesheet" href="theme.css?v=2">
 </head>
 <body class="hero">
 <div class="vg"></div><div class="grain"></div>
@@ -1141,7 +1142,7 @@ $('#bar').addEventListener('submit',e=>{e.preventDefault();const v=$('#in').valu
 $$('.chip').forEach(c=>c.onclick=()=>ask(c.textContent));
 
 /* ================= BOOT ================= */
-const lines=['> Neuronaler Kern … OK','> Portfolio-Engine … OK','> Weltkarte '+(hasE?'… OK':'… OFFLINE'),'> Markt-Briefing 18.11.2026 … OK','> Sprachmodul … BEREIT'];
+const lines=[];
 let li=0;const bi=setInterval(()=>{if(li<lines.length)$('#bootlog').innerHTML+=lines[li++]+'<br>';else clearInterval(bi)},330);
 holo.attach('#holoA');
 initStore();
@@ -1152,7 +1153,8 @@ window.J={BRIEF,go,summary,analyze,holo,toast,addMsg,TYPES,REGIONS,DE,chf,get S(
 })();
 </script>
 <script src="office.js?v=2"></script>
-<script src="lage.js?v=2"></script>
+<script src="lage.js?v=3"></script>
+<script src="theme.js?v=1"></script>
 <script type="module" src="omega.js?v=15"></script>
 </body>
 </html>

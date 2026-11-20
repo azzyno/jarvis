@@ -26,7 +26,9 @@ export const COUNTRIES = [
   { c: 'PL', n: 'Polen', en: 'Poland', cap: 'Warschau', lat: 52.23, lon: 21.01, tz: 'Europe/Warsaw', box: [[14, 49], [24.2, 54.9]], k: ['polen', 'polnisch', 'warschau', 'poland', 'polish', 'warsaw'] },
   { c: 'MX', n: 'Mexiko', en: 'Mexico', cap: 'Mexiko-Stadt', lat: 19.43, lon: -99.13, tz: 'America/Mexico_City', box: [[-118, 14], [-86, 33]], k: ['mexiko', 'mexico', 'sheinbaum'] },
   { c: 'CA', n: 'Kanada', en: 'Canada', cap: 'Ottawa', lat: 45.42, lon: -75.7, tz: 'America/Toronto', box: [[-141, 41], [-52, 70]], k: ['kanada', 'canada', 'carney', 'ottawa'] },
+  { c: 'KU', n: 'Kurdistan', en: '', cap: 'Erbil', lat: 36.19, lon: 44.01, tz: 'Asia/Baghdad', box: [[35, 32.5], [49, 41]], k: ['kurd', 'kurdistan', 'erbil', 'arbil', 'pkk', 'ypg', 'sdf', 'rojava', 'peschmerga', 'peshmerga', 'kobane', 'kobani', 'diyarbak', 'sulaimani', 'sulaymaniyah', 'öcalan', 'ocalan', 'dem-partei'] },
 ];
+export const WATCH = ['CH', 'KU'];
 
 const RX = COUNTRIES.map(x => ({ x, r: x.k.map(k => new RegExp('(^|[^\\p{L}])' + k.replace(/[.*+?^${}()|[\]\\]/g, '\\$&'), 'iu')) }));
 export function countriesIn(text) {
