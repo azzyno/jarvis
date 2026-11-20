@@ -40,7 +40,7 @@ async function images(country) {
   try {
     const q = encodeURIComponent(country.n.split(' / ')[0]);
     const xml = await get(`https://www.bing.com/news/search?q=${q}&format=rss&setlang=de-CH&cc=CH`, 5000);
-    return parseRss(xml).filter(x => x.img).slice(0, 9).map(x => ({ img: x.img.replace(/&amp;/g, '&') + (x.img.includes('?') ? '&' : '?') + 'w=480&h=320&c=7', t: x.t, s: x.s }));
+    return parseRss(xml).filter(x => x.img).slice(0, 9).map(x => ({ img: x.img.replace(/&amp;/g, '&').replace(/^http:/, 'https:') + (x.img.includes('?') ? '&' : '?') + 'w=480&h=320&c=7', t: x.t, s: x.s }));
   } catch (e) { return []; }
 }
 async function weather(c) {
@@ -73,8 +73,12 @@ export default async function handler(req, res) {
   if (score.PS && score.IL) { const k = score.IL >= score.PS ? 'IL' : 'PS', o = k === 'IL' ? 'PS' : 'IL'; score[k] += score[o] * 0.5; delete score[o]; }
   const top = Object.entries(score).sort((a, b) => b[1] - a[1]).slice(0, 3).map(([c]) => byCode[c]);
 
+  const used = new Set();
   const hotspots = await Promise.all(top.map(async c => {
-    const items = all.filter(it => it.c.includes(c.c) || (c.c === 'IL' && it.c.includes('PS')) || (c.c === 'PS' && it.c.includes('IL')));
+    const items = all.filter(it => it.c.includes(c.c) || (c.c === 'IL' && it.c.includes('PS')) || (c.c === 'PS' && it.c.includes('IL')))
+      .map((it, i) => ({ it, i, k: it.c.length + (it.world ? 0 : 0.5) })).sort((a, b) => a.k - b.k || a.i - b.i).map(x => x.it);
+    const lead = items.find(it => !used.has(it.t)) || items[0]; if (lead) used.add(lead.t);
+    if (lead) { items.splice(items.indexOf(lead), 1); items.unshift(lead); }
     const [imgs, wx] = await Promise.all([images(c), weather(c)]);
     return { c: c.c, n: c.n, en: c.en, cap: c.cap, lat: c.lat, lon: c.lon, tz: c.tz, box: c.box, count: items.length, headline: items[0]?.t || '', items: items.slice(0, 6).map(({ t, s, u, d }) => ({ t, s, u, d })), images: imgs, weather: wx };
   }));
