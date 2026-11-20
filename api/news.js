@@ -40,7 +40,7 @@ async function images(country) {
   try {
     const q = encodeURIComponent(country.n.split(' / ')[0]);
     const xml = await get(`https://www.bing.com/news/search?q=${q}&format=rss&setlang=de-CH&cc=CH`, 5000);
-    return parseRss(xml).filter(x => x.img).slice(0, 9).map(x => ({ u: x.u, img: x.img.replace(/&amp;/g, '&').replace(/^http:/, 'https:') + (x.img.includes('?') ? '&' : '?') + 'w=480&h=320&c=7', t: x.t, s: x.s }));
+    return parseRss(xml).filter(x => x.img).slice(0, 9).map(x => ({ u: x.u, img: x.img.replace(/&amp;/g, '&').replace(/^http:/, 'https:').replace(/^\//, 'https://www.bing.com/') + (x.img.includes('?') ? '&' : '?') + 'w=480&h=320&c=7', t: x.t, s: x.s }));
   } catch (e) { return []; }
 }
 async function weather(c) {
