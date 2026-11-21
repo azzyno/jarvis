@@ -109,7 +109,7 @@
     { k: 'Märkte', go: 'invest', draw: drawMk },
     null, // Kern
     { k: 'Weltlage', go: 'lage', draw: drawLage },
-    { k: 'Wetter', fn: () => window.TRAVEL && window.TRAVEL.weather('Zürich'), draw: drawWx },
+    { k: 'Wetter', fn: () => window.TRAVEL && window.TRAVEL.weather('Bern'), draw: drawWx },
     { k: 'Immobilien', go: 'calc', draw: drawImmo },
   ];
   const SLOT = .44; // Winkelabstand
@@ -170,7 +170,7 @@
     frame(g, 3, 'Märkte', true);
     const now = new Date(); const t = now.toLocaleTimeString('de-CH', { timeZone: 'Europe/Zurich' });
     g.font = `200 120px ${SANS}`; g.fillStyle = '#f4f3f0'; g.fillText(t, 50, 250);
-    g.font = `500 22px ${MONO}`; g.fillStyle = 'rgba(236,235,232,.45)'; g.fillText('ZÜRICH', 58, 296);
+    g.font = `500 22px ${MONO}`; g.fillStyle = 'rgba(236,235,232,.45)'; g.fillText('SCHWEIZ · BERN', 58, 296);
     MK.forEach((m, k) => { const col = k % 2, row = (k / 2) | 0, x = 56 + col * 600, y = 400 + row * 120; const o = mkOpen(m), p = tzp(m.tz);
       g.fillStyle = o ? '#5ef0b1' : 'rgba(255,255,255,.25)'; g.beginPath(); g.arc(x + 8, y - 12, 8, 0, 7); g.fill();
       g.font = `500 40px ${SANS}`; g.fillStyle = '#ecebe8'; g.fillText(m.n, x + 34, y);
@@ -187,7 +187,7 @@
       g.font = `400 26px ${SANS}`; g.fillStyle = 'rgba(236,235,232,.55)'; let hl = h.headline || ''; while (g.measureText(hl).width > CW - 190 && hl.length > 10) hl = hl.slice(0, -2); if (hl !== (h.headline || '')) hl += '…'; g.fillText(hl, 130, y + 40); });
   }
   function drawWx(g) {
-    frame(g, 5, 'Wetter Zürich', !!data.wx);
+    frame(g, 5, 'Wetter Bern', !!data.wx);
     const d = data.wx; if (!d) { g.font = `400 34px ${SANS}`; g.fillStyle = 'rgba(236,235,232,.5)'; g.fillText('Lade Wetter …', 56, 200); return; }
     const j = d.jetzt, t0 = (d.tage || [])[0];
     g.font = `200 220px ${SANS}`; g.fillStyle = '#f4f3f0'; g.fillText(Math.round(j.temp) + '°', 44, 340);
@@ -213,7 +213,7 @@
 
   async function loadData() {
     try { data.lage = window.__lageData && window.__lageData.hotspots ? window.__lageData : await (await fetch(API + 'news')).json(); } catch (e) {}
-    try { const r = await fetch(API + 'weather?q=Z%C3%BCrich'); if (r.ok) data.wx = await r.json(); } catch (e) {}
+    try { const r = await fetch(API + 'weather?q=Bern'); if (r.ok) data.wx = await r.json(); } catch (e) {}
     try { window.__saxoRefresh && await window.__saxoRefresh(); } catch (e) {}
     panels.forEach(redraw);
   }

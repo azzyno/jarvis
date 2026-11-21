@@ -26,7 +26,7 @@
   const voiceOn = () => !!window.__omegaLive;
 
   async function loadWeather() {
-    try { const r = await fetch('https://api.open-meteo.com/v1/forecast?latitude=47.37&longitude=8.54&current=temperature_2m,wind_speed_10m,weather_code&timezone=Europe%2FZurich'); const j = await r.json(); live.wx = j.current; } catch (e) { live.wx = null; }
+    try { const r = await fetch('https://api.open-meteo.com/v1/forecast?latitude=46.9480&longitude=7.4474&current=temperature_2m,wind_speed_10m,weather_code&timezone=Europe%2FZurich'); const j = await r.json(); live.wx = j.current; } catch (e) { live.wx = null; }
   }
   async function loadNews() {
     const t0 = performance.now();
@@ -41,7 +41,7 @@
     const items = [
       `<span class="k">ZRH <b>${zrh}</b></span>`, `<span class="k">UTC <b>${utc}</b></span>`,
       ...MK.map(m => { const o = open(m); return `<span class="k"><i class="d ${o ? 'on' : 'off'}"></i>${m.n} <b>${o ? 'OFFEN' : 'ZU'}</b></span>`; }),
-      live.wx ? `<span class="k">ZÜRICH <b>${Math.round(live.wx.temperature_2m)}°</b> ${WX(live.wx.weather_code)}</span>` : '',
+      live.wx ? `<span class="k">BERN <b>${Math.round(live.wx.temperature_2m)}°</b> ${WX(live.wx.weather_code)}</span>` : '',
       `<span class="k"><i class="d ${voiceOn() ? 'on' : ''}"></i>STIMME <b>${voiceOn() ? 'LIVE' : 'BEREIT'}</b></span>`,
       `<span class="k"><i class="d ${hasSaxo() ? 'on' : 'warn'}"></i>SAXO <b>${hasSaxo() ? 'VERBUNDEN' : 'AUS'}</b></span>`,
       live.news ? `<span class="k"><i class="d on"></i>NEWS <b>${live.news.total}</b> · ${live.news.hotspots.filter(h => !h.watch).map(h => h.n.toUpperCase()).join(' / ')}</span>` : `<span class="k"><i class="d warn"></i>NEWS <b>…</b></span>`,

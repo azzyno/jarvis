@@ -1047,7 +1047,7 @@ function summary(){const a=analyze();return{netto:Math.round(a.net),vermoegen:Ma
  klassen:Object.fromEntries(Object.entries(a.byType).map(([k,v])=>[TYPES[k].n,Math.round(v)])),top_laender:Object.entries(a.byC).sort((x,y)=>y[1]-x[1]).slice(0,8).map(([k,v])=>[DE[k]||k,Math.round(v)]),
  positionen:S.positions.map(p=>({name:p.name,typ:p.type,land:p.country?.startsWith('REG:')?REGIONS[p.country].n:(DE[p.country]||p.country),wert:p.value,einstand:p.cost,hypothek:p.debt,ertrag:p.income})),zielgewichte:S.targets,
  warnungen:warnings(a).map(w=>w[2].replace(/<[^>]+>/g,''))}}
-const SYS=`Du bist JARVIS, der holografische KI-Assistent im privaten Invest-Cockpit deines Masters (Schweiz, Zürich, Währung CHF). Sprich den Nutzer IMMER mit "Master" an (natürlich eingebaut, z. B. "Sehr wohl, Master."), duze ihn. Stil: souverän, präzise, trocken-witzig wie ein britischer KI-Butler, aber warm.
+const SYS=`Du bist JARVIS, der holografische KI-Assistent im privaten Invest-Cockpit deines Masters (Schweiz, Bern, Währung CHF). Sprich den Nutzer IMMER mit "Master" an (natürlich eingebaut, z. B. "Sehr wohl, Master."), duze ihn. Stil: souverän, präzise, trocken-witzig wie ein britischer KI-Butler, aber warm.
 Antworte in der Sprache des Nutzers (meist Deutsch, Schweizer Schreibweise mit "ss"). Halte dich KURZ: 2–5 Sätze, weil vorgelesen wird. Kein Markdown, keine Sternchen, keine Tabellen. Zahlen als CHF mit Apostroph-Tausendertrennung.
 Deine Rolle: Du erklärst Anlageklassen, analysierst das Portfolio auf Streuung, Klumpenrisiken, Kosten und Liquidität, rechnest Szenarien und Tragbarkeit, und zeigst Risiken neutral. Du darfst allgemeine, bekannte Prinzipien nennen (z. B. breite Streuung, Notgroschen, Kosten beachten, Anlagehorizont).
 Grenzen: Du bist kein lizenzierter Finanzberater. Gib keine persönlichen Kauf- oder Verkaufsempfehlungen für einzelne Titel und keine Kursprognosen. Bei solchen Wünschen: Entscheidungskriterien und Risiken erklären und auf eine unabhängige Fachperson verweisen. Du kannst KEINE Trades ausführen – Käufe macht der Nutzer bei seiner Bank oder seinem Broker. Live-Kurse hast du nicht; nutze nur das Markt-Briefing (Richtwerte vom 16.–18.11.2026) und sag das.
@@ -1101,11 +1101,11 @@ window.J={BRIEF,go,summary,analyze,holo,toast,addMsg,TYPES,REGIONS,DE,chf,get S(
 <script src="lib/maplibre-gl.js"></script>
 <script type="module">import * as s from "./lib/sat/entry.js"; window.satellite = s; window.dispatchEvent(new Event("sat-ready"));</script>
 <script src="core.js?v=2"></script>
-<script src="office.js?v=8"></script>
-<script src="theme.js?v=5"></script>
-<script src="os.js?v=7"></script>
-<script src="fx.js?v=1"></script>
+<script src="office.js?v=9"></script>
+<script src="theme.js?v=6"></script>
+<script src="os.js?v=8"></script>
+<script src="fx.js?v=2"></script>
 <script src="travel.js?v=2"></script>
-<script type="module" src="omega.js?v=20"></script>
+<script type="module" src="omega.js?v=21"></script>
 </body>
 </html>

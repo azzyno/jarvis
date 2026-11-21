@@ -10,7 +10,7 @@
   const API = 'https://jarvis-iota-weld.vercel.app/api/';
   const esc = s => String(s ?? '').replace(/[&<>"]/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c]));
   const V = () => window.JARVIS || {};
-  const HOME = [8.5417, 47.3769];
+  const HOME = [7.4474, 46.9480];
   const ZTZ = 'Europe/Zurich';
   try { Object.defineProperty(window, '__holoPause', { get: () => true, set() {}, configurable: true }); } catch (e) {}
 
@@ -18,7 +18,7 @@
      GRUNDGERÜST
      ===================================================================== */
   document.body.insertAdjacentHTML('afterbegin', '<div id="sitMap"></div><div id="osScan"></div><div id="osCurtain"></div>');
-  const brand = $('.brand'); if (brand) { brand.innerHTML = 'JARVIS<small>// LAGEZENTRUM ZRH</small>'; brand.onclick = () => J.go('cockpit'); }
+  const brand = $('.brand'); if (brand) { brand.innerHTML = 'JARVIS<small>// LAGEZENTRUM BERN</small>'; brand.onclick = () => J.go('cockpit'); }
   document.body.insertAdjacentHTML('beforeend', `
     <button id="osMenuBtn" aria-label="Menü"><span id="osMenuT">MENÜ</span><i></i></button>
     <nav id="osMenu" aria-label="Hauptmenü"><div class="mh">◤ ZUGRIFF · STUFE MASTER</div><ol>
@@ -85,11 +85,11 @@
       <form id="shAsk" autocomplete="off"><span>›</span><input id="shAskIn" placeholder="BEFEHL AN JARVIS …" enterkeyhint="send"><button type="submit">SENDEN</button></form>
       <div class="sh-cmds" id="shCmds">
         <button data-c="scan">◎ WELTLAGE</button><button data-c="orbit">✦ SATELLITEN</button><button data-c="news">⌕ NEWS-SUCHE</button><button data-r="Genf">⌖ ROUTE GENF</button><button data-c="route">⌖ ROUTE …</button>
-        <button data-c="wx">☁ WETTER</button><button data-v="port">▣ KONTO</button><button data-v="office">◧ BÜRO</button><button data-c="home">⌂ ZÜRICH</button>
+        <button data-c="wx">☁ WETTER</button><button data-v="port">▣ KONTO</button><button data-v="office">◧ BÜRO</button><button data-c="home">⌂ BERN</button>
       </div>
     </div>
     <aside id="shOrbit" class="sh-pan"><button class="sd-x" id="obX" aria-label="Schliessen">✕</button>
-      <div class="sd-k">◤ ORBIT · SATELLITENÜBERWACHUNG</div><h2 id="obH">ÜBER ZÜRICH</h2>
+      <div class="sd-k">◤ ORBIT · SATELLITENÜBERWACHUNG</div><h2 id="obH">ÜBER BERN</h2>
       <div class="sd-st"><div><span>VERFOLGT</span><b id="obN">—</b></div><div><span>ÜBER IHNEN</span><b id="obO">—</b></div><div><span>MILITÄR</span><b id="obM">—</b></div></div>
       <div class="ob-f" id="obF"><button data-f="">ALLE</button><button data-f="Militär">MILITÄR</button><button data-f="Navigation">NAVIGATION</button><button data-f="Wetter">WETTER</button><button data-f="Raumstation">STATIONEN</button><button data-l="starlink">+ STARLINK</button><button data-l="active">+ ALLE AKTIVEN</button></div>
       <div id="obSel" class="ob-sel" hidden></div><ul id="obL" class="ob-l"></ul><div class="ob-src" id="obSrc"></div></aside>
@@ -131,7 +131,7 @@
   }
   function strip() {
     const it = [];
-    if (live.wx) it.push(`<span><b>ZRH</b> ${Math.round(live.wx.jetzt.temp)}° ${esc(String(live.wx.jetzt.wetter).toUpperCase())}</span>`);
+    if (live.wx) it.push(`<span><b>BERN</b> ${Math.round(live.wx.jetzt.temp)}° ${esc(String(live.wx.jetzt.wetter).toUpperCase())}</span>`);
     MK.forEach(m => it.push(`<span><i class="${isOpen(m) ? 'on' : ''}"></i><b>${m.n}</b> ${isOpen(m) ? 'OFFEN' : 'ZU'}</span>`));
     if (live.lage) it.push(`<span><b>MELD</b> ${live.lage.total}</span>`);
     it.push(`<span><i class="${live.saxo ? 'on' : 'off'}"></i><b>SAXO</b> ${live.saxo && live.saxo.gesamtwert != null ? Math.round(live.saxo.gesamtwert).toLocaleString('de-CH') + ' ' + esc(live.saxo.waehrung || '') : live.saxo ? 'VERBUNDEN' : 'AUS'}</span>`);
@@ -209,7 +209,7 @@
   function el(cls, html) { const d = document.createElement('div'); d.className = cls; d.innerHTML = html; return d; }
   function placeHome() {
     if (!map || homeMk) return;
-    const e = el('sm-home', `<i></i><i></i><svg viewBox="0 0 40 40"><path d="M20 2v10M20 28v10M2 20h10M28 20h10"/><circle cx="20" cy="20" r="7"/></svg><div class="sm-lab"><b>ZÜRICH</b><span>47.37N 8.54E</span><span id="smHomeWx"></span></div>`);
+    const e = el('sm-home', `<i></i><i></i><svg viewBox="0 0 40 40"><path d="M20 2v10M20 28v10M2 20h10M28 20h10"/><circle cx="20" cy="20" r="7"/></svg><div class="sm-lab"><b>BERN</b><span>46.95N 7.45E</span><span id="smHomeWx"></span></div>`);
     homeMk = new ML.Marker({ element: e }).setLngLat(HOME).addTo(map);
     if (live.wx) $('#smHomeWx').textContent = `${Math.round(live.wx.jetzt.temp)}° ${String(live.wx.jetzt.wetter).toUpperCase()}`;
   }
@@ -278,7 +278,7 @@
   }
 
   /* ---------- Daten ---------- */
-  async function loadWx() { try { const r = await fetch(API + 'weather?q=Z%C3%BCrich'); if (r.ok) { live.wx = await r.json(); const s = $('#smHomeWx'); if (s) s.textContent = `${Math.round(live.wx.jetzt.temp)}° ${String(live.wx.jetzt.wetter).toUpperCase()}`; strip(); } } catch (e) {} }
+  async function loadWx() { try { const r = await fetch(API + 'weather?q=Bern'); if (r.ok) { live.wx = await r.json(); const s = $('#smHomeWx'); if (s) s.textContent = `${Math.round(live.wx.jetzt.temp)}° ${String(live.wx.jetzt.wetter).toUpperCase()}`; strip(); } } catch (e) {} }
   async function loadLage() {
     try { const d = window.__lageData && window.__lageData.hotspots ? window.__lageData : await (await fetch(API + 'news')).json(); window.__lageData = live.lage = d;
       $('#shFunkN').textContent = `${d.total} MELD.`; strip(); placeHotspots(); } catch (e) { funk('NACHRICHTENDIENST NICHT ERREICHBAR', 'warn'); }
@@ -304,7 +304,7 @@
     const c = b.dataset.c;
     if (c === 'scan') scan();
     if (c === 'home') { closeDossier(); }
-    if (c === 'wx') window.TRAVEL && window.TRAVEL.weather('Zürich');
+    if (c === 'wx') window.TRAVEL && window.TRAVEL.weather('Bern');
     if (c === 'route') { $('#shRt').hidden = false; $('#shRtIn').focus(); }
     if (c === 'orbit') ORBIT.toggle();
     if (c === 'news') NEWS.open();
@@ -327,7 +327,7 @@
   });
   document.body.classList.add('v-cockpit');
 
-  /* ---------- Einstieg: Anflug auf Zürich ---------- */
+  /* ---------- Einstieg: Anflug auf Bern ---------- */
   function intro() {
     if (introDone) return; introDone = true; idleSpin = false;
     funk('AUTHENTIFIZIERUNG · MASTER BESTÄTIGT', 'ok');
@@ -388,8 +388,8 @@
       const c = compute(); if (!c) return;
       if (map && ready) map.getSource('sats').setData({ type: 'FeatureCollection', features: c.feats });
       $('#obN').textContent = c.n.toLocaleString('de-CH'); $('#obO').textContent = c.over.length; $('#obM').textContent = c.mil;
-      $('#obL').innerHTML = c.over.slice(0, 40).map(s => `<li data-id="${s.id}" class="${sel === s.id ? 'on' : ''}"><i style="background:${s.col}"></i><b>${esc(s.n)}</b><span>${esc(s.t.toUpperCase())} · ${Math.round(s.h)} KM · ${Math.round(s.el)}° HOCH</span></li>`).join('') || '<li><span>GERADE KEIN SATELLIT DIESER AUSWAHL HÖHER ALS 10° ÜBER ZÜRICH</span></li>';
-      if (sel) { const s = sats.find(x => x.id === sel); if (s) $('#obSel').innerHTML = `<b>${esc(s.n)}</b><span>NORAD ${s.id} · ${esc(s.t.toUpperCase())}</span><div class="sd-st"><div><span>HÖHE</span><b>${Math.round(s.h)} km</b></div><div><span>TEMPO</span><b>${(s.v * 3600).toLocaleString('de-CH', { maximumFractionDigits: 0 })} km/h</b></div><div><span>VON ZÜRICH</span><b>${Math.round(s.el)}°</b></div></div><small>POSITION ${s.lat.toFixed(2)}° ${s.lon.toFixed(2)}° · RICHTUNG ${Math.round(s.az)}°</small>`; }
+      $('#obL').innerHTML = c.over.slice(0, 40).map(s => `<li data-id="${s.id}" class="${sel === s.id ? 'on' : ''}"><i style="background:${s.col}"></i><b>${esc(s.n)}</b><span>${esc(s.t.toUpperCase())} · ${Math.round(s.h)} KM · ${Math.round(s.el)}° HOCH</span></li>`).join('') || '<li><span>GERADE KEIN SATELLIT DIESER AUSWAHL HÖHER ALS 10° ÜBER BERN</span></li>';
+      if (sel) { const s = sats.find(x => x.id === sel); if (s) $('#obSel').innerHTML = `<b>${esc(s.n)}</b><span>NORAD ${s.id} · ${esc(s.t.toUpperCase())}</span><div class="sd-st"><div><span>HÖHE</span><b>${Math.round(s.h)} km</b></div><div><span>TEMPO</span><b>${(s.v * 3600).toLocaleString('de-CH', { maximumFractionDigits: 0 })} km/h</b></div><div><span>VON BERN</span><b>${Math.round(s.el)}°</b></div></div><small>POSITION ${s.lat.toFixed(2)}° ${s.lon.toFixed(2)}° · RICHTUNG ${Math.round(s.az)}°</small>`; }
     }
     function track(s) {
       const S = lib(), pts = []; const t0 = Date.now();
@@ -408,7 +408,7 @@
       on = true; document.body.classList.add('orbit'); $('#shOrbit').classList.add('on');
       if (!sats.length) { funk('ORBIT · LADE ÖFFENTLICHEN SATELLITENKATALOG …', ''); try { await load('stations,visual,military,gps-ops,galileo,glo-ops,beidou,weather'); } catch (e) { funk('SATELLITENKATALOG NICHT ERREICHBAR · ' + e.message, 'warn'); return; } }
       render(); const c = last; clearInterval(timer); timer = setInterval(() => !document.hidden && render(), sats.length > 3000 ? 3000 : 1000);
-      funk(`ORBIT AKTIV · ${c.n} SATELLITEN VERFOLGT · ${c.over.length} GERADE ÜBER ZÜRICH`, 'ok');
+      funk(`ORBIT AKTIV · ${c.n} SATELLITEN VERFOLGT · ${c.over.length} GERADE ÜBER BERN`, 'ok');
       const iss = sats.find(s => /^ISS/.test(s.n)); if (iss && iss.h) funk(`ISS · ${Math.round(iss.h)} KM HÖHE · ${iss.lat.toFixed(1)}° ${iss.lon.toFixed(1)}°`, 'dim');
       if (map) map.flyTo({ center: [HOME[0], HOME[1] - 8], zoom: 1.7, pitch: 0, bearing: 0, duration: 2400 });
     }
@@ -425,8 +425,8 @@
         if (!sats.length) { try { if (!lib()) await new Promise(r => { window.addEventListener('sat-ready', r, { once: true }); setTimeout(r, 4000); }); await load('stations,visual,military,gps-ops,galileo,glo-ops,beidou,weather'); } catch (e) { return { fehler: 'Satellitenkatalog nicht erreichbar' }; } }
         const c = compute(); if (!c) return { fehler: 'Bahnrechner nicht geladen' }; const iss = sats.find(s => /^ISS/.test(s.n));
         return { quelle: 'CelesTrak (öffentlicher NORAD-Katalog), Positionen per SGP4 live berechnet', hinweis: 'Geheime Satelliten ohne veröffentlichte Bahndaten sind nicht enthalten.', verfolgt: c.n, militaer_im_katalog: c.mil,
-          ueber_zuerich_hoeher_10_grad: c.over.length, darueber: c.over.slice(0, 10).map(s => ({ name: s.n, typ: s.t, hoehe_km: Math.round(s.h), elevation_grad: Math.round(s.el) })),
-          iss: iss && iss.h ? { breite: +iss.lat.toFixed(2), laenge: +iss.lon.toFixed(2), hoehe_km: Math.round(iss.h), ueber_zuerich_sichtbar: iss.el > 10 } : null };
+          ueber_bern_hoeher_10_grad: c.over.length, darueber: c.over.slice(0, 10).map(s => ({ name: s.n, typ: s.t, hoehe_km: Math.round(s.h), elevation_grad: Math.round(s.el) })),
+          iss: iss && iss.h ? { breite: +iss.lat.toFixed(2), laenge: +iss.lon.toFixed(2), hoehe_km: Math.round(iss.h), ueber_bern_sichtbar: iss.el > 10 } : null };
       },
     };
   })();

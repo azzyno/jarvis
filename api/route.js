@@ -12,7 +12,7 @@ export default async function handler(req, res) {
     let start;
     if (req.query.from) start = await geocode(String(req.query.from));
     else if (req.query.lat && req.query.lon) start = { name: req.query.label || 'Ihr Standort', lat: +req.query.lat, lon: +req.query.lon };
-    else start = { name: 'Zürich (Standard)', lat: 47.3769, lon: 8.5417 };
+    else start = { name: 'Bern (Standard)', lat: 46.9480, lon: 7.4474 };
 
     const tasks = {
       auto: getJson(`https://router.project-osrm.org/route/v1/driving/${start.lon},${start.lat};${ziel.lon},${ziel.lat}?overview=false&alternatives=false`, 8000)

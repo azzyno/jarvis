@@ -1,13 +1,13 @@
 /* =====================================================================
    JARVIS · AKTION
-   Kino-Intro mit Sound, Radar über Zürich, Live-Zielerfassungen auf der
+   Kino-Intro mit Sound, Radar über Bern, Live-Zielerfassungen auf der
    Erde (aus echten Schlagzeilen), Tag-Nacht-Grenze in Echtzeit,
    Datenströme, Glitch, Telemetrie. Sounds werden live synthetisiert.
    ===================================================================== */
 (function () {
   const $ = s => document.querySelector(s);
   const V = () => window.JARVIS || {};
-  const HOME = [8.5417, 47.3769];
+  const HOME = [7.4474, 46.9480];
 
   /* ---------- Sound ---------- */
   let ctx = null, master = null, soundOn = (() => { try { return localStorage.getItem('fx-sound') !== 'off'; } catch (e) { return true; } })();
@@ -122,7 +122,7 @@
     g.setTransform(dpr, 0, 0, dpr, 0, 0); g.clearRect(0, 0, w, h);
     const S = window.SIT; if (!S || S.view !== 'cockpit' || document.body.classList.contains('menu')) return;
     const T = t / 1000, map = S.getMap();
-    // Radar über Zürich
+    // Radar über Bern
     if (map) {
       const p = map.project(HOME), R = Math.min(w, h) * .22;
       if (p.x > -R && p.x < w + R && p.y > -R && p.y < h + R) {

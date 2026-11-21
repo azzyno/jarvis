@@ -111,11 +111,11 @@ window.JARVIS = {
 let greeted = false;
 async function greetFacts() {
   const now = new Date();
-  const f = [`Uhrzeit Zürich ${now.toLocaleTimeString('de-CH', { timeZone: 'Europe/Zurich', hour: '2-digit', minute: '2-digit' })}, ${now.toLocaleDateString('de-CH', { timeZone: 'Europe/Zurich', weekday: 'long' })}.`];
+  const f = [`Uhrzeit Bern ${now.toLocaleTimeString('de-CH', { timeZone: 'Europe/Zurich', hour: '2-digit', minute: '2-digit' })}, ${now.toLocaleDateString('de-CH', { timeZone: 'Europe/Zurich', weekday: 'long' })}.`];
   try {
     const ctl = new AbortController(); const t = setTimeout(() => ctl.abort(), 2500);
-    const r = await fetch('https://jarvis-iota-weld.vercel.app/api/weather?q=Z%C3%BCrich', { signal: ctl.signal }); clearTimeout(t);
-    const d = await r.json(); if (d.jetzt) f.push(`Wetter Zürich: ${Math.round(d.jetzt.temp)} Grad, ${d.jetzt.wetter}.`);
+    const r = await fetch('https://jarvis-iota-weld.vercel.app/api/weather?q=Bern', { signal: ctl.signal }); clearTimeout(t);
+    const d = await r.json(); if (d.jetzt) f.push(`Wetter Bern: ${Math.round(d.jetzt.temp)} Grad, ${d.jetzt.wetter}.`);
   } catch (e) {}
   const L = window.__lageData; if (L && L.hotspots) f.push(`Weltlage: ${L.total} Schlagzeilen, Brennpunkte ${L.hotspots.filter(h => !h.watch).map(h => h.n).join(', ')}.`);
   if (window.__saxoSnap && window.__saxoSnap.gesamtwert != null) f.push(`Saxo-Konto: ${Math.round(window.__saxoSnap.gesamtwert)} ${window.__saxoSnap.waehrung || ''}.`);
