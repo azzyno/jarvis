@@ -86,12 +86,25 @@ async function sendText(t) {
 window.__saxoRefresh = async () => { if (!saxo.token) { window.__saxoSnap = null; return; } try { window.__saxoSnap = await saxo.snapshot(); } catch (e) {} };
 
 // JARVIS spricht zu einem Klick in der App (startet die Live-Stimme falls nötig)
+// Warteschlange: nie mitten in einen laufenden Satz senden, nur den neuesten Klick behalten
+let sayQ = null, sayT = 0, sayTimer = 0;
+function flushSay() {
+  clearTimeout(sayTimer);
+  if (!sayQ || !conv) return;
+  const busy = mode === 'speaking' || Date.now() - sayT < 3000;
+  if (busy) { sayTimer = setTimeout(flushSay, 500); return; }
+  const c = sayQ; sayQ = null; sayT = Date.now();
+  try { conv.sendUserMessage('[APP-KLICK] ' + c + ' Sprich den Master direkt an und gib eine kurze gesprochene Lage in zwei bis drei Sätzen, nur aus diesen Fakten.'); } catch (e) {}
+}
 window.JARVIS = {
   async say(context) {
     if (!conv) await startVoice();
     if (!conv) return false;
-    try { conv.sendUserMessage('[APP-KLICK] ' + context + ' Sprich den Master direkt an und gib eine kurze gesprochene Lage in zwei bis drei Sätzen, nur aus diesen Fakten.'); return true; } catch (e) { return false; }
+    sayQ = context; flushSay(); return true;
   },
+  start: () => startVoice(), end: () => endVoice(), mute: () => toggleMute(), send: t => sendText(t),
+  get state() { return status.voice === 'live' ? (muted ? 'muted' : mode) : status.voice; },
+  level() { try { if (!conv) return 0; return mode === 'speaking' ? conv.getOutputVolume() : conv.getInputVolume(); } catch (e) { return 0; } },
 };
 
 /* ============ CLIENT TOOLS (called by the agent) ============ */

@@ -38,8 +38,8 @@
     t.userData = { c, g }; return t;
   };
   const rnd = (a, b) => a + Math.random() * (b - a);
-  const font = (px, w = 600) => `${w} ${px}px "Inter","SF Pro Display",system-ui,sans-serif`;
-  const mono = px => `500 ${px}px "JetBrains Mono","SF Mono",ui-monospace,monospace`;
+  const font = (px, w = 600) => `${w} ${px}px "Geist","SF Pro Display",system-ui,sans-serif`;
+  const mono = px => `500 ${px}px "Geist Mono","SF Mono",ui-monospace,monospace`;
 
   /* ---------- Umgebungs-Reflexionen ---------- */
   {

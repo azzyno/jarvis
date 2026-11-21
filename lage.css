@@ -1,13 +1,13 @@
 /* ===== WELTLAGE · fotorealistischer Globus ===== */
 #v-lage{padding:0;max-width:none;margin:0}
 #v-lage.on{position:absolute;inset:0}
-#lageStage{position:absolute;inset:0;overflow:hidden;background:#020306;font-family:var(--sans,Inter,system-ui)}
+#lageStage{position:absolute;inset:0;overflow:hidden;background:#020306;font-family:var(--sans,Geist,system-ui)}
 #lageStage canvas{position:absolute;inset:0;width:100%!important;height:100%!important;display:block}
 #lageStage::after{content:'';position:absolute;inset:0;pointer-events:none;z-index:2;background:radial-gradient(ellipse at 50% 50%,transparent 55%,rgba(0,0,0,.55) 100%)}
 
 /* Kopfbereich */
 .lg-tl{position:absolute;left:14px;top:12px;z-index:4;display:flex;flex-direction:column;gap:3px;pointer-events:none;font:500 9px var(--mono,monospace);letter-spacing:.2em;color:rgba(200,215,232,.62)}
-.lg-tl b{font:700 13px var(--sans,Inter);letter-spacing:.42em;color:#eef4fa;margin-bottom:2px}
+.lg-tl b{font:700 13px var(--sans,Geist);letter-spacing:.42em;color:#eef4fa;margin-bottom:2px}
 .lg-tc{position:absolute;right:14px;top:12px;z-index:4;text-align:right;pointer-events:none}
 .lg-badge{display:inline-flex;align-items:center;gap:7px;font:600 8.5px var(--mono,monospace);letter-spacing:.26em;color:#ffcab8;padding:4px 8px;border:1px solid rgba(255,90,58,.45);border-radius:3px;background:rgba(30,6,4,.55)}
 .lg-badge i{width:6px;height:6px;border-radius:50%;background:#ff4d3a;box-shadow:0 0 8px #ff4d3a;animation:cmdPulse 1.2s infinite}
@@ -17,7 +17,7 @@
 /* Live-Feed */
 #lgFeed{position:absolute;left:14px;top:92px;width:min(420px,38vw);z-index:3;pointer-events:none;display:flex;flex-direction:column;gap:5px;
   -webkit-mask-image:linear-gradient(#000 60%,transparent);mask-image:linear-gradient(#000 60%,transparent)}
-.lgf{display:grid;grid-template-columns:26px 1fr;column-gap:8px;font:500 11px/1.3 var(--sans,Inter);color:rgba(232,240,248,.86);animation:lgfIn .35s ease-out both}
+.lgf{display:grid;grid-template-columns:26px 1fr;column-gap:8px;font:500 11px/1.3 var(--sans,Geist);color:rgba(232,240,248,.86);animation:lgfIn .35s ease-out both}
 .lgf i{grid-row:span 2;font:700 8.5px var(--mono,monospace);color:#05070a;background:#cfe0f0;border-radius:2px;height:15px;display:grid;place-items:center;font-style:normal;margin-top:1px}
 .lgf em{font:500 8.5px var(--mono,monospace);letter-spacing:.14em;color:rgba(160,180,200,.6);font-style:normal;text-transform:uppercase}
 .lgf span{white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
@@ -31,7 +31,7 @@
 /* Markierungen */
 #lgPins,#lgPlaces{position:absolute;inset:0;z-index:4;pointer-events:none}
 .lgpin{position:absolute;left:0;top:0;margin:-30px 0 0 12px;display:flex;align-items:center;gap:7px;padding:4px 9px 4px 4px;border-radius:3px;cursor:pointer;
-  background:rgba(14,4,3,.78);border:1px solid rgba(255,77,58,.65);color:#fff;font:600 10.5px var(--sans,Inter);letter-spacing:.04em;white-space:nowrap;transition:opacity .3s;backdrop-filter:blur(6px);-webkit-backdrop-filter:blur(6px)}
+  background:rgba(14,4,3,.78);border:1px solid rgba(255,77,58,.65);color:#fff;font:600 10.5px var(--sans,Geist);letter-spacing:.04em;white-space:nowrap;transition:opacity .3s;backdrop-filter:blur(6px);-webkit-backdrop-filter:blur(6px)}
 .lgpin b{display:grid;place-items:center;width:17px;height:17px;border-radius:2px;background:#ff4d3a;font:700 9.5px var(--mono,monospace)}
 .lgpin small{font:600 9px var(--mono,monospace);color:#ffb6a8;margin-left:2px}
 .lgpin.w{background:rgba(3,14,20,.8);border-color:rgba(143,230,255,.65)}
@@ -51,7 +51,7 @@
 #lgcClose{position:absolute;right:10px;top:10px;width:30px;height:30px;border-radius:4px;border:1px solid rgba(255,255,255,.15);background:rgba(0,0,0,.35);color:#fff;font-size:13px;cursor:pointer}
 .lgp-meta{font:600 8.5px var(--mono,monospace);letter-spacing:.24em;color:#ff9c86;padding-right:36px}
 #lgPanel.w .lgp-meta{color:#9fe9ff}
-#lgcHead{font:700 19px/1.25 var(--sans,Inter);color:#fff;margin:8px 0 14px;letter-spacing:-.01em}
+#lgcHead{font:700 19px/1.25 var(--sans,Geist);color:#fff;margin:8px 0 14px;letter-spacing:-.01em}
 .lgp-stats{display:grid;grid-template-columns:repeat(4,1fr);gap:1px;background:rgba(160,190,220,.12);border:1px solid rgba(160,190,220,.12);border-radius:4px;overflow:hidden;margin-bottom:12px}
 .lgp-stats div{background:rgba(6,9,13,.92);padding:8px 8px 7px}
 .lgp-stats span{display:block;font:600 7.5px var(--mono,monospace);letter-spacing:.2em;color:rgba(160,180,200,.6)}
@@ -63,11 +63,11 @@
 #lgcImgs img{width:100%;height:100%;object-fit:cover;display:block;filter:saturate(.9) contrast(1.05)}
 #lgcImgs figcaption{position:absolute;left:0;right:0;bottom:0;padding:2px 5px;font:600 7.5px var(--mono,monospace);color:#fff;background:linear-gradient(transparent,rgba(0,0,0,.8));white-space:nowrap;overflow:hidden}
 #lgcList{list-style:none;margin:0;padding:0}
-#lgcList li{padding:8px 0;border-top:1px solid rgba(160,190,220,.1);font:500 12.5px/1.35 var(--sans,Inter);color:#e3ecf5}
+#lgcList li{padding:8px 0;border-top:1px solid rgba(160,190,220,.1);font:500 12.5px/1.35 var(--sans,Geist);color:#e3ecf5}
 #lgcList li.none{color:rgba(200,215,232,.55)}
 #lgcList a{color:#eef4fa;text-decoration:none}
 #lgcList small{display:block;font:500 8.5px var(--mono,monospace);letter-spacing:.14em;color:rgba(160,180,200,.6);margin-top:3px;text-transform:uppercase}
-.lgx{font:500 11px/1.5 var(--sans,Inter);color:rgba(220,230,240,.7);border-left:2px solid #ffb547;padding:6px 10px;margin-top:10px}
+.lgx{font:500 11px/1.5 var(--sans,Geist);color:rgba(220,230,240,.7);border-left:2px solid #ffb547;padding:6px 10px;margin-top:10px}
 .lgx a{color:#ffd28a}
 .lgp-voice{display:flex;align-items:center;gap:3px;margin-top:12px;font:600 8.5px var(--mono,monospace);letter-spacing:.24em;color:#9fe9ff;opacity:0;transition:opacity .3s}
 .lgp-voice.on{opacity:1}
