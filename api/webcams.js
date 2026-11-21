@@ -9,7 +9,10 @@ export default async function handler(req, res) {
   const key = process.env.WINDY_KEY;
   if (!key) return res.status(503).json({ error: 'WINDY_KEY fehlt', code: 'no_key' });
   const lat = +req.query.lat, lon = +req.query.lon, r = Math.max(1, Math.min(250, +req.query.r || 50));
-  const n = +req.query.n, s = +req.query.s, e = +req.query.e, w = +req.query.w, z = Math.max(1, Math.min(18, Math.round(+req.query.z || 5)));
+  const n = +req.query.n, s = +req.query.s, e = +req.query.e, w = +req.query.w;
+  // Windy erlaubt je Zoomstufe nur eine bestimmte Breite (z. B. Zoom 7: 5.625° = 360/2^6), also Zoom passend wählen
+  const span = Math.max(1e-3, Math.abs(e - w)), hspan = Math.max(1e-3, Math.abs(n - s));
+  const z = Math.max(1, Math.min(18, Math.min(Math.round(+req.query.z || 18), Math.floor(1 + Math.log2(Math.min(360 / span, 180 / hspan))))));
   const box = [n, s, e, w].every(isFinite);
   if (!box && (!isFinite(lat) || !isFinite(lon))) return res.status(400).json({ error: 'lat/lon fehlen' });
   const url = box
