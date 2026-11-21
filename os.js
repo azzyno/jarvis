@@ -1,8 +1,8 @@
 /* =====================================================================
-   JARVIS · MERIDIAN-OBERFLÄCHE
-   Zentrale mit flüssigem Chrom-Kern, Tiefen-Karussell mit Live-Daten,
-   Vollbild-Menü, Sprach-Knopf auf jeder Seite, Vorhang-Übergänge.
-   Alle Zahlen kommen live aus echten Quellen; ohne Daten: „—“.
+   JARVIS · LAGEZENTRUM
+   Echtes Satellitenbild der Erde (Esri World Imagery, NASA Black Marble),
+   Live-Brennpunkte aus den Nachrichten, Dossiers je Land, Routen mit
+   Live-Verkehr, Funkverkehr, Sprach-Steuerung. Keine erfundenen Daten.
    ===================================================================== */
 (function () {
   const J = window.J; if (!J) return;
@@ -10,232 +10,341 @@
   const API = 'https://jarvis-iota-weld.vercel.app/api/';
   const esc = s => String(s ?? '').replace(/[&<>"]/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c]));
   const V = () => window.JARVIS || {};
-  const words = (html, d0 = 0) => html.split('|').map((w, i) => `<span class="w"><i style="animation-delay:${(d0 + i * .09).toFixed(2)}s">${w}</i></span>`).join(' ');
+  const HOME = [8.5417, 47.3769];
+  const ZTZ = 'Europe/Zurich';
   try { Object.defineProperty(window, '__holoPause', { get: () => true, set() {}, configurable: true }); } catch (e) {}
 
-  /* ---------- Grundgerüst ---------- */
-  document.body.insertAdjacentHTML('afterbegin', '<div id="osGrain"></div><div id="osTop"></div><div id="osCurtain"></div>');
-  const brand = $('.brand'); if (brand) { brand.innerHTML = 'Jarvis<small>Ω</small>'; brand.onclick = () => J.go('cockpit'); }
+  /* =====================================================================
+     GRUNDGERÜST
+     ===================================================================== */
+  document.body.insertAdjacentHTML('afterbegin', '<div id="sitMap"></div><div id="osScan"></div><div id="osCurtain"></div>');
+  const brand = $('.brand'); if (brand) { brand.innerHTML = 'JARVIS<small>// LAGEZENTRUM ZRH</small>'; brand.onclick = () => J.go('cockpit'); }
   document.body.insertAdjacentHTML('beforeend', `
     <button id="osMenuBtn" aria-label="Menü"><span id="osMenuT">MENÜ</span><i></i></button>
-    <nav id="osMenu" aria-label="Hauptmenü"><ol>
-      <li><a data-v="cockpit"><span>01</span><b>Zentrale</b><em id="mm1"></em></a></li>
+    <nav id="osMenu" aria-label="Hauptmenü"><div class="mh">◤ ZUGRIFF · STUFE MASTER</div><ol>
+      <li><a data-v="cockpit"><span>01</span><b>Lagezentrum</b><em id="mm1">SATELLIT LIVE</em></a></li>
       <li><a data-v="office"><span>02</span><b>Atrium</b><em>3D-BÜRO</em></a></li>
-      <li><a data-v="lage"><span>03</span><b>Weltlage</b><em id="mm3"></em></a></li>
-      <li><a data-v="port"><span>04</span><b>Finanzen</b><em id="mm4"></em></a></li>
-      <li><a data-v="invest"><span>05</span><b>Märkte</b><em id="mm5"></em></a></li>
-      <li><a data-v="calc"><span>06</span><b>Immobilien</b><em>RECHNER</em></a></li>
-      <li><a data-v="hub"><span>07</span><b>Verbindungen</b><em id="mm7"></em></a></li>
-    </ol><div class="mf"><span>JARVIS · ZÜRICH</span><span id="mmT"></span></div></nav>
-    <button id="osFab" aria-label="Mit JARVIS sprechen" data-s="off"></button>`);
-  $$('#osMenu a').forEach((a, i) => a.style.transitionDelay = (.12 + i * .05) + 's');
+      <li><a data-v="port"><span>03</span><b>Finanzen</b><em id="mm3"></em></a></li>
+      <li><a data-v="invest"><span>04</span><b>Märkte</b><em id="mm4"></em></a></li>
+      <li><a data-v="calc"><span>05</span><b>Immobilien</b><em>RECHNER</em></a></li>
+      <li><a data-v="hub"><span>06</span><b>Verbindungen</b><em id="mm6"></em></a></li>
+    </ol><div class="mf"><span>KANAL GESICHERT</span><span id="mmT"></span></div></nav>
+    <button id="osFab" aria-label="Mit JARVIS sprechen" data-s="off"><i></i></button>`);
+  $$('#osMenu a').forEach((a, i) => a.style.transitionDelay = (.1 + i * .05) + 's');
   const menu = on => { document.body.classList.toggle('menu', on); $('#osMenuT').textContent = on ? 'SCHLIESSEN' : 'MENÜ'; if (on) refreshMenu(); };
   $('#osMenuBtn').onclick = () => menu(!document.body.classList.contains('menu'));
   $('#osMenu').onclick = e => { const a = e.target.closest('a[data-v]'); if (!a) return; menu(false); setTimeout(() => J.go(a.dataset.v), 250); };
-  $('#osFab').onclick = () => { const s = V().state; if (!s || s === 'off' || s === 'err') V().start && V().start(); else { V().end && V().end(); J.toast('Gespräch beendet'); } };
+  const talk = () => { const s = V().state; if (!s || s === 'off' || s === 'err') V().start && V().start(); else { V().end && V().end(); funk('VERBINDUNG ZU JARVIS GETRENNT', 'dim'); } };
+  $('#osFab').onclick = talk;
 
-  /* ---------- Seitenköpfe ---------- */
-  const HEAD = {
-    port: ['04', 'FINANZEN · SAXO · ORDER', 'Ihre|<em>Finanzen</em>'],
-    invest: ['05', 'MÄRKTE · ANALYSE', 'Die|<em>Märkte</em>'],
-    calc: ['06', 'IMMOBILIEN · RECHNER', 'Ihr|<em>Zuhause</em>'],
-    hub: ['07', 'VERBINDUNGEN · EINSTELLUNGEN', 'Ver|<em>bindungen</em>'],
-    welt: ['—', 'VERMÖGEN NACH LÄNDERN', 'Die|<em>Welt</em>'],
-    jarvis: ['—', 'GESPRÄCH', 'Im|<em>Dialog</em>'],
-  };
+  /* Vermögen gehört zu Finanzen */
+  const port = $('#v-port'); const ck = $('#v-cockpit');
+  ['.kpis', '.cols'].forEach(s => { const el = ck.querySelector(':scope > ' + s); if (el && port) port.appendChild(el); });
+
+  /* Seitenköpfe */
+  const HEAD = { port: ['03', 'FINANZEN', 'Konto · Order · Vermögen'], invest: ['04', 'MÄRKTE', 'Kurse · Analyse'], calc: ['05', 'IMMOBILIEN', 'Tragbarkeit · Rendite'], hub: ['06', 'VERBINDUNGEN', 'Systeme · Schlüssel'], welt: ['—', 'WELTKARTE', 'Vermögen nach Ländern'], jarvis: ['—', 'DIALOG', 'Gespräch'] };
   function head(v) {
     const h = HEAD[v], sec = document.getElementById('v-' + v); if (!h || !sec) return;
     let el = sec.querySelector('.os-ph'); if (!el) { el = document.createElement('div'); el.className = 'os-ph'; sec.prepend(el); }
-    el.innerHTML = `<span><i>${h[0]}</i> — ${h[1]}</span><h1>${words(h[2], .15)}</h1><div class="ln"></div>`;
+    el.innerHTML = `<span>◤ DOSSIER ${h[0]} // ${h[2].toUpperCase()}</span><h1 data-t="${h[1]}">${h[1]}</h1><div class="ln"></div>`;
+    scramble(el.querySelector('h1'));
   }
-
-  /* ---------- Beschriftungen beruhigen ---------- */
+  const GLY = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789#%&/<>';
+  function scramble(el, txt) {
+    txt = txt || el.dataset.t || el.textContent; let f = 0; const N = 18;
+    const step = () => { el.textContent = txt.split('').map((c, i) => c === ' ' ? ' ' : i < (f / N) * txt.length ? c : GLY[(Math.random() * GLY.length) | 0]).join(''); if (++f <= N) requestAnimationFrame(step); else el.textContent = txt; };
+    step();
+  }
   const EMO = /^\s*(?:[\p{Extended_Pictographic}←-⇿⌀-⏿■-➿⬀-⯿]️?‍?)+\s*/u;
   function clean(root = document) {
-    root.querySelectorAll('button, .btn, a.btn').forEach(b => { const t = [...b.childNodes].find(n => n.nodeType === 3 && n.textContent.trim()); if (t && EMO.test(t.textContent)) t.textContent = t.textContent.replace(EMO, ''); });
+    root.querySelectorAll('button, .btn').forEach(b => { if (b.closest('#sitHud,#osMenu')) return; const t = [...b.childNodes].find(n => n.nodeType === 3 && n.textContent.trim()); if (t && EMO.test(t.textContent)) t.textContent = t.textContent.replace(EMO, ''); });
     root.querySelectorAll('.card[style*="border-color"]').forEach(c => c.style.removeProperty('border-color'));
     root.querySelectorAll('.ct[style*="color"]').forEach(c => c.style.removeProperty('color'));
   }
 
   /* =====================================================================
-     ZENTRALE
+     HUD
      ===================================================================== */
-  const sec = $('#v-cockpit');
-  const home = document.createElement('div'); home.id = 'osHome';
-  const ARROW = '<svg viewBox="0 0 24 24"><path d="M4 12h16M14 6l6 6-6 6"/></svg>';
-  home.innerHTML = `
-    <section class="oh-hero">
-      <div class="oh-glow"></div>
-      <div class="oh-ring"><svg viewBox="-100 -100 200 200" fill="none">
-        <g class="a"><circle r="96" stroke="rgba(239,238,233,.10)" stroke-width=".3"/><circle r="96" stroke="rgba(239,238,233,.35)" stroke-width=".3" stroke-dasharray=".4 3.6"/>
-          <path d="M0 -96 A96 96 0 0 1 60 -75" stroke="#ff6a2b" stroke-width=".5"/></g>
-        <g class="b"><circle r="84" stroke="rgba(239,238,233,.08)" stroke-width=".3" stroke-dasharray="20 6 2 6"/></g>
-      </svg></div>
-      <div id="ohCore" role="button" aria-label="Mit JARVIS sprechen"></div>
-      <div class="oh-meta"><span><i></i><b id="ohDate">—</b></span><span id="ohWx">ZÜRICH —</span></div>
-      <div class="oh-txt"><h1 class="oh-hi" id="ohHi"></h1></div>
-      <div class="oh-st" id="ohSt" data-s="off"><i></i><span id="ohStT">Bereit · Kern antippen</span><span class="sp"></span><button id="ohMute" hidden>Stumm</button><button id="ohEnd" hidden>Beenden</button><button id="ohLog">Protokoll</button></div>
-      <div class="oh-say" id="ohSay"></div>
-      <form class="oh-ask" id="ohAsk" autocomplete="off"><input id="ohAskIn" placeholder="Was darf ich für Sie tun?" enterkeyhint="send"><button type="submit" aria-label="Senden">${ARROW}</button></form>
-      <div class="oh-chips" id="ohChips">
-        <button data-ask="Wie ist die Weltlage gerade?">Weltlage</button><button data-ask="Wie ist der Verkehr nach Genf?">Verkehr Genf</button>
-        <button data-ask="Wie wird das Wetter morgen in Zürich?">Wetter morgen</button><button data-ask="Wie steht mein Saxo-Konto?">Mein Konto</button><button data-ask="Ich will nach Berlin.">Nach Berlin</button>
-      </div>
-    </section>
-    <div class="oh-sec"><span>01</span><h2>Live-<em>Lage</em></h2><small id="ohStamp">—</small></div>
-    <div class="oh-deck" id="ohDeck">
-      <button class="oh-card" id="cWx"><div class="n"><span><b>01</b> · ZÜRICH</span><span class="lv">LIVE</span></div><div id="cWxB"><span class="oh-shim" style="width:60%"></span><span class="oh-shim" style="width:40%"></span></div><canvas class="sp" id="cWxS"></canvas><div class="ft">Prognose öffnen</div></button>
-      <button class="oh-card" id="cLage"><div class="n"><span><b>02</b> · WELTLAGE</span><span class="lv" id="cLageN">LIVE</span></div><h3>Brenn-<em>punkte</em></h3><ul class="oh-news" id="cLageB"><li><span class="oh-shim" style="width:80%"></span></li></ul><div class="ft">Globus öffnen</div></button>
-      <div class="oh-card" id="cRoute" style="cursor:default"><div class="n"><span><b>03</b> · ROUTE</span><span>LIVE-VERKEHR</span></div><h3>Wohin,<br><em>Master?</em></h3>
-        <form class="oh-route" id="ohRoute"><input id="ohRouteIn" placeholder="Ziel …" enterkeyhint="go"><button type="submit">LOS →</button></form>
-        <div class="oh-rq"><span>Genf</span><span>Bern</span><span>Basel</span><span>Luzern</span><span>Mailand</span><span>Berlin</span></div><div class="ft" style="pointer-events:none">Stau · Zug · Wetter</div></div>
-      <button class="oh-card" id="cMk"><div class="n"><span><b>04</b> · BÖRSEN</span><span class="lv">LIVE</span></div><h3>Han<em>del</em></h3><div class="oh-mk" id="cMkB"></div><div class="ft">Märkte öffnen</div></button>
-      <button class="oh-card" id="cSx"><div class="n"><span><b>05</b> · KONTO</span><span id="cSxE">SAXO</span></div><div id="cSxB"><h3>…</h3></div><div class="ft">Finanzen öffnen</div></button>
-      <button class="oh-card oh-off" id="cOff"><div class="n"><span><b>06</b> · ATRIUM</span><span>3D</span></div><h3>Das<br><em>Büro</em></h3><div class="pv"><i></i><i></i></div><div class="ft">Eintreten</div></button>
+  const hud = document.createElement('div'); hud.id = 'sitHud';
+  hud.innerHTML = `
+    <svg class="sh-frame" preserveAspectRatio="none" viewBox="0 0 100 100"><path d="M0 6V0h6M94 0h6v6M100 94v6h-6M6 100H0v-6" vector-effect="non-scaling-stroke"/></svg>
+    <div class="sh-class"><i></i>STRENG VERTRAULICH · NUR FÜR DEN MASTER<i></i></div>
+    <div class="sh-head">
+      <div class="sh-greet"><small id="shGr">—</small><b>MASTER</b></div>
+      <div class="sh-clock"><b id="shClock">--:--:--</b><small id="shDate">—</small></div>
     </div>
-    <div class="oh-sec"><span>02</span><h2>Ihr <em>Vermögen</em></h2><small>APP-PORTFOLIO</small></div>`;
-  sec.prepend(home);
+    <div class="sh-strip" id="shStrip"></div>
+    <div class="sh-funk"><div class="sh-h"><span>▸ FUNKVERKEHR</span><span id="shFunkN">—</span></div><div id="shFunk"></div></div>
+    <aside id="shDossier"><button class="sd-x" id="sdX" aria-label="Schliessen">✕</button>
+      <div class="sd-k" id="sdK">DOSSIER</div><h2 id="sdH">—</h2>
+      <div class="sd-st"><div><span>MELDUNGEN</span><b id="sdN">—</b></div><div><span>ORTSZEIT</span><b id="sdT">—</b></div><div><span>WETTER</span><b id="sdW">—</b></div></div>
+      <ul id="sdL"></ul><div class="sd-v" id="sdV"><i></i><i></i><i></i><i></i><span>JARVIS BRIEFT</span></div></aside>
+    <div class="sh-dock">
+      <div class="sh-voice"><button id="shTalk" aria-label="Mit JARVIS sprechen"><i></i></button><canvas id="shWave"></canvas>
+        <div class="sv-t"><span id="shState">BEREIT · KERN ANTIPPEN</span><p id="shSay">—</p></div></div>
+      <form id="shAsk" autocomplete="off"><span>›</span><input id="shAskIn" placeholder="BEFEHL AN JARVIS …" enterkeyhint="send"><button type="submit">SENDEN</button></form>
+      <div class="sh-cmds" id="shCmds">
+        <button data-c="scan">◎ WELTLAGE</button><button data-r="Genf">⌖ ROUTE GENF</button><button data-c="route">⌖ ROUTE …</button>
+        <button data-c="wx">☁ WETTER</button><button data-v="port">▣ KONTO</button><button data-v="office">◧ BÜRO</button><button data-c="home">⌂ ZÜRICH</button>
+      </div>
+    </div>
+    <div class="sh-rt" id="shRt" hidden><span>⌖ ZIEL</span><input id="shRtIn" placeholder="ORT EINGEBEN" enterkeyhint="go"><button id="shRtGo">LOS</button><button id="shRtX">✕</button></div>`;
+  document.body.appendChild(hud);
 
-  /* ---------- Uhr & Begrüssung ---------- */
-  let lastHi = '';
-  function tick() {
-    const now = new Date();
-    const d = now.toLocaleDateString('de-CH', { timeZone: 'Europe/Zurich', weekday: 'short', day: '2-digit', month: '2-digit' }).toUpperCase();
-    const t = now.toLocaleTimeString('de-CH', { timeZone: 'Europe/Zurich', hour: '2-digit', minute: '2-digit' });
-    $('#ohDate').textContent = `${d} · ${t}`; $('#mmT').textContent = t; const m1 = $('#mm1'); if (m1) m1.textContent = t;
-    const h = +now.toLocaleString('en-GB', { timeZone: 'Europe/Zurich', hour: '2-digit', hour12: false });
-    const g = h < 5 ? 'Gute|Nacht,' : h < 11 ? 'Guten|Morgen,' : h < 17 ? 'Guten|Tag,' : h < 22 ? 'Guten|Abend,' : 'Gute|Nacht,';
-    if (g !== lastHi) { lastHi = g; $('#ohHi').innerHTML = words(g, .3) + '<br>' + words('<em>Master.</em>', .5); }
+  /* ---------- Funkverkehr ---------- */
+  const funkEl = $('#shFunk'); let funkQ = [], typing = false;
+  function funk(t, cls = '') { funkQ.push([t, cls]); if (!typing) nextFunk(); }
+  function nextFunk() {
+    const it = funkQ.shift(); if (!it) { typing = false; return; } typing = true;
+    const [t, cls] = it; const d = document.createElement('div'); d.className = 'fl ' + cls;
+    const ts = new Date().toLocaleTimeString('de-CH', { timeZone: ZTZ });
+    d.innerHTML = `<em>${ts}</em><span></span>`; funkEl.appendChild(d); while (funkEl.children.length > 6) funkEl.firstChild.remove();
+    const sp = d.querySelector('span'); let i = 0; const s = String(t);
+    const tick = () => { sp.textContent = s.slice(0, i += 2); if (i < s.length) setTimeout(tick, 14); else setTimeout(nextFunk, 220); };
+    tick();
   }
 
-  /* ---------- Stimme ---------- */
-  const STXT = { off: 'Bereit · Kern antippen', busy: 'Verbinde …', err: 'Fehler · erneut antippen', listening: 'Ich höre zu', speaking: 'JARVIS spricht', muted: 'Mikrofon stumm' };
-  $('#ohCore').onclick = () => { const s = V().state; if (!s || s === 'off' || s === 'err') V().start && V().start(); else if (s === 'muted') V().mute(); };
-  $('#ohMute').onclick = () => V().mute && V().mute();
-  $('#ohEnd').onclick = () => V().end && V().end();
-  $('#ohLog').onclick = () => { const w = $('#vLogWrap'); w && w.classList.toggle('open'); };
-  const ask = t => { t = String(t || '').trim(); if (t && V().send) V().send(t); };
-  $('#ohAsk').onsubmit = e => { e.preventDefault(); const i = $('#ohAskIn'); ask(i.value); i.value = ''; i.blur(); };
-  $('#ohChips').onclick = e => { const b = e.target.closest('[data-ask]'); if (b) ask(b.dataset.ask); };
-  const greet = $('#greet');
-  if (greet) new MutationObserver(() => { if (!['listening', 'speaking', 'muted'].includes(V().state)) return; const s = $('#ohSay'); s.style.opacity = 0; setTimeout(() => { s.textContent = greet.textContent; s.style.opacity = 1; }, 250); }).observe(greet, { childList: true, characterData: true, subtree: true });
-  let lastS = '';
-  function voiceUI() {
-    const st = V().state || 'off'; if (st === lastS) return; lastS = st;
-    $('#ohSt').dataset.s = st; $('#ohStT').textContent = STXT[st] || STXT.off; $('#osFab').dataset.s = st;
-    const live = ['listening', 'speaking', 'muted'].includes(st);
-    $('#ohMute').hidden = $('#ohEnd').hidden = !live; $('#ohMute').textContent = st === 'muted' ? 'Mikro an' : 'Stumm';
-    document.body.classList.toggle('voice-speaking', st === 'speaking'); document.body.classList.toggle('voice-listening', st === 'listening');
-  }
-
-  /* ---------- Chrom-Kern ---------- */
-  let core = null;
-  (function makeCore() {
-    const host = $('#ohCore'); if (typeof THREE === 'undefined' || !window.JCore) return;
-    let r; try { r = new THREE.WebGLRenderer({ antialias: true, alpha: true, powerPreference: 'high-performance' }); } catch (e) { host.innerHTML = '<div style="position:absolute;inset:28%;border-radius:50%;background:radial-gradient(circle at 35% 28%,#fff,#bfc2c8 18%,#55575d 45%,#141417 70%)"></div>'; return; }
-    r.setPixelRatio(Math.min(devicePixelRatio || 1, 2)); r.setClearColor(0, 0); host.appendChild(r.domElement);
-    const sc = new THREE.Scene(), cam = new THREE.PerspectiveCamera(26, 1, .1, 50); cam.position.set(0, 0, 6.2);
-    const mat = window.JCore.material(); const m = new THREE.Mesh(new THREE.SphereGeometry(1, 192, 144), mat); sc.add(m);
-    let tx = 0, ty = 0, rx = 0, ry = 0, vis = true, w = 0;
-    host.addEventListener('pointermove', e => { const b = host.getBoundingClientRect(); tx = ((e.clientX - b.left) / b.width - .5) * .6; ty = ((e.clientY - b.top) / b.height - .5) * .4; });
-    host.addEventListener('pointerleave', () => { tx = ty = 0; });
-    new IntersectionObserver(es => es.forEach(e => vis = e.isIntersecting)).observe(host);
-    core = {
-      frame(T) {
-        if (!vis) return; const s = host.clientWidth; if (!s) return; if (s !== w) { w = s; r.setSize(s, s, false); cam.aspect = 1; cam.updateProjectionMatrix(); }
-        const st = window.JCore.update(mat, T); rx += (ty - rx) * .05; ry += (tx - ry) * .05;
-        m.rotation.y = T * .15 + ry; m.rotation.x = rx; m.position.y = Math.sin(T * .8) * .04; m.scale.setScalar(1 + st.lvl * .06);
-        r.render(sc, cam);
-      },
-    };
-  })();
-
-  /* ---------- Tiefen-Karussell ---------- */
-  const deck = $('#ohDeck');
-  function flow() {
-    const dr = deck.getBoundingClientRect(), cx = dr.left + dr.width / 2;
-    deck.querySelectorAll('.oh-card').forEach(c => { const b = c.getBoundingClientRect(); const o = (b.left + b.width / 2 - cx) / b.width; const a = Math.min(1.6, Math.abs(o));
-      c.style.transform = `translateZ(${-a * 110}px) rotateY(${Math.max(-1.6, Math.min(1.6, o)) * -16}deg) scale(${1 - a * .05})`; c.style.opacity = 1 - a * .38; });
-  }
-  deck.addEventListener('scroll', () => requestAnimationFrame(flow), { passive: true });
-  addEventListener('resize', flow);
-
-  /* ---------- Live-Daten ---------- */
+  /* ---------- Uhr, Begrüssung, Statusleiste ---------- */
   const MK = [
-    { n: 'SIX', c: 'Zürich', tz: 'Europe/Zurich', o: 540, e: 1050 }, { n: 'XETRA', c: 'Frankfurt', tz: 'Europe/Berlin', o: 540, e: 1050 }, { n: 'LSE', c: 'London', tz: 'Europe/London', o: 480, e: 990 },
-    { n: 'NYSE', c: 'New York', tz: 'America/New_York', o: 570, e: 960 }, { n: 'TSE', c: 'Tokio', tz: 'Asia/Tokyo', o: 540, e: 930 }, { n: 'HKEX', c: 'Hongkong', tz: 'Asia/Hong_Kong', o: 570, e: 960 },
+    { n: 'SIX', tz: 'Europe/Zurich', o: 540, e: 1050 }, { n: 'XETRA', tz: 'Europe/Berlin', o: 540, e: 1050 }, { n: 'LSE', tz: 'Europe/London', o: 480, e: 990 },
+    { n: 'NYSE', tz: 'America/New_York', o: 570, e: 960 }, { n: 'TSE', tz: 'Asia/Tokyo', o: 540, e: 930 }, { n: 'HKEX', tz: 'Asia/Hong_Kong', o: 570, e: 960 },
   ];
   const tzp = tz => { const o = {}; new Intl.DateTimeFormat('en-GB', { timeZone: tz, weekday: 'short', hour: '2-digit', minute: '2-digit', hour12: false }).formatToParts(new Date()).forEach(p => o[p.type] = p.value); return o; };
   const isOpen = m => { const p = tzp(m.tz); if (p.weekday === 'Sat' || p.weekday === 'Sun') return false; const t = (+p.hour % 24) * 60 + +p.minute; return t >= m.o && t < m.e; };
-  function renderMk() {
-    $('#cMkB').innerHTML = MK.map(m => { const p = tzp(m.tz), on = isOpen(m); return `<div><i class="${on ? 'on' : ''}"></i><span>${m.n} <small>${m.c}</small></span><small>${(+p.hour % 24 + '').padStart(2, '0')}:${p.minute} · ${on ? 'OFFEN' : 'ZU'}</small></div>`; }).join('');
-    const open = MK.filter(isOpen).length; const m5 = $('#mm5'); if (m5) m5.textContent = open ? `${open} BÖRSEN OFFEN` : 'ALLE BÖRSEN ZU';
+  const live = { wx: null, lage: null, saxo: null };
+  function tick() {
+    const now = new Date();
+    $('#shClock').textContent = now.toLocaleTimeString('de-CH', { timeZone: ZTZ });
+    $('#shDate').textContent = now.toLocaleDateString('de-CH', { timeZone: ZTZ, weekday: 'long', day: '2-digit', month: 'long' }).toUpperCase() + ' · UTC+1';
+    const h = +now.toLocaleString('en-GB', { timeZone: ZTZ, hour: '2-digit', hour12: false });
+    $('#shGr').textContent = h < 5 ? 'NOCH WACH,' : h < 11 ? 'GUTEN MORGEN,' : h < 17 ? 'GUTEN TAG,' : h < 22 ? 'GUTEN ABEND,' : 'GUTE NACHT,';
+    $('#mmT').textContent = $('#shClock').textContent;
   }
-  function spark(cv, vals) {
-    const dpr = Math.min(2, devicePixelRatio || 1), w = cv.clientWidth, h = cv.clientHeight; if (!w || vals.length < 2) return;
-    cv.width = w * dpr; cv.height = h * dpr; const x = cv.getContext('2d'); x.scale(dpr, dpr);
-    const mn = Math.min(...vals) - .5, mx = Math.max(...vals) + .5, pt = i => [i / (vals.length - 1) * w, h - 10 - (vals[i] - mn) / (mx - mn) * (h - 24)];
-    const gr = x.createLinearGradient(0, 0, w, 0); gr.addColorStop(0, '#9fd4ff'); gr.addColorStop(1, '#ff6a2b');
-    x.beginPath(); vals.forEach((v, i) => { const [a, b] = pt(i); i ? x.lineTo(a, b) : x.moveTo(a, b); }); x.strokeStyle = gr; x.lineWidth = 1.4; x.stroke();
-    x.lineTo(w, h); x.lineTo(0, h); x.closePath(); const fg = x.createLinearGradient(0, 0, 0, h); fg.addColorStop(0, 'rgba(255,106,43,.16)'); fg.addColorStop(1, 'rgba(255,106,43,0)'); x.fillStyle = fg; x.fill();
-    vals.forEach((v, i) => { if (i % 3) return; const [a, b] = pt(i); x.fillStyle = '#efeee9'; x.beginPath(); x.arc(a, b, 1.6, 0, 7); x.fill(); });
+  function strip() {
+    const it = [];
+    if (live.wx) it.push(`<span><b>ZRH</b> ${Math.round(live.wx.jetzt.temp)}° ${esc(String(live.wx.jetzt.wetter).toUpperCase())}</span>`);
+    MK.forEach(m => it.push(`<span><i class="${isOpen(m) ? 'on' : ''}"></i><b>${m.n}</b> ${isOpen(m) ? 'OFFEN' : 'ZU'}</span>`));
+    if (live.lage) it.push(`<span><b>MELD</b> ${live.lage.total}</span>`);
+    it.push(`<span><i class="${live.saxo ? 'on' : 'off'}"></i><b>SAXO</b> ${live.saxo && live.saxo.gesamtwert != null ? Math.round(live.saxo.gesamtwert).toLocaleString('de-CH') + ' ' + esc(live.saxo.waehrung || '') : live.saxo ? 'VERBUNDEN' : 'AUS'}</span>`);
+    $('#shStrip').innerHTML = it.join('');
   }
-  async function loadWx() {
+
+  /* ---------- Stimme ---------- */
+  const STXT = { off: 'BEREIT · KERN ANTIPPEN', busy: 'VERBINDE MIT JARVIS …', err: 'FEHLER · ERNEUT ANTIPPEN', listening: 'JARVIS HÖRT ZU', speaking: 'JARVIS SPRICHT', muted: 'MIKROFON STUMM' };
+  $('#shTalk').onclick = talk;
+  const ask = t => { t = String(t || '').trim(); if (!t) return; funk('MASTER › ' + t.toUpperCase(), 'me'); V().send && V().send(t); };
+  $('#shAsk').onsubmit = e => { e.preventDefault(); const i = $('#shAskIn'); ask(i.value); i.value = ''; i.blur(); };
+  const greet = $('#greet');
+  if (greet) new MutationObserver(() => { if (!['listening', 'speaking', 'muted'].includes(V().state)) return; $('#shSay').textContent = greet.textContent; funk('JARVIS › ' + greet.textContent, 'jv'); }).observe(greet, { childList: true, characterData: true, subtree: true });
+  let lastS = '';
+  function voiceUI() {
+    const st = V().state || 'off'; if (st === lastS) return; lastS = st;
+    hud.dataset.v = st; $('#osFab').dataset.s = st; $('#shState').textContent = STXT[st] || STXT.off;
+    if (st === 'listening' && lastS !== 'speaking') {}
+    document.body.classList.toggle('voice-speaking', st === 'speaking'); document.body.classList.toggle('voice-listening', st === 'listening');
+  }
+  const wave = $('#shWave'), wx = wave.getContext('2d'); const hist = new Array(48).fill(0);
+  function waveFrame(T) {
+    const dpr = Math.min(2, devicePixelRatio || 1), w = wave.clientWidth, h = wave.clientHeight; if (!w) return;
+    if (wave.width !== w * dpr) { wave.width = w * dpr; wave.height = h * dpr; }
+    let l = 0; try { l = V().level ? V().level() : 0; } catch (e) {}
+    const st = V().state || 'off'; const base = st === 'off' ? .04 + .03 * Math.sin(T * 2) : st === 'busy' ? .3 * Math.abs(Math.sin(T * 6)) : 0;
+    hist.push(Math.min(1, l * 3 + base)); hist.shift();
+    wx.setTransform(dpr, 0, 0, dpr, 0, 0); wx.clearRect(0, 0, w, h);
+    const bw = w / hist.length; const col = st === 'speaking' ? '255,61,61' : st === 'listening' ? '79,216,255' : '200,220,235';
+    hist.forEach((v, i) => { const bh = Math.max(1, v * h * .9); wx.fillStyle = `rgba(${col},${.25 + v * .75})`; wx.fillRect(i * bw + 1, (h - bh) / 2, bw - 2, bh); });
+  }
+
+  /* =====================================================================
+     SATELLITENKARTE
+     ===================================================================== */
+  let map = null, ready = false, markers = [], homeMk = null, idleSpin = true, lastUser = 0, introDone = false;
+  const ML = window.maplibregl;
+  function makeMap() {
+    if (!ML) { $('#sitMap').classList.add('nomap'); funk('KARTENMODUL NICHT GELADEN', 'warn'); return; }
     try {
-      const r = await fetch(API + 'weather?q=Z%C3%BCrich'); const d = await r.json(); if (!r.ok) throw 0;
-      const j = d.jetzt, t0 = (d.tage || [])[0];
-      $('#cWxB').innerHTML = `<div class="big">${Math.round(j.temp)}<sup>°</sup></div><p><b>${esc(j.wetter)}</b>${t0 ? ` · H ${Math.round(t0.max)}° · T ${Math.round(t0.min)}°` : ''}<br>Wind ${Math.round(j.wind)} km/h${j.boeen ? ' · Böen ' + Math.round(j.boeen) : ''}</p>`;
-      $('#ohWx').textContent = `ZÜRICH ${Math.round(j.temp)}° · ${String(j.wetter).toUpperCase()}`;
-      spark($('#cWxS'), (d.stunden || []).map(s => s.temp));
-    } catch (e) { $('#cWxB').innerHTML = '<div class="big">—</div><p>Wetter nicht erreichbar</p>'; }
+      map = new ML.Map({
+        container: 'sitMap', attributionControl: { compact: true }, center: [20, 25], zoom: 1.15, maxPitch: 70, fadeDuration: 200, renderWorldCopies: false,
+        style: {
+          version: 8, projection: { type: 'globe' },
+          sources: {
+            sat: { type: 'raster', tiles: ['https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}'], tileSize: 256, maxzoom: 19, attribution: 'Satellit: Esri, Maxar, Earthstar Geographics' },
+            night: { type: 'raster', tiles: ['https://gibs.earthdata.nasa.gov/wmts/epsg3857/best/VIIRS_Black_Marble/default/2016-01-01/GoogleMapsCompatible_Level8/{z}/{y}/{x}.png'], tileSize: 256, maxzoom: 8, attribution: 'Nachtlichter: NASA Black Marble' },
+            lab: { type: 'raster', tiles: ['https://server.arcgisonline.com/ArcGIS/rest/services/Reference/World_Boundaries_and_Places/MapServer/tile/{z}/{y}/{x}'], tileSize: 256, maxzoom: 19 },
+            links: { type: 'geojson', data: { type: 'FeatureCollection', features: [] } },
+            route: { type: 'geojson', data: { type: 'FeatureCollection', features: [] } },
+          },
+          layers: [
+            { id: 'bg', type: 'background', paint: { 'background-color': '#010307' } },
+            { id: 'sat', type: 'raster', source: 'sat', paint: { 'raster-saturation': -0.25, 'raster-brightness-max': 0.92, 'raster-contrast': 0.12 } },
+            { id: 'night', type: 'raster', source: 'night', paint: { 'raster-opacity': ['interpolate', ['linear'], ['zoom'], 0, 0.6, 3.5, 0.35, 5.5, 0] } },
+            { id: 'lab', type: 'raster', source: 'lab', paint: { 'raster-opacity': ['interpolate', ['linear'], ['zoom'], 1, 0.5, 6, 0.85] } },
+            { id: 'links-glow', type: 'line', source: 'links', paint: { 'line-color': ['get', 'c'], 'line-width': 6, 'line-opacity': 0.12, 'line-blur': 4 } },
+            { id: 'links', type: 'line', source: 'links', paint: { 'line-color': ['get', 'c'], 'line-width': 1.3, 'line-opacity': 0.85, 'line-dasharray': [2, 2] } },
+            { id: 'route-glow', type: 'line', source: 'route', layout: { 'line-cap': 'round' }, paint: { 'line-color': '#4fd8ff', 'line-width': 10, 'line-opacity': 0.2, 'line-blur': 6 } },
+            { id: 'route', type: 'line', source: 'route', layout: { 'line-cap': 'round' }, paint: { 'line-color': '#4fd8ff', 'line-width': 2.4 } },
+          ],
+          sky: { 'sky-color': '#000000', 'horizon-color': '#0b2a44', 'fog-color': '#010307', 'sky-horizon-blend': 0.6, 'horizon-fog-blend': 0.6, 'fog-ground-blend': 0.4, 'atmosphere-blend': ['interpolate', ['linear'], ['zoom'], 0, 1, 5, 1, 7, 0] },
+        },
+      });
+    } catch (e) { $('#sitMap').classList.add('nomap'); funk('3D-GRAFIK NICHT VERFÜGBAR', 'warn'); map = null; return; }
+    map.on('load', () => { ready = true; setTimeout(() => document.querySelectorAll('.maplibregl-compact-show').forEach(x => x.classList.remove('maplibregl-compact-show')), 4000); funk('SATELLITENVERBINDUNG STEHT · ESRI / NASA', 'ok'); placeHome(); if (live.lage) placeHotspots(); });
+    ['dragstart', 'zoomstart', 'rotatestart', 'pitchstart'].forEach(ev => map.on(ev, e => { if (e.originalEvent) { lastUser = performance.now(); idleSpin = false; } }));
+    map.on('error', () => {});
   }
+  function el(cls, html) { const d = document.createElement('div'); d.className = cls; d.innerHTML = html; return d; }
+  function placeHome() {
+    if (!map || homeMk) return;
+    const e = el('sm-home', `<i></i><i></i><svg viewBox="0 0 40 40"><path d="M20 2v10M20 28v10M2 20h10M28 20h10"/><circle cx="20" cy="20" r="7"/></svg><div class="sm-lab"><b>ZÜRICH</b><span>47.37N 8.54E</span><span id="smHomeWx"></span></div>`);
+    homeMk = new ML.Marker({ element: e }).setLngLat(HOME).addTo(map);
+    if (live.wx) $('#smHomeWx').textContent = `${Math.round(live.wx.jetzt.temp)}° ${String(live.wx.jetzt.wetter).toUpperCase()}`;
+  }
+  function placeHotspots() {
+    if (!map || !ready || !live.lage) return;
+    markers.forEach(m => m.remove()); markers = [];
+    const hs = live.lage.hotspots || [], feats = [];
+    hs.forEach((h, k) => {
+      if (h.lat == null) return;
+      const e = el('sm-pin' + (h.watch ? ' w' : '') + (h.c === 'CH' ? ' l' : ''), `<i></i><i></i><b>${k + 1 <= 3 && !h.watch ? k + 1 : '◎'}</b><div class="sm-lab"><b>${esc(h.n.toUpperCase())}</b><span>${h.count} MELD.</span></div>`);
+      e.querySelectorAll('b,.sm-lab').forEach(x => x.style.animationDelay = (k * .25) + 's');
+      e.addEventListener('click', ev => { ev.stopPropagation(); dossier(h); });
+      markers.push(new ML.Marker({ element: e }).setLngLat([h.lon, h.lat]).addTo(map));
+      feats.push({ type: 'Feature', properties: { c: h.watch ? '#4fd8ff' : '#ff3d3d' }, geometry: { type: 'LineString', coordinates: arc(HOME, [h.lon, h.lat]) } });
+    });
+    map.getSource('links').setData({ type: 'FeatureCollection', features: feats });
+  }
+  function arc(a, b, n = 48) { const pts = []; for (let i = 0; i <= n; i++) { const t = i / n; pts.push([a[0] + (b[0] - a[0]) * t, a[1] + (b[1] - a[1]) * t + Math.sin(Math.PI * t) * Math.min(12, Math.hypot(b[0] - a[0], b[1] - a[1]) * .18)]); } return pts; }
+
+  /* ---------- Dossier ---------- */
+  let openH = null;
+  function dossier(h, speak = true) {
+    openH = h; idleSpin = false;
+    const D = $('#shDossier');
+    $('#sdK').textContent = `◤ DOSSIER · ${h.c}${h.watch ? ' · DAUERBEOBACHTUNG' : ''}`;
+    $('#sdH').textContent = h.n.toUpperCase(); scramble($('#sdH'), h.n.toUpperCase());
+    $('#sdN').textContent = h.count;
+    $('#sdT').textContent = h.tz ? new Date().toLocaleTimeString('de-CH', { timeZone: h.tz, hour: '2-digit', minute: '2-digit' }) : '—';
+    $('#sdW').textContent = h.weather && h.weather.temp != null ? `${Math.round(h.weather.temp)}°` : (h.weather && h.weather.jetzt ? `${Math.round(h.weather.jetzt.temp)}°` : '—');
+    $('#sdL').innerHTML = (h.items || []).slice(0, 5).map(it => `<li><span>${esc(it.s || 'QUELLE')}</span>${it.u ? `<a href="${esc(it.u)}" target="_blank" rel="noopener">${esc(it.t)}</a>` : esc(it.t)}</li>`).join('') || `<li>${esc(h.headline || 'Keine Meldungen')}</li>`;
+    D.classList.add('on'); document.body.classList.add('dossier');
+    funk(`ZIEL ERFASST · ${h.n.toUpperCase()} · ${h.count} MELDUNGEN`, h.watch ? 'ok' : 'warn');
+    if (map) map.flyTo({ center: [h.lon, h.lat - (innerWidth < 900 ? 4 : 0)], zoom: h.c === 'KU' ? 5.2 : 4.4, pitch: 35, bearing: -8, duration: 2600, essential: true, padding: innerWidth >= 900 ? { right: 380 } : { bottom: 260 } });
+    if (speak && window.JARVIS && window.JARVIS.say && ['listening', 'speaking', 'muted'].includes(V().state)) {
+      const top = (h.items || []).slice(0, 3).map(x => x.t).join(' | ');
+      window.JARVIS.say(`Dossier ${h.n}: ${h.count} Meldungen. Ortszeit ${$('#sdT').textContent}. Wichtigste Schlagzeilen: ${top || h.headline}.`);
+    }
+  }
+  function closeDossier() { openH = null; $('#shDossier').classList.remove('on'); document.body.classList.remove('dossier'); goHome(); }
+  $('#sdX').onclick = closeDossier;
+  function goHome(z = innerWidth < 900 ? 3.4 : 3.9) { if (map) map.flyTo({ center: [HOME[0] + 6, HOME[1] - (innerWidth < 900 ? 6 : 2)], zoom: z, pitch: 28, bearing: -6, duration: 3000, essential: true }); }
+
+  /* ---------- Lagescan (statt altem Globus) ---------- */
+  let scanId = 0;
+  async function scan() {
+    const id = ++scanId; if (!live.lage) await loadLage();
+    const d = live.lage; if (!d) return;
+    document.body.classList.add('scanning'); setTimeout(() => document.body.classList.remove('scanning'), 2600);
+    funk(`LAGESCAN GESTARTET · ${d.total} SCHLAGZEILEN AUS ${new Set((d.headlines || []).map(x => x.s)).size || '—'} QUELLEN`, 'ok');
+    if (map) map.flyTo({ center: [25, 30], zoom: 1.6, pitch: 0, bearing: 0, duration: 2200 });
+    await wait(2600);
+    for (const h of d.hotspots) { if (id !== scanId) return; dossier(h, false); await wait(5200); }
+    if (id === scanId) closeDossier();
+  }
+  const wait = ms => new Promise(r => setTimeout(r, ms));
+
+  /* ---------- Routen auf der Karte ---------- */
+  function showRoute(d) {
+    if (!d || !d.start || !d.ziel) return;
+    const a = [d.start.lon, d.start.lat], b = [d.ziel.lon, d.ziel.lat];
+    funk(`ROUTE ${d.start.name.toUpperCase()} › ${d.ziel.name.toUpperCase()} · ${d.verkehr ? Math.round(d.verkehr.minuten_mit_verkehr) + ' MIN · STAU ' + Math.round(d.verkehr.stau_minuten || 0) + ' MIN' : d.auto ? Math.round(d.auto.minuten_ohne_verkehr) + ' MIN' : ''}`, 'ok');
+    if (!map || !ready) return;
+    map.getSource('route').setData({ type: 'FeatureCollection', features: [{ type: 'Feature', properties: {}, geometry: { type: 'LineString', coordinates: arc(a, b, 64) } }] });
+    const bb = new ML.LngLatBounds(a, a).extend(b);
+    map.fitBounds(bb, { padding: { top: 140, bottom: innerHeight * .45, left: 40, right: 40 }, pitch: 40, duration: 2600, maxZoom: 8 });
+  }
+
+  /* ---------- Daten ---------- */
+  async function loadWx() { try { const r = await fetch(API + 'weather?q=Z%C3%BCrich'); if (r.ok) { live.wx = await r.json(); const s = $('#smHomeWx'); if (s) s.textContent = `${Math.round(live.wx.jetzt.temp)}° ${String(live.wx.jetzt.wetter).toUpperCase()}`; strip(); } } catch (e) {} }
   async function loadLage() {
-    try {
-      const d = window.__lageData && window.__lageData.hotspots ? window.__lageData : await (await fetch(API + 'news')).json();
-      window.__lageData = d;
-      $('#cLageN').textContent = `${d.total || 0} MELD.`; const m3 = $('#mm3'); if (m3) m3.textContent = `${d.total || 0} MELDUNGEN`;
-      $('#cLageB').innerHTML = (d.hotspots || []).slice(0, 4).map(h => `<li class="${h.watch ? 'w' : ''}"><b>${esc(h.c)}</b><span><strong>${esc(h.n)}</strong> — ${esc(h.headline || '')}</span></li>`).join('');
-      $('#ohStamp').textContent = 'STAND ' + new Date(d.stand || Date.now()).toLocaleTimeString('de-CH', { timeZone: 'Europe/Zurich', hour: '2-digit', minute: '2-digit' });
-    } catch (e) { $('#cLageB').innerHTML = '<li><span>Nachrichtendienst nicht erreichbar</span></li>'; }
+    try { const d = window.__lageData && window.__lageData.hotspots ? window.__lageData : await (await fetch(API + 'news')).json(); window.__lageData = live.lage = d;
+      $('#shFunkN').textContent = `${d.total} MELD.`; strip(); placeHotspots(); } catch (e) { funk('NACHRICHTENDIENST NICHT ERREICHBAR', 'warn'); }
   }
   const hasSaxo = () => { try { return !!(JSON.parse(localStorage.getItem('omega-saxo') || 'null') || {}).token; } catch (e) { return false; } };
-  async function loadSx() {
-    const m4 = $('#mm4'), m7 = $('#mm7');
-    if (!hasSaxo()) { $('#cSxB').innerHTML = '<h3>Nicht<br><em>verbunden</em></h3><p>Tippen, um Ihr Saxo-Konto zu verbinden.</p>'; if (m4) m4.textContent = 'SAXO AUS'; if (m7) m7.textContent = 'SAXO AUS'; return; }
-    try { window.__saxoRefresh && await window.__saxoRefresh(); } catch (e) {}
-    const s = window.__saxoSnap;
-    if (!s || s.gesamtwert == null) { $('#cSxB').innerHTML = '<h3><em>Verbunden</em></h3><p>Kontostand gerade nicht abrufbar.</p>'; if (m4) m4.textContent = 'SAXO VERBUNDEN'; return; }
-    $('#cSxE').textContent = 'SAXO · ' + (s.umgebung === 'SIM' ? 'DEMO' : 'LIVE');
-    $('#cSxB').innerHTML = `<div class="big" style="font-size:78px;margin-top:30px">${Math.round(s.gesamtwert).toLocaleString('de-CH')}</div><p><b>${esc(s.waehrung || '')}</b> · ${(s.positionen || []).length} Positionen<br>Cash ${Math.round(s.cash || 0).toLocaleString('de-CH')} ${esc(s.waehrung || '')}</p>`;
-    if (m4) m4.textContent = `${Math.round(s.gesamtwert).toLocaleString('de-CH')} ${s.waehrung || ''}`; if (m7) m7.textContent = 'SAXO VERBUNDEN';
+  async function loadSx() { if (!hasSaxo()) { live.saxo = null; strip(); return; } try { window.__saxoRefresh && await window.__saxoRefresh(); } catch (e) {} live.saxo = window.__saxoSnap || { gesamtwert: null }; strip(); }
+  function refreshMenu() {
+    const open = MK.filter(isOpen).length;
+    $('#mm4').textContent = open ? `${open} BÖRSEN OFFEN` : 'ALLE BÖRSEN ZU';
+    $('#mm3').textContent = live.saxo && live.saxo.gesamtwert != null ? `${Math.round(live.saxo.gesamtwert).toLocaleString('de-CH')} ${live.saxo.waehrung || ''}` : hasSaxo() ? 'SAXO VERBUNDEN' : 'SAXO AUS';
+    $('#mm6').textContent = hasSaxo() ? 'SAXO · STIMME · VERKEHR' : 'SAXO AUS';
+    $$('#osMenu a').forEach(a => a.classList.toggle('on', a.dataset.v === view));
   }
-  function refreshMenu() { renderMk(); tick(); $$('#osMenu a').forEach(a => a.classList.toggle('on', a.dataset.v === view)); }
+  // Funkverkehr mit echten Schlagzeilen füttern
+  let fi = 0;
+  setInterval(() => { if (view !== 'cockpit' || document.hidden || typing) return; const hl = live.lage && live.lage.headlines; if (!hl || !hl.length) return; const x = hl[fi++ % hl.length]; funk(`${x.c ? x.c + ' · ' : ''}${String(x.t).toUpperCase()}${x.s ? ' — ' + String(x.s).toUpperCase() : ''}`, 'dim'); }, 7000);
 
-  $('#cWx').onclick = () => window.TRAVEL && window.TRAVEL.weather('Zürich');
-  $('#cLage').onclick = () => J.go('lage');
-  $('#cMk').onclick = () => J.go('invest');
-  $('#cSx').onclick = () => J.go('port');
-  $('#cOff').onclick = () => J.go('office');
-  const route = z => { z = String(z || '').trim(); if (z && window.TRAVEL) window.TRAVEL.route(z).catch(e => J.toast('Route: ' + e.message)); };
-  $('#ohRoute').onsubmit = e => { e.preventDefault(); route($('#ohRouteIn').value); $('#ohRouteIn').blur(); };
-  $('#cRoute .oh-rq').onclick = e => { if (e.target.tagName === 'SPAN') route(e.target.textContent); };
+  /* ---------- Befehle ---------- */
+  $('#shCmds').onclick = e => {
+    const b = e.target.closest('button'); if (!b) return;
+    if (b.dataset.v) return J.go(b.dataset.v);
+    if (b.dataset.r) return route(b.dataset.r);
+    const c = b.dataset.c;
+    if (c === 'scan') scan();
+    if (c === 'home') { closeDossier(); }
+    if (c === 'wx') window.TRAVEL && window.TRAVEL.weather('Zürich');
+    if (c === 'route') { $('#shRt').hidden = false; $('#shRtIn').focus(); }
+  };
+  const route = z => { z = String(z || '').trim(); if (!z || !window.TRAVEL) return; funk('BERECHNE ROUTE › ' + z.toUpperCase(), ''); window.TRAVEL.route(z).catch(err => funk('ROUTE FEHLGESCHLAGEN · ' + err.message, 'warn')); };
+  $('#shRtGo').onclick = () => { route($('#shRtIn').value); $('#shRt').hidden = true; $('#shRtIn').value = ''; };
+  $('#shRtIn').onkeydown = e => { if (e.key === 'Enter') $('#shRtGo').click(); };
+  $('#shRtX').onclick = () => { $('#shRt').hidden = true; };
 
   /* ---------- Seitenwechsel ---------- */
   let view = 'cockpit', first = true;
   const curtain = $('#osCurtain');
   J.onView(v => {
+    if (v === 'lage') { setTimeout(() => { J.go('cockpit'); scan(); }, 0); return; }
     const prev = view; view = v;
     [...document.body.classList].filter(c => c.startsWith('v-')).forEach(c => document.body.classList.remove(c)); document.body.classList.add('v-' + v);
     if (!first && prev !== v) { curtain.classList.remove('go'); void curtain.offsetWidth; curtain.classList.add('go'); }
     first = false; head(v); setTimeout(() => clean(), 30);
-    if (v === 'cockpit') { loadSx(); renderMk(); setTimeout(flow, 60); }
+    if (v === 'cockpit') { loadSx(); if (map) setTimeout(() => map.resize(), 50); }
   });
   document.body.classList.add('v-cockpit');
 
-  /* ---------- Taktgeber ---------- */
-  (function loop(t) { requestAnimationFrame(loop); if (document.hidden) return; voiceUI(); if (view === 'cockpit' && core) core.frame(t / 1000); })(performance.now());
-  tick(); renderMk(); loadWx(); loadLage(); loadSx(); clean(); setTimeout(flow, 100); setTimeout(flow, 800);
-  setInterval(tick, 5000); setInterval(renderMk, 30000); setInterval(loadWx, 10 * 60000);
+  /* ---------- Einstieg: Anflug auf Zürich ---------- */
+  function intro() {
+    if (introDone) return; introDone = true; idleSpin = false;
+    funk('AUTHENTIFIZIERUNG · MASTER BESTÄTIGT', 'ok');
+    if (map) map.flyTo({ center: [HOME[0] + 6, HOME[1] - (innerWidth < 900 ? 6 : 2)], zoom: innerWidth < 900 ? 3.4 : 3.9, pitch: 28, bearing: -6, duration: 5200, curve: 1.6, essential: true });
+    setTimeout(() => { funk('BRENNPUNKTE MARKIERT · SCHWEIZ & KURDISTAN UNTER DAUERBEOBACHTUNG', 'warn'); idleSpin = true; }, 5600);
+  }
+  $('#boot') && $('#boot').addEventListener('click', () => setTimeout(intro, 300), { once: true });
+
+  /* Weltlage-Werkzeug der Stimme */
+  window.LAGE = {
+    start() {}, run: scan, open: code => { const h = live.lage && live.lage.hotspots.find(x => x.c === code); h && dossier(h); },
+    async briefing() { if (!live.lage) await loadLage(); const d = live.lage; if (!d) return { fehler: 'Weltlage nicht erreichbar' };
+      return { stand: d.stand, quelle: d.quelle, gescannte_schlagzeilen: d.total, brennpunkte: d.hotspots.map(h => ({ land: h.n, beobachtet: !!h.watch, meldungen: h.count, top_schlagzeile: h.headline, weitere: (h.items || []).slice(1, 4).map(x => x.t), ortszeit: h.tz ? new Date().toLocaleTimeString('de-CH', { timeZone: h.tz, hour: '2-digit', minute: '2-digit' }) : null, wetter: h.weather })) }; },
+  };
+  window.SIT = { scan, dossier, showRoute, funk, goHome };
+
+  /* ---------- Takt ---------- */
+  (function loop(t) {
+    requestAnimationFrame(loop); if (document.hidden) return; const T = t / 1000;
+    voiceUI(); if (view === 'cockpit') waveFrame(T);
+    if (map && ready && view === 'cockpit') {
+      if (!introDone || (idleSpin && !openH && performance.now() - lastUser > 8000 && !map.isMoving())) {
+        if (!introDone) { const c = map.getCenter(); map.setCenter([c.lng + .06, c.lat]); }
+        else map.setBearing(map.getBearing() + .008);
+      }
+      if ((t | 0) % 3 === 0) map.setPaintProperty('links', 'line-opacity', .55 + .35 * Math.sin(T * 2.4));
+    }
+  })(performance.now());
+  setTimeout(() => { // nach travel.js: Routen auch auf der Karte zeigen
+    if (window.TRAVEL && !window.TRAVEL.__sit) { const o = window.TRAVEL.route; window.TRAVEL.route = async (...a) => { const d = await o(...a); try { showRoute(d); } catch (e) {} return d; }; window.TRAVEL.__sit = true; }
+  }, 0);
+  makeMap(); tick(); strip(); loadWx(); loadLage(); loadSx(); clean();
+  funk('JARVIS LAGEZENTRUM · SYSTEMSTART', 'dim');
+  setInterval(tick, 1000); setInterval(strip, 30000); setInterval(loadWx, 10 * 60000);
   setInterval(() => { window.__lageData = null; loadLage(); }, 10 * 60000);
-  document.addEventListener('visibilitychange', () => { if (!document.hidden) { tick(); renderMk(); } });
 })();

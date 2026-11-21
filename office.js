@@ -26,7 +26,7 @@
   const cam = new THREE.PerspectiveCamera(50, 1, 0.05, 300);
   const C = new THREE.Vector3(0, 1.45, 3.4);   // Mittelpunkt des Tafel-Bogens (Standort)
   const R = 3.7;                                // Bogenradius
-  const SERIF = '"Instrument Serif", Georgia, serif', SANS = 'Geist, system-ui, sans-serif', MONO = '"Geist Mono", ui-monospace, monospace';
+  const SERIF = '"Barlow Condensed", "Arial Narrow", sans-serif', SANS = 'Barlow, system-ui, sans-serif', MONO = '"IBM Plex Mono", ui-monospace, monospace';
 
   /* ---------- Horizont-Kuppel ---------- */
   const dome = new THREE.Mesh(new THREE.SphereGeometry(120, 48, 24), new THREE.ShaderMaterial({
@@ -154,14 +154,14 @@
       (s.positionen || []).slice(0, 4).forEach((p, k) => { const y = 500 + k * 62; g.font = `400 30px ${SANS}`; g.fillStyle = '#ecebe8'; g.fillText(String(p.titel || p.symbol || '').slice(0, 34), 56, y); g.textAlign = 'right'; g.fillStyle = (p.gv || 0) >= 0 ? '#5ef0b1' : '#ff7a6b'; g.fillText((p.gv >= 0 ? '+' : '') + chf(p.gv || 0), CW - 56, y); g.textAlign = 'left'; });
     } else {
       g.fillText('Saxo', 56, 180);
-      g.font = `400 italic 120px ${SERIF}`; g.fillStyle = '#f4f3f0'; g.fillText('nicht verbunden', 50, 320);
+      g.font = `400 120px ${SERIF}`; g.fillStyle = '#f4f3f0'; g.fillText('nicht verbunden', 50, 320);
       g.font = `400 34px ${SANS}`; g.fillStyle = 'rgba(236,235,232,.6)'; g.fillText('Antippen, um das Konto zu verbinden.', 56, 400);
     }
     if (sum) { g.fillStyle = 'rgba(255,255,255,.1)'; g.fillRect(56, CH - 150, CW - 112, 1); g.font = `400 28px ${SANS}`; g.fillStyle = 'rgba(236,235,232,.5)'; g.fillText('App-Portfolio netto', 56, CH - 90); g.textAlign = 'right'; g.font = `400 44px ${SANS}`; g.fillStyle = '#ecebe8'; g.fillText('CHF ' + chf(sum.netto || 0), CW - 56, CH - 86); g.textAlign = 'left'; }
   }
   function drawOrder(g) {
     frame(g, 2, 'Order');
-    g.font = `400 italic 112px ${SERIF}`; g.fillStyle = '#f4f3f0'; g.fillText('Kaufen.', 50, 260); g.fillText('Verkaufen.', 50, 380);
+    g.font = `400 112px ${SERIF}`; g.fillStyle = '#f4f3f0'; g.fillText('Kaufen.', 50, 260); g.fillText('Verkaufen.', 50, 380);
     g.font = `400 34px ${SANS}`; g.fillStyle = 'rgba(236,235,232,.62)';
     ['Über Ihr Saxo-Konto, mit Kostenprüfung vorab.', 'Gesendet wird nur nach Ihrer ausdrücklichen', 'Bestätigung.'].forEach((t, k) => g.fillText(t, 56, 490 + k * 50));
     const on = !!(window.__saxoSnap); g.font = `500 24px ${MONO}`; g.fillStyle = on ? '#5ef0b1' : '#ff9a5a'; g.fillText(on ? '● SAXO BEREIT' : '○ SAXO NICHT VERBUNDEN', 56, CH - 70);
@@ -191,7 +191,7 @@
     const d = data.wx; if (!d) { g.font = `400 34px ${SANS}`; g.fillStyle = 'rgba(236,235,232,.5)'; g.fillText('Lade Wetter …', 56, 200); return; }
     const j = d.jetzt, t0 = (d.tage || [])[0];
     g.font = `200 220px ${SANS}`; g.fillStyle = '#f4f3f0'; g.fillText(Math.round(j.temp) + '°', 44, 340);
-    g.font = `400 italic 64px ${SERIF}`; g.fillText(j.wetter, 470, 250);
+    g.font = `400 64px ${SERIF}`; g.fillText(j.wetter, 470, 250);
     g.font = `400 30px ${SANS}`; g.fillStyle = 'rgba(236,235,232,.55)'; g.fillText(`${t0 ? `H ${Math.round(t0.max)}°  T ${Math.round(t0.min)}°  · ` : ''}Wind ${Math.round(j.wind)} km/h`, 474, 310);
     const hs = (d.stunden || []).map(s => s.temp); if (hs.length > 1) {
       const mn = Math.min(...hs) - .5, mx = Math.max(...hs) + .5, x0 = 56, x1 = CW - 56, y0 = CH - 80, y1 = 470;
@@ -204,7 +204,7 @@
   }
   function drawImmo(g) {
     frame(g, 6, 'Immobilien');
-    g.font = `400 italic 104px ${SERIF}`; g.fillStyle = '#f4f3f0'; g.fillText('Eigenheim', 50, 250); g.fillText('& Rendite', 50, 360);
+    g.font = `400 104px ${SERIF}`; g.fillStyle = '#f4f3f0'; g.fillText('Eigenheim', 50, 250); g.fillText('& Rendite', 50, 360);
     const b = (J.BRIEF || []).find(x => /Festhypo/.test(x.n));
     if (b) { g.font = `400 30px ${SANS}`; g.fillStyle = 'rgba(236,235,232,.5)'; g.fillText('Festhypothek 10 J. (Richtwert, Stand 18.11.2026)', 56, 470); g.font = `300 70px ${SANS}`; g.fillStyle = '#ecebe8'; g.fillText(b.v, 56, 556); g.font = `400 28px ${SANS}`; g.fillStyle = 'rgba(236,235,232,.5)'; g.fillText(b.i, 56, 606); }
     g.font = `500 24px ${MONO}`; g.fillStyle = '#ff9a5a'; g.fillText('TRAGBARKEIT · RENDITE · SIMULATION', 56, CH - 70);

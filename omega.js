@@ -107,6 +107,29 @@ window.JARVIS = {
   level() { try { if (!conv) return 0; return mode === 'speaking' ? conv.getOutputVolume() : conv.getInputVolume(); } catch (e) { return 0; } },
 };
 
+// Beim Öffnen (Tipp auf „Eintreten“) begrüsst JARVIS den Master – mit echten Live-Fakten
+let greeted = false;
+async function greetFacts() {
+  const now = new Date();
+  const f = [`Uhrzeit Zürich ${now.toLocaleTimeString('de-CH', { timeZone: 'Europe/Zurich', hour: '2-digit', minute: '2-digit' })}, ${now.toLocaleDateString('de-CH', { timeZone: 'Europe/Zurich', weekday: 'long' })}.`];
+  try {
+    const ctl = new AbortController(); const t = setTimeout(() => ctl.abort(), 2500);
+    const r = await fetch('https://jarvis-iota-weld.vercel.app/api/weather?q=Z%C3%BCrich', { signal: ctl.signal }); clearTimeout(t);
+    const d = await r.json(); if (d.jetzt) f.push(`Wetter Zürich: ${Math.round(d.jetzt.temp)} Grad, ${d.jetzt.wetter}.`);
+  } catch (e) {}
+  const L = window.__lageData; if (L && L.hotspots) f.push(`Weltlage: ${L.total} Schlagzeilen, Brennpunkte ${L.hotspots.filter(h => !h.watch).map(h => h.n).join(', ')}.`);
+  if (window.__saxoSnap && window.__saxoSnap.gesamtwert != null) f.push(`Saxo-Konto: ${Math.round(window.__saxoSnap.gesamtwert)} ${window.__saxoSnap.waehrung || ''}.`);
+  return f.join(' ');
+}
+async function greetOnOpen() {
+  if (greeted) return; greeted = true;
+  const facts = greetFacts();
+  await startVoice(); if (!conv) return;
+  const txt = await facts;
+  setTimeout(() => { try { sayT = Date.now(); conv && conv.sendUserMessage('[START] ' + txt); } catch (e) {} }, 300);
+}
+document.getElementById('boot')?.addEventListener('click', () => { greetOnOpen(); }, { once: true });
+
 /* ============ CLIENT TOOLS (called by the agent) ============ */
 const VIEWS = { core: 'cockpit', office: 'office', weltlage: 'lage', news: 'lage', finance: 'port', market: 'invest', realestate: 'calc', world: 'welt', hub: 'hub' };
 const clientTools = {
