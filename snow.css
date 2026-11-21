@@ -361,3 +361,39 @@ label.f span{font:400 12px var(--sans)!important;text-transform:none!important;l
 body.far .sm-pin .sm-lab{opacity:0;transform:translateY(4px);pointer-events:none}
 .sm-pin .sm-lab{transition:opacity .5s,transform .5s var(--ez)}
 #sitMap .maplibregl-ctrl-attrib-button{background-color:rgba(255,255,255,.8)!important;border-radius:50%}
+
+/* ===== LIVE-ATLAS ===== */
+#atlasBar{position:fixed;right:14px;top:calc(318px + env(safe-area-inset-top));z-index:6;display:flex;flex-direction:column;gap:6px;padding:6px;border-radius:24px;background:rgba(255,255,255,.72);border:.5px solid var(--line2);backdrop-filter:var(--blur);-webkit-backdrop-filter:var(--blur);box-shadow:var(--sh);opacity:0;pointer-events:none;transition:opacity .6s,transform .6s var(--ez);transform:translateX(20px)}
+body.v-cockpit.entered #atlasBar{opacity:1;pointer-events:auto;transform:none}
+body.menu #atlasBar{opacity:0;pointer-events:none}
+#atlasBar button{position:relative;width:40px;height:40px;border-radius:50%;border:none;background:transparent;color:var(--mut2);display:grid;place-items:center;cursor:pointer;transition:background .3s,color .3s}
+#atlasBar button.on{background:var(--ink);color:#fff}
+#atlasBar svg{width:18px;height:18px;fill:none;stroke:currentColor;stroke-width:1.5;stroke-linecap:round;stroke-linejoin:round}
+#atlasBar button[data-k="planes"] svg{fill:currentColor;stroke:none}
+#atlasBar b{position:absolute;right:-4px;top:-4px;min-width:18px;height:16px;padding:0 4px;border-radius:9px;background:var(--ch);color:#fff;font:600 9px/16px var(--sans);text-align:center}
+#atlasBar b:empty{display:none}
+#atlasBar span{position:absolute;right:50px;top:50%;transform:translateY(-50%);white-space:nowrap;font:500 11px var(--sans);color:var(--ink);background:rgba(255,255,255,.9);padding:4px 8px;border-radius:8px;opacity:0;pointer-events:none;transition:opacity .3s}
+#atlasBar button:hover span{opacity:1}
+body.pan #atlasBar{opacity:.0;pointer-events:none}
+@media (min-width:900px){body.pan #atlasBar{opacity:1;pointer-events:auto;right:414px}}
+.sh-time{right:72px}
+@media (max-width:899px){.sh-head{right:70px}}
+.fl-al{font:400 13px var(--sans);color:var(--mut);margin:-8px 0 12px}
+.fl-may{color:#fff;background:#c4553f;padding:2px 8px;border-radius:6px;letter-spacing:.1em}
+.fl-rt{display:grid;grid-template-columns:auto 1fr auto;align-items:center;gap:12px;margin:4px 0 6px}
+.fl-rt b{display:block;font:300 26px var(--sans);color:var(--ink);letter-spacing:.02em}
+.fl-rt span{display:block;font:400 11px var(--sans);color:var(--mut);max-width:110px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.fl-rt>div:last-child{text-align:right}
+.fl-bar{position:relative;height:2px;background:var(--line2);border-radius:2px}
+.fl-bar i{position:absolute;left:0;top:0;bottom:0;background:var(--ch);border-radius:2px}
+.fl-bar em{position:absolute;top:50%;width:10px;height:10px;margin:-5px 0 0 -5px;border-radius:50%;background:var(--ch);box-shadow:0 0 0 4px var(--chs)}
+.fl-eta{font:400 12.5px var(--sans);color:var(--ink2);margin-bottom:12px}
+.fl-dt{list-style:none;margin:4px 0 8px}
+.fl-dt li{display:flex;justify-content:space-between;gap:12px;padding:9px 0;border-bottom:.5px solid var(--line2);font:400 13.5px var(--sans)}
+.fl-dt li span{color:var(--mut)}.fl-dt li b{font-weight:500;color:var(--ink);text-align:right}
+.fl-link{display:inline-block;margin:8px 0;padding:10px 16px;border-radius:999px;background:var(--ink);color:#fff;text-decoration:none;font:500 13px var(--sans)}
+.cm-play video{display:block;width:100%;aspect-ratio:16/10;object-fit:cover;background:#000}
+.cm-cap small{display:block;font:400 11px var(--sans);color:var(--mut);margin-top:2px}
+.cm-live{font:600 11px var(--sans);color:#c4553f;white-space:nowrap;animation:osBlink 1.6s infinite}
+@media (min-width:900px){#atlasBar{top:calc(80px + env(safe-area-inset-top))}}
+body.deep #atlasBar,body.far #atlasBar{top:calc(80px + env(safe-area-inset-top))}

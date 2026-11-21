@@ -109,6 +109,7 @@
     <aside id="shCams" class="sh-pan"><button class="sd-x" id="cmX" aria-label="Schliessen">${I.x}</button>
       <div class="sd-k">Live-Kameras · öffentlich</div><h2 id="cmH">In der Nähe</h2>
       <div id="cmPlay" class="cm-play" hidden></div><div class="ob-src" id="cmSrc"></div><ul id="cmL" class="cm-l"></ul></aside>
+    <aside id="shFlight" class="sh-pan"><button class="sd-x" id="flX" aria-label="Schliessen">${I.x}</button><div id="flBody"></div></aside>
     <div class="sh-rt" id="shRt" hidden><input id="shRtIn" placeholder="Wohin, Master?" enterkeyhint="go"><button id="shRtGo">Los</button><button id="shRtX" aria-label="Schliessen">${I.x}</button></div>`;
   document.body.appendChild(hud);
 
@@ -247,7 +248,7 @@
   function arc(a, b, n = 48) { const pts = []; for (let i = 0; i <= n; i++) { const t = i / n; pts.push([a[0] + (b[0] - a[0]) * t, a[1] + (b[1] - a[1]) * t + Math.sin(Math.PI * t) * Math.min(12, Math.hypot(b[0] - a[0], b[1] - a[1]) * .18)]); } return pts; }
 
   /* ---------- Panels ---------- */
-  const PANS = ['#shDossier', '#shOrbit', '#shNews', '#shCams'];
+  const PANS = ['#shDossier', '#shOrbit', '#shNews', '#shCams', '#shFlight'];
   function openPan(id) { PANS.forEach(p => { if (p !== id) $(p).classList.remove('on'); }); $(id).classList.add('on'); document.body.classList.add('pan'); }
   function closePan(id) { $(id).classList.remove('on'); if (!PANS.some(p => $(p).classList.contains('on'))) document.body.classList.remove('pan'); }
 
@@ -473,24 +474,31 @@
         $('#cmSrc').innerHTML = e.code === 'no_key' ? 'Die Kameras brauchen noch einen kostenlosen Windy-Schlüssel. JARVIS sagt Ihnen, wie.' : 'Kameradienst gerade nicht erreichbar.';
       }
     }
-    function play(id) {
-      const c = list.find(x => String(x.id) === String(id)); if (!c) return;
+    let refreshT = 0;
+    function show(c, fly = true) {
+      if (!c) return; clearInterval(refreshT);
+      if (!$('#shCams').classList.contains('on')) { openPan('#shCams'); document.body.classList.add('camsp'); }
+      $('#cmH').textContent = c.titel || 'Kamera';
       const P = $('#cmPlay'); P.hidden = false;
       const src = c.live || c.tag || c.player;
-      P.innerHTML = src ? `<iframe src="${esc(src)}" allow="autoplay; fullscreen" allowfullscreen loading="lazy"></iframe><div class="cm-cap"><b>${esc(c.titel)}</b>${c.link ? `<a href="${esc(c.link)}" target="_blank" rel="noopener">Quelle öffnen</a>` : ''}</div>`
-        : `${c.bild ? `<img src="${esc(c.bild)}" alt="">` : ''}<div class="cm-cap"><b>${esc(c.titel)}</b>${c.link ? `<a href="${esc(c.link)}" target="_blank" rel="noopener">Quelle öffnen</a>` : ''}</div>`;
-      map && map.flyTo({ center: [c.lon, c.lat], zoom: Math.max(map.getZoom(), 12), pitch: 50, duration: 2200, padding: innerWidth >= 900 ? { right: 400 } : { bottom: innerHeight * .5 } });
+      const cap = `<div class="cm-cap"><div><b>${esc(c.titel)}</b>${c.ort ? `<small>${esc(c.ort)}</small>` : ''}</div>${c.link ? `<a href="${esc(c.link)}" target="_blank" rel="noopener">Quelle öffnen</a>` : `<span class="cm-live">● live</span>`}</div>`;
+      if (c.video) P.innerHTML = `<video src="${esc(c.video)}" autoplay muted loop playsinline poster="${esc(c.bild || '')}"></video>` + cap;
+      else if (c.refresh && c.bild) { P.innerHTML = `<img id="cmImg" src="${esc(c.bild)}${c.bild.includes('?') ? '&' : '?'}t=${Date.now()}" alt="">` + cap; refreshT = setInterval(() => { const im = $('#cmImg'); if (!im || !$('#shCams').classList.contains('on')) return clearInterval(refreshT); const n = new Image(); n.onload = () => { im.src = n.src; }; n.src = c.bild + (c.bild.includes('?') ? '&' : '?') + 't=' + Date.now(); }, c.refresh); }
+      else if (src) P.innerHTML = `<iframe src="${esc(src)}" allow="autoplay; fullscreen" allowfullscreen loading="lazy"></iframe>` + cap;
+      else P.innerHTML = `${c.bild ? `<img src="${esc(c.bild)}" alt="">` : ''}` + cap;
+      if (fly && map) map.flyTo({ center: [c.lon, c.lat], zoom: Math.max(map.getZoom(), 14), pitch: 50, duration: 2200, padding: innerWidth >= 900 ? { right: 400 } : { bottom: innerHeight * .5 } });
     }
+    function play(id) { show(list.find(x => String(x.id) === String(id))); }
     function toggle() {
       if ($('#shCams').classList.contains('on')) { close(); return; }
       openPan('#shCams'); document.body.classList.add('camsp');
       if (map && map.getZoom() < 5) { map.flyTo({ center: HOME, zoom: 8.5, pitch: 30, duration: 2600 }); setTimeout(load, 2700); } else load();
     }
-    function close() { closePan('#shCams'); document.body.classList.remove('camsp'); const P = $('#cmPlay'); P.hidden = true; P.innerHTML = ''; }
+    function close() { clearInterval(refreshT); closePan('#shCams'); document.body.classList.remove('camsp'); const P = $('#cmPlay'); P.hidden = true; P.innerHTML = ''; }
     $('#cmX').onclick = close;
     $('#cmL').onclick = e => { const li = e.target.closest('li[data-id]'); if (li) play(li.dataset.id); };
     const bindMap = () => { if (!map) return; map.on('click', 'cams', e => { const f = e.features && e.features[0]; if (f) play(f.properties.id); }); map.on('moveend', () => { if (document.body.classList.contains('camsp')) load(); }); };
-    return { toggle, load, bindMap, play, async summary(lat = HOME[1], lon = HOME[0], r = 50) { try { const d = await near(lat, lon, r); return { anzahl: (d.kameras || []).length, kameras: (d.kameras || []).slice(0, 8).map(c => ({ titel: c.titel, ort: c.ort, live: !!c.live })) }; } catch (e) { return { fehler: e.code === 'no_key' ? 'Windy-Schlüssel fehlt' : 'nicht erreichbar' }; } } };
+    return { toggle, load, bindMap, play, show, async summary(lat = HOME[1], lon = HOME[0], r = 50) { try { const d = await near(lat, lon, r); return { anzahl: (d.kameras || []).length, kameras: (d.kameras || []).slice(0, 8).map(c => ({ titel: c.titel, ort: c.ort, live: !!c.live })) }; } catch (e) { return { fehler: e.code === 'no_key' ? 'Windy-Schlüssel fehlt' : 'nicht erreichbar' }; } } };
   })();
   window.CAMS = CAMS;
 
@@ -513,7 +521,7 @@
   })();
   window.NEWS = NEWS;
 
-  window.SIT = { scan, dossier, showRoute, funk, goHome, flyBern, getMap: () => (ready ? map : null), get view() { return view; }, get lage() { return live.lage; } };
+  window.SIT = { scan, dossier, showRoute, funk, goHome, flyBern, openPan, closePan, getMap: () => (ready ? map : null), get view() { return view; }, get lage() { return live.lage; } };
 
   /* ---------- Takt ---------- */
   (function loop(t) {
