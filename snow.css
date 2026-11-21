@@ -396,4 +396,4 @@ body.pan #atlasBar{opacity:.0;pointer-events:none}
 .cm-cap small{display:block;font:400 11px var(--sans);color:var(--mut);margin-top:2px}
 .cm-live{font:600 11px var(--sans);color:#c4553f;white-space:nowrap;animation:osBlink 1.6s infinite}
 @media (min-width:900px){#atlasBar{top:calc(80px + env(safe-area-inset-top))}}
-body.deep #atlasBar,body.far #atlasBar{top:calc(80px + env(safe-area-inset-top))}
+body.deep #atlasBar,body.pan #atlasBar{top:calc(80px + env(safe-area-inset-top))}
