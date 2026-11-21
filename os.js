@@ -334,7 +334,7 @@
     if (map) map.flyTo({ center: [HOME[0] + 6, HOME[1] - (innerWidth < 900 ? 6 : 2)], zoom: innerWidth < 900 ? 3.4 : 3.9, pitch: 28, bearing: -6, duration: 5200, curve: 1.6, essential: true });
     setTimeout(() => { funk('BRENNPUNKTE MARKIERT · SCHWEIZ & KURDISTAN UNTER DAUERBEOBACHTUNG', 'warn'); idleSpin = true; }, 5600);
   }
-  $('#boot') && $('#boot').addEventListener('click', () => setTimeout(intro, 300), { once: true });
+  $('#boot') && $('#boot').addEventListener('click', () => setTimeout(intro, 3400), { once: true });
 
   /* Weltlage-Werkzeug der Stimme */
   window.LAGE = {
@@ -453,7 +453,7 @@
   })();
   window.NEWS = NEWS;
 
-  window.SIT = { scan, dossier, showRoute, funk, goHome };
+  window.SIT = { scan, dossier, showRoute, funk, goHome, getMap: () => (ready ? map : null), get view() { return view; }, get lage() { return live.lage; } };
 
   /* ---------- Takt ---------- */
   (function loop(t) {
