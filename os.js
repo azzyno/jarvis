@@ -1,8 +1,9 @@
 /* =====================================================================
-   JARVIS · LAGEZENTRUM
-   Echtes Satellitenbild der Erde (Esri World Imagery, NASA Black Marble),
-   Live-Brennpunkte aus den Nachrichten, Dossiers je Land, Routen mit
-   Live-Verkehr, Funkverkehr, Sprach-Steuerung. Keine erfundenen Daten.
+   JARVIS · SCHNEE
+   Schneeweisse Oberfläche, Navy-Schrift, Champagner-Akzente.
+   Echte 3D-Erde (Esri World Imagery bis Strassenebene, NASA Black Marble
+   nicht mehr), Live-Brennpunkte, Satelliten (SGP4), Nachrichten, Routen,
+   öffentliche Live-Kameras (Windy). Keine erfundenen Daten.
    ===================================================================== */
 (function () {
   const J = window.J; if (!J) return;
@@ -12,29 +13,30 @@
   const V = () => window.JARVIS || {};
   const HOME = [7.4474, 46.9480];
   const ZTZ = 'Europe/Zurich';
+  const NAVY = '#1c2b4a', CH = '#a8864a';
   try { Object.defineProperty(window, '__holoPause', { get: () => true, set() {}, configurable: true }); } catch (e) {}
 
   /* =====================================================================
      GRUNDGERÜST
      ===================================================================== */
-  document.body.insertAdjacentHTML('afterbegin', '<div id="sitMap"></div><div id="osScan"></div><div id="osCurtain"></div>');
-  const brand = $('.brand'); if (brand) { brand.innerHTML = 'JARVIS<small>// LAGEZENTRUM BERN</small>'; brand.onclick = () => J.go('cockpit'); }
+  document.body.insertAdjacentHTML('afterbegin', '<div id="sitMap"></div><div id="osCurtain"></div>');
+  const brand = $('.brand'); if (brand) { brand.innerHTML = 'JARVIS'; brand.onclick = () => J.go('cockpit'); }
   document.body.insertAdjacentHTML('beforeend', `
-    <button id="osMenuBtn" aria-label="Menü"><span id="osMenuT">MENÜ</span><i></i></button>
-    <nav id="osMenu" aria-label="Hauptmenü"><div class="mh">◤ ZUGRIFF · STUFE MASTER</div><ol>
-      <li><a data-v="cockpit"><span>01</span><b>Lagezentrum</b><em id="mm1">SATELLIT LIVE</em></a></li>
-      <li><a data-v="office"><span>02</span><b>Atrium</b><em>3D-BÜRO</em></a></li>
-      <li><a data-v="port"><span>03</span><b>Finanzen</b><em id="mm3"></em></a></li>
-      <li><a data-v="invest"><span>04</span><b>Märkte</b><em id="mm4"></em></a></li>
-      <li><a data-v="calc"><span>05</span><b>Immobilien</b><em>RECHNER</em></a></li>
-      <li><a data-v="hub"><span>06</span><b>Verbindungen</b><em id="mm6"></em></a></li>
-    </ol><div class="mf"><span>KANAL GESICHERT</span><span id="mmT"></span></div></nav>
+    <button id="osMenuBtn" aria-label="Menü"><i></i></button>
+    <nav id="osMenu" aria-label="Hauptmenü"><ol>
+      <li><a data-v="cockpit"><b>Erde</b><em id="mm1">Live</em></a></li>
+      <li><a data-v="office"><b>Atrium</b><em>3D-Büro</em></a></li>
+      <li><a data-v="port"><b>Finanzen</b><em id="mm3"></em></a></li>
+      <li><a data-v="invest"><b>Märkte</b><em id="mm4"></em></a></li>
+      <li><a data-v="calc"><b>Immobilien</b><em>Rechner</em></a></li>
+      <li><a data-v="hub"><b>Verbindungen</b><em id="mm6"></em></a></li>
+    </ol><div class="mf"><span>Bern</span><span id="mmT"></span></div></nav>
     <button id="osFab" aria-label="Mit JARVIS sprechen" data-s="off"><i></i></button>`);
-  $$('#osMenu a').forEach((a, i) => a.style.transitionDelay = (.1 + i * .05) + 's');
-  const menu = on => { document.body.classList.toggle('menu', on); $('#osMenuT').textContent = on ? 'SCHLIESSEN' : 'MENÜ'; if (on) refreshMenu(); };
+  $$('#osMenu a').forEach((a, i) => a.style.transitionDelay = (.08 + i * .05) + 's');
+  const menu = on => { document.body.classList.toggle('menu', on); if (on) refreshMenu(); };
   $('#osMenuBtn').onclick = () => menu(!document.body.classList.contains('menu'));
   $('#osMenu').onclick = e => { const a = e.target.closest('a[data-v]'); if (!a) return; menu(false); setTimeout(() => J.go(a.dataset.v), 250); };
-  const talk = () => { const s = V().state; if (!s || s === 'off' || s === 'err') V().start && V().start(); else { V().end && V().end(); funk('VERBINDUNG ZU JARVIS GETRENNT', 'dim'); } };
+  const talk = () => { const s = V().state; if (!s || s === 'off' || s === 'err') V().start && V().start(); else V().end && V().end(); };
   $('#osFab').onclick = talk;
 
   /* Vermögen gehört zu Finanzen */
@@ -42,75 +44,82 @@
   ['.kpis', '.cols'].forEach(s => { const el = ck.querySelector(':scope > ' + s); if (el && port) port.appendChild(el); });
 
   /* Seitenköpfe */
-  const HEAD = { port: ['03', 'FINANZEN', 'Konto · Order · Vermögen'], invest: ['04', 'MÄRKTE', 'Kurse · Analyse'], calc: ['05', 'IMMOBILIEN', 'Tragbarkeit · Rendite'], hub: ['06', 'VERBINDUNGEN', 'Systeme · Schlüssel'], welt: ['—', 'WELTKARTE', 'Vermögen nach Ländern'], jarvis: ['—', 'DIALOG', 'Gespräch'] };
+  const HEAD = { port: ['Finanzen', 'Konto, Order und Vermögen'], invest: ['Märkte', 'Kurse und Analyse'], calc: ['Immobilien', 'Tragbarkeit und Rendite'], hub: ['Verbindungen', 'Systeme und Schlüssel'], welt: ['Weltkarte', 'Vermögen nach Ländern'], jarvis: ['Dialog', 'Gespräch mit JARVIS'] };
   function head(v) {
     const h = HEAD[v], sec = document.getElementById('v-' + v); if (!h || !sec) return;
     let el = sec.querySelector('.os-ph'); if (!el) { el = document.createElement('div'); el.className = 'os-ph'; sec.prepend(el); }
-    el.innerHTML = `<span>◤ DOSSIER ${h[0]} // ${h[2].toUpperCase()}</span><h1 data-t="${h[1]}">${h[1]}</h1><div class="ln"></div>`;
-    scramble(el.querySelector('h1'));
-  }
-  const GLY = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789#%&/<>';
-  function scramble(el, txt) {
-    txt = txt || el.dataset.t || el.textContent; let f = 0; const N = 18;
-    const step = () => { el.textContent = txt.split('').map((c, i) => c === ' ' ? ' ' : i < (f / N) * txt.length ? c : GLY[(Math.random() * GLY.length) | 0]).join(''); if (++f <= N) requestAnimationFrame(step); else el.textContent = txt; };
-    step();
+    el.innerHTML = `<span>${h[1]}</span><h1>${h[0]}</h1>`;
   }
   const EMO = /^\s*(?:[\p{Extended_Pictographic}←-⇿⌀-⏿■-➿⬀-⯿]️?‍?)+\s*/u;
   function clean(root = document) {
-    root.querySelectorAll('button, .btn').forEach(b => { if (b.closest('#sitHud,#osMenu')) return; const t = [...b.childNodes].find(n => n.nodeType === 3 && n.textContent.trim()); if (t && EMO.test(t.textContent)) t.textContent = t.textContent.replace(EMO, ''); });
+    root.querySelectorAll('button, .btn, option').forEach(b => { if (b.closest('#sitHud,#osMenu')) return; const t = [...b.childNodes].find(n => n.nodeType === 3 && n.textContent.trim()); if (t && EMO.test(t.textContent)) t.textContent = t.textContent.replace(EMO, ''); });
     root.querySelectorAll('.card[style*="border-color"]').forEach(c => c.style.removeProperty('border-color'));
     root.querySelectorAll('.ct[style*="color"]').forEach(c => c.style.removeProperty('color'));
+    root.querySelectorAll('.ct').forEach(c => { const t = [...c.childNodes].find(n => n.nodeType === 3 && n.textContent.trim()); if (t && t.textContent === t.textContent.toUpperCase()) t.textContent = t.textContent.trim().toLowerCase().replace(/^./, m => m.toUpperCase()) + ' '; });
   }
 
   /* =====================================================================
      HUD
      ===================================================================== */
+  const I = {
+    globe: '<svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="9"/><path d="M3 12h18M12 3c3 3.5 3 14.5 0 18M12 3c-3 3.5-3 14.5 0 18"/></svg>',
+    sat: '<svg viewBox="0 0 24 24"><path d="M13 7l4-4 4 4-4 4zM3 17l4-4 4 4-4 4zM9 9l6 6M8.5 15.5l7-7"/><path d="M16 21a5 5 0 0 0 5-5"/></svg>',
+    search: '<svg viewBox="0 0 24 24"><circle cx="11" cy="11" r="7"/><path d="M20 20l-4-4"/></svg>',
+    route: '<svg viewBox="0 0 24 24"><circle cx="6" cy="19" r="2"/><circle cx="18" cy="5" r="2"/><path d="M8 19h7a3.5 3.5 0 0 0 0-7H9a3.5 3.5 0 0 1 0-7h7"/></svg>',
+    wx: '<svg viewBox="0 0 24 24"><path d="M7 18a4 4 0 0 1-.5-8 6 6 0 0 1 11.5 2 3 3 0 0 1 0 6z"/></svg>',
+    cam: '<svg viewBox="0 0 24 24"><rect x="3" y="7" width="13" height="10" rx="2"/><path d="M16 11l5-3v8l-5-3"/></svg>',
+    home: '<svg viewBox="0 0 24 24"><path d="M12 21s-7-6.2-7-11a7 7 0 0 1 14 0c0 4.8-7 11-7 11z"/><circle cx="12" cy="10" r="2.5"/></svg>',
+    mic: '<svg viewBox="0 0 24 24"><rect x="9" y="3" width="6" height="11" rx="3"/><path d="M5 11a7 7 0 0 0 14 0M12 18v3"/></svg>',
+    send: '<svg viewBox="0 0 24 24"><path d="M5 12h14M13 6l6 6-6 6"/></svg>',
+    x: '<svg viewBox="0 0 24 24"><path d="M6 6l12 12M18 6L6 18"/></svg>',
+  };
   const hud = document.createElement('div'); hud.id = 'sitHud';
   hud.innerHTML = `
-    <svg class="sh-frame" preserveAspectRatio="none" viewBox="0 0 100 100"><path d="M0 6V0h6M94 0h6v6M100 94v6h-6M6 100H0v-6" vector-effect="non-scaling-stroke"/></svg>
-    <div class="sh-class"><i></i>STRENG VERTRAULICH · NUR FÜR DEN MASTER<i></i></div>
     <div class="sh-head">
-      <div class="sh-greet"><small id="shGr">—</small><b>MASTER</b></div>
-      <div class="sh-clock"><b id="shClock">--:--:--</b><small id="shDate">—</small></div>
+      <div class="sh-greet"><small id="shGr">Guten Tag,</small><b>Master.</b><span id="shDate">—</span></div>
     </div>
+    <div class="sh-time" id="shClock">--:--</div>
     <div class="sh-strip" id="shStrip"></div>
-    <div class="sh-funk"><div class="sh-h"><span>▸ FUNKVERKEHR</span><span id="shFunkN">—</span></div><div id="shFunk"></div></div>
-    <aside id="shDossier"><button class="sd-x" id="sdX" aria-label="Schliessen">✕</button>
-      <div class="sd-k" id="sdK">DOSSIER</div><h2 id="sdH">—</h2>
-      <div class="sd-st"><div><span>MELDUNGEN</span><b id="sdN">—</b></div><div><span>ORTSZEIT</span><b id="sdT">—</b></div><div><span>WETTER</span><b id="sdW">—</b></div></div>
-      <ul id="sdL"></ul><div class="sd-v" id="sdV"><i></i><i></i><i></i><i></i><span>JARVIS BRIEFT</span></div></aside>
+    <div class="sh-funk"><div id="shFunk"></div></div>
+    <aside id="shDossier" class="sh-pan"><button class="sd-x" id="sdX" aria-label="Schliessen">${I.x}</button>
+      <div class="sd-k" id="sdK">Dossier</div><h2 id="sdH">—</h2>
+      <div class="sd-st"><div><span>Meldungen</span><b id="sdN">—</b></div><div><span>Ortszeit</span><b id="sdT">—</b></div><div><span>Wetter</span><b id="sdW">—</b></div></div>
+      <ul id="sdL"></ul><div class="sd-v" id="sdV"><i></i><i></i><i></i><i></i><span>JARVIS spricht</span></div></aside>
     <div class="sh-dock">
-      <div class="sh-voice"><button id="shTalk" aria-label="Mit JARVIS sprechen"><i></i></button><canvas id="shWave"></canvas>
-        <div class="sv-t"><span id="shState">BEREIT · KERN ANTIPPEN</span><p id="shSay">—</p></div></div>
-      <form id="shAsk" autocomplete="off"><span>›</span><input id="shAskIn" placeholder="BEFEHL AN JARVIS …" enterkeyhint="send"><button type="submit">SENDEN</button></form>
       <div class="sh-cmds" id="shCmds">
-        <button data-c="scan">◎ WELTLAGE</button><button data-c="orbit">✦ SATELLITEN</button><button data-c="news">⌕ NEWS-SUCHE</button><button data-r="Genf">⌖ ROUTE GENF</button><button data-c="route">⌖ ROUTE …</button>
-        <button data-c="wx">☁ WETTER</button><button data-v="port">▣ KONTO</button><button data-v="office">◧ BÜRO</button><button data-c="home">⌂ BERN</button>
+        <button data-c="scan">${I.globe}<span>Weltlage</span></button><button data-c="orbit">${I.sat}<span>Satelliten</span></button>
+        <button data-c="cams">${I.cam}<span>Kameras</span></button><button data-c="news">${I.search}<span>Suche</span></button>
+        <button data-c="route">${I.route}<span>Route</span></button><button data-c="wx">${I.wx}<span>Wetter</span></button><button data-c="home">${I.home}<span>Bern</span></button>
       </div>
+      <div class="sh-voice">
+        <form id="shAsk" autocomplete="off"><input id="shAskIn" placeholder="Was wünschen Sie, Master?" enterkeyhint="send"><button type="submit" aria-label="Senden">${I.send}</button></form>
+        <button id="shTalk" aria-label="Mit JARVIS sprechen">${I.mic}<canvas id="shWave"></canvas></button>
+      </div>
+      <div class="sv-t"><span id="shState">Bereit</span><p id="shSay"></p></div>
     </div>
-    <aside id="shOrbit" class="sh-pan"><button class="sd-x" id="obX" aria-label="Schliessen">✕</button>
-      <div class="sd-k">◤ ORBIT · SATELLITENÜBERWACHUNG</div><h2 id="obH">ÜBER BERN</h2>
-      <div class="sd-st"><div><span>VERFOLGT</span><b id="obN">—</b></div><div><span>ÜBER IHNEN</span><b id="obO">—</b></div><div><span>MILITÄR</span><b id="obM">—</b></div></div>
-      <div class="ob-f" id="obF"><button data-f="">ALLE</button><button data-f="Militär">MILITÄR</button><button data-f="Navigation">NAVIGATION</button><button data-f="Wetter">WETTER</button><button data-f="Raumstation">STATIONEN</button><button data-l="starlink">+ STARLINK</button><button data-l="active">+ ALLE AKTIVEN</button></div>
+    <aside id="shOrbit" class="sh-pan"><button class="sd-x" id="obX" aria-label="Schliessen">${I.x}</button>
+      <div class="sd-k">Satelliten · live berechnet</div><h2 id="obH">Über Bern</h2>
+      <div class="sd-st"><div><span>Verfolgt</span><b id="obN">—</b></div><div><span>Über Ihnen</span><b id="obO">—</b></div><div><span>Militärisch</span><b id="obM">—</b></div></div>
+      <div class="ob-f" id="obF"><button data-f="" class="on">Alle</button><button data-f="Militär">Militär</button><button data-f="Navigation">Navigation</button><button data-f="Wetter">Wetter</button><button data-f="Raumstation">Stationen</button><button data-l="starlink">+ Starlink</button><button data-l="active">+ Alle aktiven</button></div>
       <div id="obSel" class="ob-sel" hidden></div><ul id="obL" class="ob-l"></ul><div class="ob-src" id="obSrc"></div></aside>
-    <aside id="shNews" class="sh-pan"><button class="sd-x" id="nwX" aria-label="Schliessen">✕</button>
-      <div class="sd-k">◤ NACHRICHTEN · WELTWEIT</div><h2 id="nwH">SUCHE</h2>
-      <form id="nwF" class="nw-f"><input id="nwQ" placeholder="THEMA, PERSON, FIRMA …" enterkeyhint="search"><button>SUCHEN</button></form>
+    <aside id="shNews" class="sh-pan"><button class="sd-x" id="nwX" aria-label="Schliessen">${I.x}</button>
+      <div class="sd-k">Nachrichten · weltweit</div><h2 id="nwH">Suche</h2>
+      <form id="nwF" class="nw-f"><input id="nwQ" placeholder="Thema, Person, Firma" enterkeyhint="search"><button>Suchen</button></form>
       <div class="ob-src" id="nwSrc"></div><ul id="nwL" class="ob-l nw-l"></ul></aside>
-    <div class="sh-rt" id="shRt" hidden><span>⌖ ZIEL</span><input id="shRtIn" placeholder="ORT EINGEBEN" enterkeyhint="go"><button id="shRtGo">LOS</button><button id="shRtX">✕</button></div>`;
+    <aside id="shCams" class="sh-pan"><button class="sd-x" id="cmX" aria-label="Schliessen">${I.x}</button>
+      <div class="sd-k">Live-Kameras · öffentlich</div><h2 id="cmH">In der Nähe</h2>
+      <div id="cmPlay" class="cm-play" hidden></div><div class="ob-src" id="cmSrc"></div><ul id="cmL" class="cm-l"></ul></aside>
+    <div class="sh-rt" id="shRt" hidden><input id="shRtIn" placeholder="Wohin, Master?" enterkeyhint="go"><button id="shRtGo">Los</button><button id="shRtX" aria-label="Schliessen">${I.x}</button></div>`;
   document.body.appendChild(hud);
 
-  /* ---------- Funkverkehr ---------- */
+  /* ---------- Protokoll (dezent, nur letzte Zeile) ---------- */
   const funkEl = $('#shFunk'); let funkQ = [], typing = false;
   function funk(t, cls = '') { funkQ.push([t, cls]); if (!typing) nextFunk(); }
   function nextFunk() {
     const it = funkQ.shift(); if (!it) { typing = false; return; } typing = true;
     const [t, cls] = it; const d = document.createElement('div'); d.className = 'fl ' + cls;
-    const ts = new Date().toLocaleTimeString('de-CH', { timeZone: ZTZ });
-    d.innerHTML = `<em>${ts}</em><span></span>`; funkEl.appendChild(d); while (funkEl.children.length > 6) funkEl.firstChild.remove();
-    const sp = d.querySelector('span'); let i = 0; const s = String(t);
-    const tick = () => { sp.textContent = s.slice(0, i += 2); if (i < s.length) setTimeout(tick, 14); else setTimeout(nextFunk, 220); };
-    tick();
+    d.textContent = String(t); funkEl.innerHTML = ''; funkEl.appendChild(d);
+    setTimeout(nextFunk, 2600);
   }
 
   /* ---------- Uhr, Begrüssung, Statusleiste ---------- */
@@ -120,98 +129,106 @@
   ];
   const tzp = tz => { const o = {}; new Intl.DateTimeFormat('en-GB', { timeZone: tz, weekday: 'short', hour: '2-digit', minute: '2-digit', hour12: false }).formatToParts(new Date()).forEach(p => o[p.type] = p.value); return o; };
   const isOpen = m => { const p = tzp(m.tz); if (p.weekday === 'Sat' || p.weekday === 'Sun') return false; const t = (+p.hour % 24) * 60 + +p.minute; return t >= m.o && t < m.e; };
-  const live = { wx: null, lage: null, saxo: null };
+  const live = { wx: null, lage: null, saxo: null, over: null };
   function tick() {
     const now = new Date();
-    $('#shClock').textContent = now.toLocaleTimeString('de-CH', { timeZone: ZTZ });
-    $('#shDate').textContent = now.toLocaleDateString('de-CH', { timeZone: ZTZ, weekday: 'long', day: '2-digit', month: 'long' }).toUpperCase() + ' · UTC+1';
+    $('#shClock').textContent = now.toLocaleTimeString('de-CH', { timeZone: ZTZ, hour: '2-digit', minute: '2-digit' });
+    const wx = live.wx ? ` · Bern ${Math.round(live.wx.jetzt.temp)}°, ${live.wx.jetzt.wetter}` : ' · Bern';
+    $('#shDate').textContent = now.toLocaleDateString('de-CH', { timeZone: ZTZ, weekday: 'long', day: 'numeric', month: 'long' }) + wx;
     const h = +now.toLocaleString('en-GB', { timeZone: ZTZ, hour: '2-digit', hour12: false });
-    $('#shGr').textContent = h < 5 ? 'NOCH WACH,' : h < 11 ? 'GUTEN MORGEN,' : h < 17 ? 'GUTEN TAG,' : h < 22 ? 'GUTEN ABEND,' : 'GUTE NACHT,';
+    $('#shGr').textContent = h < 5 ? 'Noch wach,' : h < 11 ? 'Guten Morgen,' : h < 17 ? 'Guten Tag,' : h < 22 ? 'Guten Abend,' : 'Gute Nacht,';
     $('#mmT').textContent = $('#shClock').textContent;
   }
   function strip() {
+    const open = MK.filter(isOpen);
     const it = [];
-    if (live.wx) it.push(`<span><b>BERN</b> ${Math.round(live.wx.jetzt.temp)}° ${esc(String(live.wx.jetzt.wetter).toUpperCase())}</span>`);
-    MK.forEach(m => it.push(`<span><i class="${isOpen(m) ? 'on' : ''}"></i><b>${m.n}</b> ${isOpen(m) ? 'OFFEN' : 'ZU'}</span>`));
-    if (live.lage) it.push(`<span><b>MELD</b> ${live.lage.total}</span>`);
-    it.push(`<span><i class="${live.saxo ? 'on' : 'off'}"></i><b>SAXO</b> ${live.saxo && live.saxo.gesamtwert != null ? Math.round(live.saxo.gesamtwert).toLocaleString('de-CH') + ' ' + esc(live.saxo.waehrung || '') : live.saxo ? 'VERBUNDEN' : 'AUS'}</span>`);
+    it.push(`<button class="sc" data-c="wx"><span>Bern</span><b>${live.wx ? Math.round(live.wx.jetzt.temp) + '°' : '—'}</b></button>`);
+    it.push(`<button class="sc" data-v="invest"><span>Börsen</span><b>${open.length ? open.length + ' offen' : 'zu'}</b></button>`);
+    it.push(`<button class="sc" data-c="orbit"><span>Über Ihnen</span><b>${live.over != null ? live.over : '—'}</b></button>`);
+    it.push(`<button class="sc" data-c="scan"><span>Meldungen</span><b>${live.lage ? live.lage.total.toLocaleString('de-CH') : '—'}</b></button>`);
+    if (live.saxo && live.saxo.gesamtwert != null) it.push(`<button class="sc" data-v="port"><span>Saxo</span><b>${Math.round(live.saxo.gesamtwert).toLocaleString('de-CH')}</b></button>`);
     $('#shStrip').innerHTML = it.join('');
   }
+  $('#shStrip').onclick = e => { const b = e.target.closest('button'); if (!b) return; if (b.dataset.v) return J.go(b.dataset.v); cmd(b.dataset.c); };
 
   /* ---------- Stimme ---------- */
-  const STXT = { off: 'BEREIT · KERN ANTIPPEN', busy: 'VERBINDE MIT JARVIS …', err: 'FEHLER · ERNEUT ANTIPPEN', listening: 'JARVIS HÖRT ZU', speaking: 'JARVIS SPRICHT', muted: 'MIKROFON STUMM' };
+  const STXT = { off: 'Bereit', busy: 'Verbinde …', err: 'Fehler, bitte erneut tippen', listening: 'JARVIS hört zu', speaking: 'JARVIS spricht', muted: 'Mikrofon stumm' };
   $('#shTalk').onclick = talk;
-  const ask = t => { t = String(t || '').trim(); if (!t) return; funk('MASTER › ' + t.toUpperCase(), 'me'); V().send && V().send(t); };
+  const ask = t => { t = String(t || '').trim(); if (!t) return; V().send && V().send(t); $('#shSay').textContent = '„' + t + '“'; };
   $('#shAsk').onsubmit = e => { e.preventDefault(); const i = $('#shAskIn'); ask(i.value); i.value = ''; i.blur(); };
   const greet = $('#greet');
-  if (greet) new MutationObserver(() => { if (!['listening', 'speaking', 'muted'].includes(V().state)) return; $('#shSay').textContent = greet.textContent; funk('JARVIS › ' + greet.textContent, 'jv'); }).observe(greet, { childList: true, characterData: true, subtree: true });
+  if (greet) new MutationObserver(() => { if (!['listening', 'speaking', 'muted'].includes(V().state)) return; $('#shSay').textContent = greet.textContent; }).observe(greet, { childList: true, characterData: true, subtree: true });
   let lastS = '';
   function voiceUI() {
     const st = V().state || 'off'; if (st === lastS) return; lastS = st;
     hud.dataset.v = st; $('#osFab').dataset.s = st; $('#shState').textContent = STXT[st] || STXT.off;
-    if (st === 'listening' && lastS !== 'speaking') {}
     document.body.classList.toggle('voice-speaking', st === 'speaking'); document.body.classList.toggle('voice-listening', st === 'listening');
+    document.body.classList.toggle('voice-on', !['off', 'err'].includes(st));
   }
-  const wave = $('#shWave'), wx = wave.getContext('2d'); const hist = new Array(48).fill(0);
+  const wave = $('#shWave'), wx = wave.getContext('2d');
   function waveFrame(T) {
     const dpr = Math.min(2, devicePixelRatio || 1), w = wave.clientWidth, h = wave.clientHeight; if (!w) return;
     if (wave.width !== w * dpr) { wave.width = w * dpr; wave.height = h * dpr; }
     let l = 0; try { l = V().level ? V().level() : 0; } catch (e) {}
-    const st = V().state || 'off'; const base = st === 'off' ? .04 + .03 * Math.sin(T * 2) : st === 'busy' ? .3 * Math.abs(Math.sin(T * 6)) : 0;
-    hist.push(Math.min(1, l * 3 + base)); hist.shift();
+    const st = V().state || 'off';
     wx.setTransform(dpr, 0, 0, dpr, 0, 0); wx.clearRect(0, 0, w, h);
-    const bw = w / hist.length; const col = st === 'speaking' ? '255,61,61' : st === 'listening' ? '79,216,255' : '200,220,235';
-    hist.forEach((v, i) => { const bh = Math.max(1, v * h * .9); wx.fillStyle = `rgba(${col},${.25 + v * .75})`; wx.fillRect(i * bw + 1, (h - bh) / 2, bw - 2, bh); });
+    if (st === 'off' || st === 'err') return;
+    const amp = Math.min(1, l * 3 + (st === 'busy' ? .25 : .06));
+    wx.strokeStyle = st === 'speaking' ? CH : 'rgba(255,255,255,.9)'; wx.lineWidth = 1.4;
+    for (let k = 0; k < 2; k++) { wx.beginPath(); for (let x = 0; x <= w; x += 2) { const y = h / 2 + Math.sin(x / w * Math.PI * 3 + T * (4 + k * 2)) * amp * h * .32 * Math.sin(x / w * Math.PI); x ? wx.lineTo(x, y) : wx.moveTo(x, y); } wx.globalAlpha = k ? .45 : 1; wx.stroke(); }
+    wx.globalAlpha = 1;
   }
 
   /* =====================================================================
-     SATELLITENKARTE
+     ERDE · echte Satellitenbilder bis Strassenebene
      ===================================================================== */
   let map = null, ready = false, markers = [], homeMk = null, idleSpin = true, lastUser = 0, introDone = false;
   const ML = window.maplibregl;
   function makeMap() {
-    if (!ML) { $('#sitMap').classList.add('nomap'); funk('KARTENMODUL NICHT GELADEN', 'warn'); return; }
+    if (!ML) { $('#sitMap').classList.add('nomap'); return; }
     try {
       map = new ML.Map({
-        container: 'sitMap', attributionControl: { compact: true }, center: [20, 25], zoom: 1.15, maxPitch: 70, fadeDuration: 200, renderWorldCopies: false,
+        container: 'sitMap', attributionControl: { compact: true }, center: [HOME[0] - 60, 10], zoom: .1, maxZoom: 19.5, maxPitch: 75, fadeDuration: 250, renderWorldCopies: false,
         style: {
           version: 8, projection: { type: 'globe' },
           sources: {
             sat: { type: 'raster', tiles: ['https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}'], tileSize: 256, maxzoom: 19, attribution: 'Satellit: Esri, Maxar, Earthstar Geographics' },
-            night: { type: 'raster', tiles: ['https://gibs.earthdata.nasa.gov/wmts/epsg3857/best/VIIRS_Black_Marble/default/2016-01-01/GoogleMapsCompatible_Level8/{z}/{y}/{x}.png'], tileSize: 256, maxzoom: 8, attribution: 'Nachtlichter: NASA Black Marble' },
             lab: { type: 'raster', tiles: ['https://server.arcgisonline.com/ArcGIS/rest/services/Reference/World_Boundaries_and_Places/MapServer/tile/{z}/{y}/{x}'], tileSize: 256, maxzoom: 19 },
+            road: { type: 'raster', tiles: ['https://server.arcgisonline.com/ArcGIS/rest/services/Reference/World_Transportation/MapServer/tile/{z}/{y}/{x}'], tileSize: 256, maxzoom: 19 },
             links: { type: 'geojson', data: { type: 'FeatureCollection', features: [] } },
             route: { type: 'geojson', data: { type: 'FeatureCollection', features: [] } },
             sats: { type: 'geojson', data: { type: 'FeatureCollection', features: [] } },
             strack: { type: 'geojson', data: { type: 'FeatureCollection', features: [] } },
+            cams: { type: 'geojson', data: { type: 'FeatureCollection', features: [] } },
           },
           layers: [
-            { id: 'bg', type: 'background', paint: { 'background-color': '#010307' } },
-            { id: 'sat', type: 'raster', source: 'sat', paint: { 'raster-saturation': -0.25, 'raster-brightness-max': 0.92, 'raster-contrast': 0.12 } },
-            { id: 'night', type: 'raster', source: 'night', paint: { 'raster-opacity': ['interpolate', ['linear'], ['zoom'], 0, 0.6, 3.5, 0.35, 5.5, 0] } },
-            { id: 'lab', type: 'raster', source: 'lab', paint: { 'raster-opacity': ['interpolate', ['linear'], ['zoom'], 1, 0.5, 6, 0.85] } },
-            { id: 'links-glow', type: 'line', source: 'links', paint: { 'line-color': ['get', 'c'], 'line-width': 6, 'line-opacity': 0.12, 'line-blur': 4 } },
-            { id: 'links', type: 'line', source: 'links', paint: { 'line-color': ['get', 'c'], 'line-width': 1.3, 'line-opacity': 0.85, 'line-dasharray': [2, 2] } },
-            { id: 'route-glow', type: 'line', source: 'route', layout: { 'line-cap': 'round' }, paint: { 'line-color': '#4fd8ff', 'line-width': 10, 'line-opacity': 0.2, 'line-blur': 6 } },
-            { id: 'route', type: 'line', source: 'route', layout: { 'line-cap': 'round' }, paint: { 'line-color': '#4fd8ff', 'line-width': 2.4 } },
-            { id: 'strack', type: 'line', source: 'strack', paint: { 'line-color': '#ffffff', 'line-width': 1.2, 'line-opacity': .7, 'line-dasharray': [1, 2] } },
-            { id: 'sats-glow', type: 'circle', source: 'sats', filter: ['any', ['==', ['get', 'sel'], 1], ['==', ['get', 'over'], 1]], paint: { 'circle-radius': ['case', ['==', ['get', 'sel'], 1], 14, 7], 'circle-color': ['get', 'col'], 'circle-opacity': .22, 'circle-blur': .8 } },
-            { id: 'sats', type: 'circle', source: 'sats', paint: { 'circle-radius': ['interpolate', ['linear'], ['zoom'], 1, ['*', ['get', 'r'], 1.5], 6, ['*', ['get', 'r'], 2.2]], 'circle-color': ['get', 'col'], 'circle-stroke-color': '#000', 'circle-stroke-width': .5, 'circle-opacity': .95 } },
+            { id: 'bg', type: 'background', paint: { 'background-color': '#fbfbfd' } },
+            { id: 'sat', type: 'raster', source: 'sat', paint: { 'raster-saturation': 0.05, 'raster-brightness-min': 0.04, 'raster-contrast': 0.04, 'raster-fade-duration': 250 } },
+            { id: 'road', type: 'raster', source: 'road', minzoom: 11, paint: { 'raster-opacity': ['interpolate', ['linear'], ['zoom'], 11, 0, 13, 0.6] } },
+            { id: 'lab', type: 'raster', source: 'lab', paint: { 'raster-opacity': ['interpolate', ['linear'], ['zoom'], 1, 0.35, 6, 0.8] } },
+            { id: 'links', type: 'line', source: 'links', paint: { 'line-color': ['get', 'c'], 'line-width': 1.2, 'line-opacity': 0.85 } },
+            { id: 'route-c', type: 'line', source: 'route', layout: { 'line-cap': 'round', 'line-join': 'round' }, paint: { 'line-color': '#ffffff', 'line-width': 7, 'line-opacity': .9 } },
+            { id: 'route', type: 'line', source: 'route', layout: { 'line-cap': 'round', 'line-join': 'round' }, paint: { 'line-color': CH, 'line-width': 3.2 } },
+            { id: 'strack', type: 'line', source: 'strack', paint: { 'line-color': '#ffffff', 'line-width': 1.4, 'line-opacity': .85, 'line-dasharray': [2, 2] } },
+            { id: 'sats-sel', type: 'circle', source: 'sats', filter: ['==', ['get', 'sel'], 1], paint: { 'circle-radius': 12, 'circle-color': 'rgba(0,0,0,0)', 'circle-stroke-color': '#ffffff', 'circle-stroke-width': 1.5 } },
+            { id: 'sats', type: 'circle', source: 'sats', paint: { 'circle-radius': ['interpolate', ['linear'], ['zoom'], 1, ['*', ['get', 'r'], 1.4], 6, ['*', ['get', 'r'], 2.2]], 'circle-color': ['get', 'col'], 'circle-stroke-color': '#ffffff', 'circle-stroke-width': ['case', ['==', ['get', 'over'], 1], 1.4, .6], 'circle-opacity': .95 } },
+            { id: 'cams', type: 'circle', source: 'cams', paint: { 'circle-radius': ['interpolate', ['linear'], ['zoom'], 4, 4, 12, 8], 'circle-color': NAVY, 'circle-stroke-color': '#ffffff', 'circle-stroke-width': 2 } },
           ],
-          sky: { 'sky-color': '#000000', 'horizon-color': '#0b2a44', 'fog-color': '#010307', 'sky-horizon-blend': 0.6, 'horizon-fog-blend': 0.6, 'fog-ground-blend': 0.4, 'atmosphere-blend': ['interpolate', ['linear'], ['zoom'], 0, 1, 5, 1, 7, 0] },
+          sky: { 'sky-color': '#ffffff', 'horizon-color': '#e4ebf5', 'fog-color': '#fbfbfd', 'sky-horizon-blend': 0.5, 'horizon-fog-blend': 0.7, 'fog-ground-blend': 0.3, 'atmosphere-blend': ['interpolate', ['linear'], ['zoom'], 0, 1, 5, 1, 8, 0] },
         },
       });
-    } catch (e) { $('#sitMap').classList.add('nomap'); funk('3D-GRAFIK NICHT VERFÜGBAR', 'warn'); map = null; return; }
-    map.on('load', () => { ready = true; try { ORBIT.bindMap(); } catch (e) {} setTimeout(() => document.querySelectorAll('.maplibregl-compact-show').forEach(x => x.classList.remove('maplibregl-compact-show')), 4000); funk('SATELLITENVERBINDUNG STEHT · ESRI / NASA', 'ok'); placeHome(); if (live.lage) placeHotspots(); });
+    } catch (e) { $('#sitMap').classList.add('nomap'); map = null; return; }
+    map.on('load', () => { ready = true; try { ORBIT.bindMap(); CAMS.bindMap(); } catch (e) {} setTimeout(() => document.querySelectorAll('.maplibregl-compact-show').forEach(x => x.classList.remove('maplibregl-compact-show')), 3000); placeHome(); if (live.lage) placeHotspots(); });
     ['dragstart', 'zoomstart', 'rotatestart', 'pitchstart'].forEach(ev => map.on(ev, e => { if (e.originalEvent) { lastUser = performance.now(); idleSpin = false; } }));
+    map.on('zoom', () => { const z = map.getZoom(); document.body.classList.toggle('deep', z > 6.5); document.body.classList.toggle('far', z < 2.3); });
     map.on('error', () => {});
   }
   function el(cls, html) { const d = document.createElement('div'); d.className = cls; d.innerHTML = html; return d; }
   function placeHome() {
     if (!map || homeMk) return;
-    const e = el('sm-home', `<i></i><i></i><svg viewBox="0 0 40 40"><path d="M20 2v10M20 28v10M2 20h10M28 20h10"/><circle cx="20" cy="20" r="7"/></svg><div class="sm-lab"><b>BERN</b><span>46.95N 7.45E</span><span id="smHomeWx"></span></div>`);
+    const e = el('sm-home', `<i></i><i></i><b></b><div class="sm-lab"><b>Bern</b><span id="smHomeWx"></span></div>`);
     homeMk = new ML.Marker({ element: e }).setLngLat(HOME).addTo(map);
-    if (live.wx) $('#smHomeWx').textContent = `${Math.round(live.wx.jetzt.temp)}° ${String(live.wx.jetzt.wetter).toUpperCase()}`;
+    if (live.wx) $('#smHomeWx').textContent = `${Math.round(live.wx.jetzt.temp)}°`;
   }
   function placeHotspots() {
     if (!map || !ready || !live.lage) return;
@@ -219,97 +236,94 @@
     const hs = live.lage.hotspots || [], feats = [];
     hs.forEach((h, k) => {
       if (h.lat == null) return;
-      const e = el('sm-pin' + (h.watch ? ' w' : '') + (h.c === 'CH' ? ' l' : ''), `<i></i><i></i><b>${k + 1 <= 3 && !h.watch ? k + 1 : '◎'}</b><div class="sm-lab"><b>${esc(h.n.toUpperCase())}</b><span>${h.count} MELD.</span></div>`);
-      e.querySelectorAll('b,.sm-lab').forEach(x => x.style.animationDelay = (k * .25) + 's');
+      const e = el('sm-pin' + (h.watch ? ' w' : '') + (h.c === 'CH' ? ' l' : ''), `<i></i><b></b><div class="sm-lab"><b>${esc(h.n)}</b><span>${h.count} Meldungen</span></div>`);
+      e.querySelectorAll('b,.sm-lab').forEach(x => x.style.animationDelay = (k * .2) + 's');
       e.addEventListener('click', ev => { ev.stopPropagation(); dossier(h); });
       markers.push(new ML.Marker({ element: e }).setLngLat([h.lon, h.lat]).addTo(map));
-      feats.push({ type: 'Feature', properties: { c: h.watch ? '#4fd8ff' : '#ff3d3d' }, geometry: { type: 'LineString', coordinates: arc(HOME, [h.lon, h.lat]) } });
+      if (h.c !== 'CH') feats.push({ type: 'Feature', properties: { c: h.watch ? '#ffffff' : CH }, geometry: { type: 'LineString', coordinates: arc(HOME, [h.lon, h.lat]) } });
     });
     map.getSource('links').setData({ type: 'FeatureCollection', features: feats });
   }
   function arc(a, b, n = 48) { const pts = []; for (let i = 0; i <= n; i++) { const t = i / n; pts.push([a[0] + (b[0] - a[0]) * t, a[1] + (b[1] - a[1]) * t + Math.sin(Math.PI * t) * Math.min(12, Math.hypot(b[0] - a[0], b[1] - a[1]) * .18)]); } return pts; }
 
+  /* ---------- Panels ---------- */
+  const PANS = ['#shDossier', '#shOrbit', '#shNews', '#shCams'];
+  function openPan(id) { PANS.forEach(p => { if (p !== id) $(p).classList.remove('on'); }); $(id).classList.add('on'); document.body.classList.add('pan'); }
+  function closePan(id) { $(id).classList.remove('on'); if (!PANS.some(p => $(p).classList.contains('on'))) document.body.classList.remove('pan'); }
+
   /* ---------- Dossier ---------- */
   let openH = null;
   function dossier(h, speak = true) {
     openH = h; idleSpin = false;
-    const D = $('#shDossier');
-    $('#sdK').textContent = `◤ DOSSIER · ${h.c}${h.watch ? ' · DAUERBEOBACHTUNG' : ''}`;
-    $('#sdH').textContent = h.n.toUpperCase(); scramble($('#sdH'), h.n.toUpperCase());
+    $('#sdK').textContent = `Dossier · ${h.c}${h.watch ? ' · Dauerbeobachtung' : ''}`;
+    $('#sdH').textContent = h.n;
     $('#sdN').textContent = h.count;
     $('#sdT').textContent = h.tz ? new Date().toLocaleTimeString('de-CH', { timeZone: h.tz, hour: '2-digit', minute: '2-digit' }) : '—';
     $('#sdW').textContent = h.weather && h.weather.temp != null ? `${Math.round(h.weather.temp)}°` : (h.weather && h.weather.jetzt ? `${Math.round(h.weather.jetzt.temp)}°` : '—');
-    $('#sdL').innerHTML = (h.items || []).slice(0, 5).map(it => `<li><span>${esc(it.s || 'QUELLE')}</span>${it.u ? `<a href="${esc(it.u)}" target="_blank" rel="noopener">${esc(it.t)}</a>` : esc(it.t)}</li>`).join('') || `<li>${esc(h.headline || 'Keine Meldungen')}</li>`;
-    D.classList.add('on'); document.body.classList.add('dossier');
-    funk(`ZIEL ERFASST · ${h.n.toUpperCase()} · ${h.count} MELDUNGEN`, h.watch ? 'ok' : 'warn');
-    if (map) map.flyTo({ center: [h.lon, h.lat - (innerWidth < 900 ? 4 : 0)], zoom: h.c === 'KU' ? 5.2 : 4.4, pitch: 35, bearing: -8, duration: 2600, essential: true, padding: innerWidth >= 900 ? { right: 380 } : { bottom: 260 } });
+    $('#sdL').innerHTML = (h.items || []).slice(0, 5).map(it => `<li><span>${esc(it.s || 'Quelle')}</span>${it.u ? `<a href="${esc(it.u)}" target="_blank" rel="noopener">${esc(it.t)}</a>` : esc(it.t)}</li>`).join('') || `<li>${esc(h.headline || 'Keine Meldungen')}</li>`;
+    openPan('#shDossier');
+    if (map) map.flyTo({ center: [h.lon, h.lat], zoom: h.c === 'KU' ? 5.2 : 4.4, pitch: 30, bearing: -8, duration: 2600, essential: true, padding: innerWidth >= 900 ? { right: 400 } : { bottom: innerHeight * .45 } });
     if (speak && window.JARVIS && window.JARVIS.say && ['listening', 'speaking', 'muted'].includes(V().state)) {
       const top = (h.items || []).slice(0, 3).map(x => x.t).join(' | ');
       window.JARVIS.say(`Dossier ${h.n}: ${h.count} Meldungen. Ortszeit ${$('#sdT').textContent}. Wichtigste Schlagzeilen: ${top || h.headline}.`);
     }
   }
-  function closeDossier() { openH = null; $('#shDossier').classList.remove('on'); document.body.classList.remove('dossier'); goHome(); }
+  function closeDossier() { openH = null; closePan('#shDossier'); goHome(); }
   $('#sdX').onclick = closeDossier;
-  function goHome(z = innerWidth < 900 ? 3.4 : 3.9) { if (map) map.flyTo({ center: [HOME[0] + 6, HOME[1] - (innerWidth < 900 ? 6 : 2)], zoom: z, pitch: 28, bearing: -6, duration: 3000, essential: true }); }
+  const homeView = () => innerWidth < 900 ? { center: [HOME[0] + 6, HOME[1] - 18], zoom: .95, padding: { top: 230, bottom: 120, left: 0, right: 0 } } : { center: [HOME[0] + 8, HOME[1] - 12], zoom: 1.7, padding: { top: 120, bottom: 120, left: 380, right: 0 } };
+  function goHome() { if (map) map.flyTo({ ...homeView(), pitch: 0, bearing: 0, duration: 3000, essential: true }); }
+  function flyBern() { if (map) map.flyTo({ center: HOME, zoom: 15.5, pitch: 55, bearing: -20, duration: 5000, curve: 1.8, essential: true }); }
 
-  /* ---------- Lagescan (statt altem Globus) ---------- */
+  /* ---------- Lagescan ---------- */
   let scanId = 0;
   async function scan() {
     const id = ++scanId; if (!live.lage) await loadLage();
     const d = live.lage; if (!d) return;
-    document.body.classList.add('scanning'); setTimeout(() => document.body.classList.remove('scanning'), 2600);
-    funk(`LAGESCAN GESTARTET · ${d.total} SCHLAGZEILEN AUS ${new Set((d.headlines || []).map(x => x.s)).size || '—'} QUELLEN`, 'ok');
-    if (map) map.flyTo({ center: [25, 30], zoom: 1.6, pitch: 0, bearing: 0, duration: 2200 });
-    await wait(2600);
+    if (map) map.flyTo({ center: [25, 25], zoom: 1.4, pitch: 0, bearing: 0, duration: 2200 });
+    await wait(2400);
     for (const h of d.hotspots) { if (id !== scanId) return; dossier(h, false); await wait(5200); }
     if (id === scanId) closeDossier();
   }
   const wait = ms => new Promise(r => setTimeout(r, ms));
 
-  /* ---------- Routen auf der Karte ---------- */
+  /* ---------- Routen ---------- */
   function showRoute(d) {
     if (!d || !d.start || !d.ziel) return;
     const a = [d.start.lon, d.start.lat], b = [d.ziel.lon, d.ziel.lat];
-    funk(`ROUTE ${d.start.name.toUpperCase()} › ${d.ziel.name.toUpperCase()} · ${d.verkehr ? Math.round(d.verkehr.minuten_mit_verkehr) + ' MIN · STAU ' + Math.round(d.verkehr.stau_minuten || 0) + ' MIN' : d.auto ? Math.round(d.auto.minuten_ohne_verkehr) + ' MIN' : ''}`, 'ok');
     if (!map || !ready) return;
-    map.getSource('route').setData({ type: 'FeatureCollection', features: [{ type: 'Feature', properties: {}, geometry: { type: 'LineString', coordinates: arc(a, b, 64) } }] });
-    const bb = new ML.LngLatBounds(a, a).extend(b);
-    map.fitBounds(bb, { padding: { top: 140, bottom: innerHeight * .45, left: 40, right: 40 }, pitch: 40, duration: 2600, maxZoom: 8 });
+    const line = d.geometrie && d.geometrie.length > 1 ? d.geometrie : arc(a, b, 64);
+    map.getSource('route').setData({ type: 'FeatureCollection', features: [{ type: 'Feature', properties: {}, geometry: { type: 'LineString', coordinates: line } }] });
+    const bb = new ML.LngLatBounds(a, a); line.forEach(p => bb.extend(p));
+    map.fitBounds(bb, { padding: { top: 120, bottom: innerHeight * .5, left: 40, right: 40 }, pitch: 45, duration: 2600, maxZoom: 12 });
   }
 
   /* ---------- Daten ---------- */
-  async function loadWx() { try { const r = await fetch(API + 'weather?q=Bern'); if (r.ok) { live.wx = await r.json(); const s = $('#smHomeWx'); if (s) s.textContent = `${Math.round(live.wx.jetzt.temp)}° ${String(live.wx.jetzt.wetter).toUpperCase()}`; strip(); } } catch (e) {} }
+  async function loadWx() { try { const r = await fetch(API + 'weather?q=Bern'); if (r.ok) { live.wx = await r.json(); const s = $('#smHomeWx'); if (s) s.textContent = `${Math.round(live.wx.jetzt.temp)}°`; strip(); tick(); } } catch (e) {} }
   async function loadLage() {
-    try { const d = window.__lageData && window.__lageData.hotspots ? window.__lageData : await (await fetch(API + 'news')).json(); window.__lageData = live.lage = d;
-      $('#shFunkN').textContent = `${d.total} MELD.`; strip(); placeHotspots(); } catch (e) { funk('NACHRICHTENDIENST NICHT ERREICHBAR', 'warn'); }
+    try { const d = window.__lageData && window.__lageData.hotspots ? window.__lageData : await (await fetch(API + 'news')).json(); window.__lageData = live.lage = d; strip(); placeHotspots(); } catch (e) {}
   }
   const hasSaxo = () => { try { return !!(JSON.parse(localStorage.getItem('omega-saxo') || 'null') || {}).token; } catch (e) { return false; } };
   async function loadSx() { if (!hasSaxo()) { live.saxo = null; strip(); return; } try { window.__saxoRefresh && await window.__saxoRefresh(); } catch (e) {} live.saxo = window.__saxoSnap || { gesamtwert: null }; strip(); }
   function refreshMenu() {
     const open = MK.filter(isOpen).length;
-    $('#mm4').textContent = open ? `${open} BÖRSEN OFFEN` : 'ALLE BÖRSEN ZU';
-    $('#mm3').textContent = live.saxo && live.saxo.gesamtwert != null ? `${Math.round(live.saxo.gesamtwert).toLocaleString('de-CH')} ${live.saxo.waehrung || ''}` : hasSaxo() ? 'SAXO VERBUNDEN' : 'SAXO AUS';
-    $('#mm6').textContent = hasSaxo() ? 'SAXO · STIMME · VERKEHR' : 'SAXO AUS';
+    $('#mm4').textContent = open ? `${open} Börsen offen` : 'Börsen zu';
+    $('#mm3').textContent = live.saxo && live.saxo.gesamtwert != null ? `${Math.round(live.saxo.gesamtwert).toLocaleString('de-CH')} ${live.saxo.waehrung || ''}` : hasSaxo() ? 'Saxo verbunden' : 'Saxo aus';
+    $('#mm6').textContent = hasSaxo() ? 'Alles verbunden' : 'Saxo aus';
     $$('#osMenu a').forEach(a => a.classList.toggle('on', a.dataset.v === view));
   }
-  // Funkverkehr mit echten Schlagzeilen füttern
-  let fi = 0;
-  setInterval(() => { if (view !== 'cockpit' || document.hidden || typing) return; const hl = live.lage && live.lage.headlines; if (!hl || !hl.length) return; const x = hl[fi++ % hl.length]; funk(`${x.c ? x.c + ' · ' : ''}${String(x.t).toUpperCase()}${x.s ? ' — ' + String(x.s).toUpperCase() : ''}`, 'dim'); }, 7000);
 
   /* ---------- Befehle ---------- */
-  $('#shCmds').onclick = e => {
-    const b = e.target.closest('button'); if (!b) return;
-    if (b.dataset.v) return J.go(b.dataset.v);
-    if (b.dataset.r) return route(b.dataset.r);
-    const c = b.dataset.c;
+  function cmd(c) {
     if (c === 'scan') scan();
-    if (c === 'home') { closeDossier(); }
+    if (c === 'home') { closeDossier(); flyBern(); }
     if (c === 'wx') window.TRAVEL && window.TRAVEL.weather('Bern');
     if (c === 'route') { $('#shRt').hidden = false; $('#shRtIn').focus(); }
     if (c === 'orbit') ORBIT.toggle();
     if (c === 'news') NEWS.open();
-  };
-  const route = z => { z = String(z || '').trim(); if (!z || !window.TRAVEL) return; funk('BERECHNE ROUTE › ' + z.toUpperCase(), ''); window.TRAVEL.route(z).catch(err => funk('ROUTE FEHLGESCHLAGEN · ' + err.message, 'warn')); };
+    if (c === 'cams') CAMS.toggle();
+  }
+  $('#shCmds').onclick = e => { const b = e.target.closest('button'); if (!b) return; if (b.dataset.v) return J.go(b.dataset.v); cmd(b.dataset.c); };
+  const route = z => { z = String(z || '').trim(); if (!z || !window.TRAVEL) return; window.TRAVEL.route(z).catch(() => {}); };
   $('#shRtGo').onclick = () => { route($('#shRtIn').value); $('#shRt').hidden = true; $('#shRtIn').value = ''; };
   $('#shRtIn').onkeydown = e => { if (e.key === 'Enter') $('#shRtGo').click(); };
   $('#shRtX').onclick = () => { $('#shRt').hidden = true; };
@@ -327,14 +341,15 @@
   });
   document.body.classList.add('v-cockpit');
 
-  /* ---------- Einstieg: Anflug auf Bern ---------- */
+  /* ---------- Einstieg: Anflug aus dem All auf Bern ---------- */
   function intro() {
     if (introDone) return; introDone = true; idleSpin = false;
-    funk('AUTHENTIFIZIERUNG · MASTER BESTÄTIGT', 'ok');
-    if (map) map.flyTo({ center: [HOME[0] + 6, HOME[1] - (innerWidth < 900 ? 6 : 2)], zoom: innerWidth < 900 ? 3.4 : 3.9, pitch: 28, bearing: -6, duration: 5200, curve: 1.6, essential: true });
-    setTimeout(() => { funk('BRENNPUNKTE MARKIERT · SCHWEIZ & KURDISTAN UNTER DAUERBEOBACHTUNG', 'warn'); idleSpin = true; }, 5600);
+    document.body.classList.add('entered');
+    if (map) map.flyTo({ ...homeView(), pitch: 0, bearing: 0, duration: 4200, curve: 1.4, essential: true });
+    setTimeout(() => { idleSpin = true; }, 4400);
+    setTimeout(() => { try { ORBIT.start(true); } catch (e) {} }, 5200);
   }
-  $('#boot') && $('#boot').addEventListener('click', () => setTimeout(intro, 3400), { once: true });
+  $('#boot') && $('#boot').addEventListener('click', () => setTimeout(intro, 900), { once: true });
 
   /* Weltlage-Werkzeug der Stimme */
   window.LAGE = {
@@ -346,8 +361,8 @@
   /* =====================================================================
      ORBIT · Satelliten live (CelesTrak + SGP4 im Browser)
      ===================================================================== */
-  const OBS = { latitude: HOME[1] * Math.PI / 180, longitude: HOME[0] * Math.PI / 180, height: .41 };
-  const TYPE_COL = { 'Militär': '#ff3d3d', 'Navigation': '#ffb020', 'Wetter': '#4fd8ff', 'Raumstation': '#ffffff', 'Starlink': '#7e93a3', 'OneWeb': '#7e93a3', 'Erdbeobachtung': '#3dffa0', 'Sonstige': '#b7d7ea' };
+  const OBS = { latitude: HOME[1] * Math.PI / 180, longitude: HOME[0] * Math.PI / 180, height: .54 };
+  const TYPE_COL = { 'Militär': '#c4553f', 'Navigation': CH, 'Wetter': '#5b86c2', 'Raumstation': '#ffffff', 'Starlink': '#c9cfdb', 'OneWeb': '#c9cfdb', 'Erdbeobachtung': '#5f9e80', 'Sonstige': '#e8e3d6' };
   function typeOf(s) {
     const n = s.n.toUpperCase(), g = s.g;
     if (g === 'stations' || /^(ISS|CSS|TIANHE|TIANGONG|WENTIAN|MENGTIAN)\b/.test(n)) return 'Raumstation';
@@ -359,13 +374,13 @@
     return 'Sonstige';
   }
   const ORBIT = (() => {
-    let on = false, sats = [], loaded = new Set(), timer = 0, filt = '', sel = null, meta = null, last = null;
+    let on = false, sats = [], loaded = new Set(), timer = 0, filt = '', sel = null, last = null;
     const lib = () => window.satellite;
     async function load(groups) {
       const r = await fetch(API + 'sats?g=' + groups); const d = await r.json(); if (!r.ok) throw new Error(d.error || r.status);
       const S = lib(); const have = new Set(sats.map(x => x.id));
       for (const s of d.sats) { if (have.has(s.id)) continue; try { const rec = S.twoline2satrec(s.l1, s.l2); const t = typeOf(s); sats.push({ id: s.id, n: s.n, g: s.g, rec, t, col: TYPE_COL[t] }); } catch (e) {} }
-      groups.split(',').forEach(g => loaded.add(g)); meta = d; $('#obSrc').textContent = `QUELLE: ${d.quelle} · STAND ${new Date(d.stand).toLocaleTimeString('de-CH', { timeZone: ZTZ, hour: '2-digit', minute: '2-digit' })}`;
+      groups.split(',').forEach(g => loaded.add(g)); $('#obSrc').textContent = `Quelle: ${d.quelle} · Stand ${new Date(d.stand).toLocaleTimeString('de-CH', { timeZone: ZTZ, hour: '2-digit', minute: '2-digit' })}`;
       return d;
     }
     function compute(now = new Date()) {
@@ -387,9 +402,11 @@
     function render() {
       const c = compute(); if (!c) return;
       if (map && ready) map.getSource('sats').setData({ type: 'FeatureCollection', features: c.feats });
+      if (live.over !== c.over.length) { live.over = c.over.length; strip(); }
       $('#obN').textContent = c.n.toLocaleString('de-CH'); $('#obO').textContent = c.over.length; $('#obM').textContent = c.mil;
-      $('#obL').innerHTML = c.over.slice(0, 40).map(s => `<li data-id="${s.id}" class="${sel === s.id ? 'on' : ''}"><i style="background:${s.col}"></i><b>${esc(s.n)}</b><span>${esc(s.t.toUpperCase())} · ${Math.round(s.h)} KM · ${Math.round(s.el)}° HOCH</span></li>`).join('') || '<li><span>GERADE KEIN SATELLIT DIESER AUSWAHL HÖHER ALS 10° ÜBER BERN</span></li>';
-      if (sel) { const s = sats.find(x => x.id === sel); if (s) $('#obSel').innerHTML = `<b>${esc(s.n)}</b><span>NORAD ${s.id} · ${esc(s.t.toUpperCase())}</span><div class="sd-st"><div><span>HÖHE</span><b>${Math.round(s.h)} km</b></div><div><span>TEMPO</span><b>${(s.v * 3600).toLocaleString('de-CH', { maximumFractionDigits: 0 })} km/h</b></div><div><span>VON BERN</span><b>${Math.round(s.el)}°</b></div></div><small>POSITION ${s.lat.toFixed(2)}° ${s.lon.toFixed(2)}° · RICHTUNG ${Math.round(s.az)}°</small>`; }
+      if (!$('#shOrbit').classList.contains('on')) return;
+      $('#obL').innerHTML = c.over.slice(0, 40).map(s => `<li data-id="${s.id}" class="${sel === s.id ? 'on' : ''}"><i style="background:${s.col}"></i><b>${esc(s.n)}</b><span>${esc(s.t)} · ${Math.round(s.h).toLocaleString('de-CH')} km · ${Math.round(s.el)}° hoch</span></li>`).join('') || '<li><span>Gerade kein Satellit dieser Auswahl höher als 10° über Bern.</span></li>';
+      if (sel) { const s = sats.find(x => x.id === sel); if (s) $('#obSel').innerHTML = `<b>${esc(s.n)}</b><span>NORAD ${s.id} · ${esc(s.t)}</span><div class="sd-st"><div><span>Höhe</span><b>${Math.round(s.h).toLocaleString('de-CH')} km</b></div><div><span>Tempo</span><b>${(s.v * 3600).toLocaleString('de-CH', { maximumFractionDigits: 0 })} km/h</b></div><div><span>Von Bern</span><b>${Math.round(s.el)}°</b></div></div>`; }
     }
     function track(s) {
       const S = lib(), pts = []; const t0 = Date.now();
@@ -398,29 +415,28 @@
       map && map.getSource('strack').setData({ type: 'FeatureCollection', features: segs.filter(x => x.length > 1).map(c => ({ type: 'Feature', properties: {}, geometry: { type: 'LineString', coordinates: c } })) });
     }
     function select(id) {
-      sel = id; const s = sats.find(x => x.id === id); if (!s) return; $('#obSel').hidden = false; render(); track(s);
-      funk(`ZIEL ERFASST · ${s.n} · ${s.t.toUpperCase()} · ${Math.round(s.h)} KM`, s.t === 'Militär' ? 'warn' : 'ok');
-      map && map.flyTo({ center: [s.lon, s.lat], zoom: Math.max(2.4, map.getZoom() > 4 ? 3 : map.getZoom()), duration: 1800 });
+      sel = id; const s = sats.find(x => x.id === id); if (!s) return;
+      if (!$('#shOrbit').classList.contains('on')) openPan('#shOrbit');
+      $('#obSel').hidden = false; render(); track(s);
+      map && map.flyTo({ center: [s.lon, s.lat], zoom: Math.min(3, Math.max(2, map.getZoom())), duration: 1800 });
     }
-    async function start() {
+    async function start(quiet) {
       if (!lib()) { await new Promise(r => { window.addEventListener('sat-ready', r, { once: true }); setTimeout(r, 4000); }); }
-      if (!lib()) { funk('BAHNRECHNER NICHT GELADEN', 'warn'); return; }
-      on = true; document.body.classList.add('orbit'); $('#shOrbit').classList.add('on');
-      if (!sats.length) { funk('ORBIT · LADE ÖFFENTLICHEN SATELLITENKATALOG …', ''); try { await load('stations,visual,military,gps-ops,galileo,glo-ops,beidou,weather'); } catch (e) { funk('SATELLITENKATALOG NICHT ERREICHBAR · ' + e.message, 'warn'); return; } }
-      render(); const c = last; clearInterval(timer); timer = setInterval(() => !document.hidden && render(), sats.length > 3000 ? 3000 : 1000);
-      funk(`ORBIT AKTIV · ${c.n} SATELLITEN VERFOLGT · ${c.over.length} GERADE ÜBER BERN`, 'ok');
-      const iss = sats.find(s => /^ISS/.test(s.n)); if (iss && iss.h) funk(`ISS · ${Math.round(iss.h)} KM HÖHE · ${iss.lat.toFixed(1)}° ${iss.lon.toFixed(1)}°`, 'dim');
-      if (map) map.flyTo({ center: [HOME[0], HOME[1] - 8], zoom: 1.7, pitch: 0, bearing: 0, duration: 2400 });
+      if (!lib()) return;
+      on = true; if (!quiet) openPan('#shOrbit');
+      if (!sats.length) { try { await load('stations,visual,military,gps-ops,galileo,glo-ops,beidou,weather'); } catch (e) { $('#obSrc').textContent = 'Satellitenkatalog gerade nicht erreichbar.'; return; } }
+      render(); clearInterval(timer); timer = setInterval(() => !document.hidden && render(), sats.length > 3000 ? 3000 : 1000);
+      if (!quiet && map) map.flyTo({ center: [HOME[0], HOME[1] - 8], zoom: 1.7, pitch: 0, bearing: 0, duration: 2400 });
     }
-    function stop() { on = false; clearInterval(timer); document.body.classList.remove('orbit'); $('#shOrbit').classList.remove('on'); sel = null; if (map && ready) { map.getSource('sats').setData({ type: 'FeatureCollection', features: [] }); map.getSource('strack').setData({ type: 'FeatureCollection', features: [] }); } goHome(); }
-    $('#obX').onclick = stop;
+    function panel() { if ($('#shOrbit').classList.contains('on')) { closePan('#shOrbit'); sel = null; $('#obSel').hidden = true; map && ready && map.getSource('strack').setData({ type: 'FeatureCollection', features: [] }); } else start(false); }
+    $('#obX').onclick = () => { closePan('#shOrbit'); sel = null; $('#obSel').hidden = true; map && ready && map.getSource('strack').setData({ type: 'FeatureCollection', features: [] }); goHome(); };
     $('#obL').onclick = e => { const li = e.target.closest('li[data-id]'); if (li) select(li.dataset.id); };
     $('#obF').onclick = async e => { const b = e.target.closest('button'); if (!b) return;
-      if (b.dataset.l) { if (loaded.has(b.dataset.l)) return; b.textContent = 'LÄDT …'; try { const d = await load(b.dataset.l); b.textContent = `✓ ${b.dataset.l.toUpperCase()}`; funk(`${d.total} WEITERE BAHNEN GELADEN (${b.dataset.l.toUpperCase()})`, 'ok'); clearInterval(timer); timer = setInterval(() => !document.hidden && render(), sats.length > 3000 ? 3000 : 1000); render(); } catch (er) { b.textContent = 'FEHLER'; } return; }
+      if (b.dataset.l) { if (loaded.has(b.dataset.l)) return; b.textContent = 'Lädt …'; try { await load(b.dataset.l); b.textContent = '✓ ' + (b.dataset.l === 'active' ? 'Alle aktiven' : 'Starlink'); clearInterval(timer); timer = setInterval(() => !document.hidden && render(), sats.length > 3000 ? 3000 : 1000); render(); } catch (er) { b.textContent = 'Fehler'; } return; }
       filt = b.dataset.f; $$('#obF button[data-f]').forEach(x => x.classList.toggle('on', x === b)); render(); };
     const bindMap = () => { if (!map) return; map.on('click', 'sats', e => { const f = e.features && e.features[0]; if (f) select(f.properties.id); }); map.on('mouseenter', 'sats', () => map.getCanvas().style.cursor = 'pointer'); map.on('mouseleave', 'sats', () => map.getCanvas().style.cursor = ''); };
     return {
-      toggle: () => on ? stop() : start(), start, stop, bindMap,
+      toggle: panel, start, bindMap,
       async summary() {
         if (!sats.length) { try { if (!lib()) await new Promise(r => { window.addEventListener('sat-ready', r, { once: true }); setTimeout(r, 4000); }); await load('stations,visual,military,gps-ops,galileo,glo-ops,beidou,weather'); } catch (e) { return { fehler: 'Satellitenkatalog nicht erreichbar' }; } }
         const c = compute(); if (!c) return { fehler: 'Bahnrechner nicht geladen' }; const iss = sats.find(s => /^ISS/.test(s.n));
@@ -433,45 +449,85 @@
   window.ORBIT = ORBIT;
 
   /* =====================================================================
+     KAMERAS · öffentliche Live-Webcams (Windy Webcams API)
+     ===================================================================== */
+  const CAMS = (() => {
+    let list = [], lastQ = '';
+    async function near(lat, lon, r = 50) {
+      const r0 = await fetch(`${API}webcams?lat=${lat.toFixed(4)}&lon=${lon.toFixed(4)}&r=${Math.round(r)}`); const d = await r0.json();
+      if (!r0.ok) throw Object.assign(new Error(d.error || r0.status), { code: d.code }); return d;
+    }
+    function draw() {
+      if (map && ready) map.getSource('cams').setData({ type: 'FeatureCollection', features: list.map(c => ({ type: 'Feature', properties: { id: c.id }, geometry: { type: 'Point', coordinates: [c.lon, c.lat] } })) });
+      $('#cmL').innerHTML = list.map(c => `<li data-id="${c.id}">${c.bild ? `<img src="${esc(c.bild)}" alt="" loading="lazy">` : '<div class="ph"></div>'}<b>${esc(c.titel)}</b><span>${esc(c.ort || '')}${c.live ? ' · live' : ''}</span></li>`).join('') || '<li class="empty"><span>Hier gibt es keine öffentlichen Kameras. Zoomen Sie an einen anderen Ort.</span></li>';
+    }
+    async function load() {
+      const c = map ? map.getCenter() : { lat: HOME[1], lng: HOME[0] }; const z = map ? map.getZoom() : 8;
+      const r = z > 11 ? 10 : z > 8 ? 30 : z > 5 ? 120 : 250;
+      const q = `${c.lat.toFixed(2)},${c.lng.toFixed(2)},${r}`; if (q === lastQ && list.length) return; lastQ = q;
+      $('#cmSrc').textContent = 'Suche Kameras …';
+      try { const d = await near(c.lat, c.lng, r); list = d.kameras || []; $('#cmH').textContent = d.ort || 'In der Nähe';
+        $('#cmSrc').textContent = `${list.length} Kameras im Umkreis von ${r} km · Quelle: Windy Webcams`; draw();
+      } catch (e) {
+        list = []; draw();
+        $('#cmSrc').innerHTML = e.code === 'no_key' ? 'Die Kameras brauchen noch einen kostenlosen Windy-Schlüssel. JARVIS sagt Ihnen, wie.' : 'Kameradienst gerade nicht erreichbar.';
+      }
+    }
+    function play(id) {
+      const c = list.find(x => String(x.id) === String(id)); if (!c) return;
+      const P = $('#cmPlay'); P.hidden = false;
+      const src = c.live || c.tag || c.player;
+      P.innerHTML = src ? `<iframe src="${esc(src)}" allow="autoplay; fullscreen" allowfullscreen loading="lazy"></iframe><div class="cm-cap"><b>${esc(c.titel)}</b>${c.link ? `<a href="${esc(c.link)}" target="_blank" rel="noopener">Quelle öffnen</a>` : ''}</div>`
+        : `${c.bild ? `<img src="${esc(c.bild)}" alt="">` : ''}<div class="cm-cap"><b>${esc(c.titel)}</b>${c.link ? `<a href="${esc(c.link)}" target="_blank" rel="noopener">Quelle öffnen</a>` : ''}</div>`;
+      map && map.flyTo({ center: [c.lon, c.lat], zoom: Math.max(map.getZoom(), 12), pitch: 50, duration: 2200, padding: innerWidth >= 900 ? { right: 400 } : { bottom: innerHeight * .5 } });
+    }
+    function toggle() {
+      if ($('#shCams').classList.contains('on')) { close(); return; }
+      openPan('#shCams'); document.body.classList.add('camsp');
+      if (map && map.getZoom() < 5) { map.flyTo({ center: HOME, zoom: 8.5, pitch: 30, duration: 2600 }); setTimeout(load, 2700); } else load();
+    }
+    function close() { closePan('#shCams'); document.body.classList.remove('camsp'); const P = $('#cmPlay'); P.hidden = true; P.innerHTML = ''; }
+    $('#cmX').onclick = close;
+    $('#cmL').onclick = e => { const li = e.target.closest('li[data-id]'); if (li) play(li.dataset.id); };
+    const bindMap = () => { if (!map) return; map.on('click', 'cams', e => { const f = e.features && e.features[0]; if (f) play(f.properties.id); }); map.on('moveend', () => { if (document.body.classList.contains('camsp')) load(); }); };
+    return { toggle, load, bindMap, play, async summary(lat = HOME[1], lon = HOME[0], r = 50) { try { const d = await near(lat, lon, r); return { anzahl: (d.kameras || []).length, kameras: (d.kameras || []).slice(0, 8).map(c => ({ titel: c.titel, ort: c.ort, live: !!c.live })) }; } catch (e) { return { fehler: e.code === 'no_key' ? 'Windy-Schlüssel fehlt' : 'nicht erreichbar' }; } } };
+  })();
+  window.CAMS = CAMS;
+
+  /* =====================================================================
      NEWS · weltweite Suche (GDELT + Google News + Bing)
      ===================================================================== */
   const NEWS = (() => {
     async function search(q) { const r = await fetch(API + 'search?q=' + encodeURIComponent(q)); const d = await r.json(); if (!r.ok) throw new Error(d.error || r.status); return d; }
     async function show(q) {
-      $('#shNews').classList.add('on'); document.body.classList.add('newsp'); $('#nwQ').value = q; $('#nwH').textContent = q.toUpperCase(); $('#nwL').innerHTML = '<li><span>DURCHSUCHE WELTWEITE QUELLEN …</span></li>';
-      funk('WELTWEITE SUCHE › ' + q.toUpperCase(), '');
+      openPan('#shNews'); $('#nwQ').value = q; $('#nwH').textContent = q; $('#nwL').innerHTML = '<li><span>Durchsuche weltweite Quellen …</span></li>';
       try { const d = await search(q); const qq = d.quellen;
-        $('#nwSrc').textContent = `${d.total} TREFFER · GDELT ${qq.gdelt} · GOOGLE CH ${qq.google_ch} · DE ${qq.google_de} · US ${qq.google_us} · BING ${qq.bing}`;
-        $('#nwL').innerHTML = d.artikel.map(a => `<li><span>${esc((a.s || a.via).toUpperCase())}${a.zeit ? ' · ' + new Date(a.zeit).toLocaleString('de-CH', { timeZone: ZTZ, day: '2-digit', month: '2-digit', hour: '2-digit', minute: '2-digit' }) : ''}</span><a href="${esc(a.u)}" target="_blank" rel="noopener">${esc(a.t)}</a></li>`).join('') || '<li><span>KEINE TREFFER</span></li>';
-        funk(`${d.total} MELDUNGEN ZU „${q.toUpperCase()}“ GEFUNDEN`, 'ok');
-      } catch (e) { $('#nwL').innerHTML = `<li><span>SUCHE FEHLGESCHLAGEN · ${esc(e.message)}</span></li>`; }
+        $('#nwSrc').textContent = `${d.total} Treffer · GDELT ${qq.gdelt} · Google CH ${qq.google_ch} · DE ${qq.google_de} · US ${qq.google_us} · Bing ${qq.bing}`;
+        $('#nwL').innerHTML = d.artikel.map(a => `<li><span>${esc(a.s || a.via)}${a.zeit ? ' · ' + new Date(a.zeit).toLocaleString('de-CH', { timeZone: ZTZ, day: '2-digit', month: '2-digit', hour: '2-digit', minute: '2-digit' }) : ''}</span><a href="${esc(a.u)}" target="_blank" rel="noopener">${esc(a.t)}</a></li>`).join('') || '<li><span>Keine Treffer.</span></li>';
+      } catch (e) { $('#nwL').innerHTML = `<li><span>Suche fehlgeschlagen.</span></li>`; }
     }
-    $('#nwX').onclick = () => { $('#shNews').classList.remove('on'); document.body.classList.remove('newsp'); };
+    $('#nwX').onclick = () => closePan('#shNews');
     $('#nwF').onsubmit = e => { e.preventDefault(); const q = $('#nwQ').value.trim(); if (q) show(q); };
-    const open = () => { $('#shNews').classList.add('on'); document.body.classList.add('newsp'); setTimeout(() => $('#nwQ').focus(), 300); };
+    const open = () => { openPan('#shNews'); setTimeout(() => $('#nwQ').focus(), 300); };
     return { search, show, open };
   })();
   window.NEWS = NEWS;
 
-  window.SIT = { scan, dossier, showRoute, funk, goHome, getMap: () => (ready ? map : null), get view() { return view; }, get lage() { return live.lage; } };
+  window.SIT = { scan, dossier, showRoute, funk, goHome, flyBern, getMap: () => (ready ? map : null), get view() { return view; }, get lage() { return live.lage; } };
 
   /* ---------- Takt ---------- */
   (function loop(t) {
     requestAnimationFrame(loop); if (document.hidden) return; const T = t / 1000;
     voiceUI(); if (view === 'cockpit') waveFrame(T);
     if (map && ready && view === 'cockpit') {
-      if (!introDone || (idleSpin && !openH && performance.now() - lastUser > 8000 && !map.isMoving())) {
-        if (!introDone) { const c = map.getCenter(); map.setCenter([c.lng + .06, c.lat]); }
-        else map.setBearing(map.getBearing() + .008);
-      }
-      if ((t | 0) % 3 === 0) map.setPaintProperty('links', 'line-opacity', .55 + .35 * Math.sin(T * 2.4));
+      if (!introDone) { const c = map.getCenter(); map.setCenter([c.lng + .05, c.lat]); }
+      else if (idleSpin && !openH && !document.body.classList.contains('pan') && performance.now() - lastUser > 12000 && !map.isMoving() && map.getZoom() < 4.5) { const c = map.getCenter(); map.setCenter([c.lng + .02, c.lat]); }
     }
   })(performance.now());
   setTimeout(() => { // nach travel.js: Routen auch auf der Karte zeigen
     if (window.TRAVEL && !window.TRAVEL.__sit) { const o = window.TRAVEL.route; window.TRAVEL.route = async (...a) => { const d = await o(...a); try { showRoute(d); } catch (e) {} return d; }; window.TRAVEL.__sit = true; }
   }, 0);
   makeMap(); tick(); strip(); loadWx(); loadLage(); loadSx(); clean();
-  funk('JARVIS LAGEZENTRUM · SYSTEMSTART', 'dim');
   setInterval(tick, 1000); setInterval(strip, 30000); setInterval(loadWx, 10 * 60000);
   setInterval(() => { window.__lageData = null; loadLage(); }, 10 * 60000);
 })();

@@ -55,12 +55,12 @@
   varying vec3 vN;varying vec3 vV;varying float vD;varying vec3 vW;
   vec3 env(vec3 r){
     float y=r.y;
-    vec3 c=vec3(.012,.012,.016);
-    c+=vec3(.92,.93,.96)*smoothstep(-.02,.18,y)*(1.-smoothstep(.18,.62,y))*.95;
+    vec3 c=mix(vec3(.07,.1,.17),vec3(.96,.965,.975),smoothstep(-.12,.38,y));
+    c-=vec3(.6)*exp(-pow((y-.03)*22.,2.));
     c+=uTint*exp(-pow((y+.04)*7.,2.))*1.25;
     c+=vec3(.75,.85,1.)*pow(max(r.x,0.),10.)*.9;
     c+=vec3(1.,.95,.9)*pow(max(-r.x*.7+r.y*.7,0.),24.)*1.6;
-    c+=pow(max(y,0.),2.5)*vec3(.16,.17,.2);
+    c+=pow(max(y,0.),2.5)*vec3(.05,.05,.06);
     return c;
   }
   void main(){
@@ -75,7 +75,7 @@
     col=col/(1.+col*.35);
     gl_FragColor=vec4(pow(col,vec3(1./1.05)),1.);
   }`;
-  const TINT = { idle: new THREE.Color(1.0, .42, .17), listening: new THREE.Color(.45, .78, 1.0), speaking: new THREE.Color(1.0, .5, .2), busy: new THREE.Color(.9, .9, 1.0) };
+  const TINT = { idle: new THREE.Color(.66, .53, .29), listening: new THREE.Color(.36, .52, .76), speaking: new THREE.Color(.75, .6, .32), busy: new THREE.Color(.5, .55, .65) };
   function material() {
     return new THREE.ShaderMaterial({ vertexShader: VERT, fragmentShader: FRAG,
       uniforms: { uTime: { value: 0 }, uLevel: { value: 0 }, uCalm: { value: .6 }, uMood: { value: 0 }, uTint: { value: TINT.idle.clone() } } });

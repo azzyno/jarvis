@@ -57,18 +57,16 @@
   const boot = $('#boot');
   if (boot) {
     const bx = boot.querySelector('.bx');
+    const h0 = +new Date().toLocaleString('en-GB', { timeZone: 'Europe/Zurich', hour: '2-digit', hour12: false });
+    const gr = h0 < 5 ? 'Noch wach' : h0 < 11 ? 'Guten Morgen' : h0 < 17 ? 'Guten Tag' : h0 < 22 ? 'Guten Abend' : 'Gute Nacht';
     bx.innerHTML = `
-      <div class="cmd-id"><svg viewBox="0 0 150 150" fill="none">
-        <circle cx="75" cy="75" r="70" stroke="rgba(160,200,240,.18)"/>
-        <circle cx="75" cy="75" r="70" stroke="#8fe6ff" stroke-width="1.5" stroke-dasharray="40 400" stroke-linecap="round"><animateTransform attributeName="transform" type="rotate" from="0 75 75" to="360 75 75" dur="2.4s" repeatCount="indefinite"/></circle>
-        <circle cx="75" cy="75" r="58" stroke="rgba(160,200,240,.12)" stroke-dasharray="2 5"><animateTransform attributeName="transform" type="rotate" from="360 75 75" to="0 75 75" dur="18s" repeatCount="indefinite"/></circle>
-        <path d="M75 38c-14 0-24 10-24 25v10c0 15 10 32 24 32s24-17 24-32V63c0-15-10-25-24-25z" stroke="rgba(233,242,250,.55)" stroke-width="1.2"/>
-        <path d="M60 64c3-5 9-8 15-8s12 3 15 8M58 74h34M62 84c4 4 8 6 13 6s9-2 13-6" stroke="rgba(143,230,255,.6)" stroke-width="1"/>
-        <path d="M8 26V8h18M124 8h18v18M142 124v18h-18M26 142H8v-18" stroke="#8fe6ff" stroke-width="1.5"/>
-      </svg><div class="sc"></div></div>
-      <h1>JARV<em>IS</em></h1><p>LAGEZENTRUM · ZUGRIFF NUR FÜR DEN MASTER</p>
+      <div class="sn-orb"><i></i><i></i><i></i><b></b></div>
+      <h1>JARVIS</h1>
+      <div class="sn-t">${gr},<br><i>Master.</i></div>
+      <p>Ihr persönliches System ist bereit.</p>
+      <div id="tap" style="opacity:.35">Einen Moment …</div>
       <div class="cmd-prog"><i id="bootProg"></i></div>
-      <div id="bootlog"></div><div id="tap" style="opacity:.35">PRÜFE SYSTEME …</div>`;
+      <div id="bootlog"></div>`;
     const log = (t, st, cls) => { $('#bootlog').insertAdjacentHTML('beforeend', `<div>› ${t} <span class="${cls}">${st}</span></div>`); };
     (async () => {
       const steps = [
@@ -79,8 +77,8 @@
         ['BÖRSE ZÜRICH', async () => open(MK[0]) ? ['OFFEN', 'ok'] : ['GESCHLOSSEN', 'wn']],
         ['IDENTITÄT', async () => ['MASTER', 'ok']],
       ];
-      for (let i = 0; i < steps.length; i++) { const [n, f] = steps[i]; let r; try { r = await f(); } catch (e) { r = ['FEHLER', 'wn']; } log(n, r[0], r[1]); $('#bootProg').style.width = ((i + 1) / steps.length * 100) + '%'; await new Promise(r => setTimeout(r, 180)); }
-      const tap = $('#tap'); tap.textContent = 'Zugriff bestätigen'; tap.style.opacity = 1;
+      for (let i = 0; i < steps.length; i++) { const [n, f] = steps[i]; let r; try { r = await f(); } catch (e) { r = ['FEHLER', 'wn']; } log(n, r[0], r[1]); $('#bootProg').style.width = ((i + 1) / steps.length * 100) + '%'; await new Promise(r => setTimeout(r, 120)); }
+      const tap = $('#tap'); tap.textContent = 'Eintreten'; tap.style.opacity = 1;
       renderBar();
     })();
   }
