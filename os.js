@@ -117,7 +117,7 @@
   $('#osChips').onclick = e => { const b = e.target.closest('[data-ask]'); if (b) ask(b.dataset.ask); };
   // Letzte JARVIS-Antwort spiegeln
   const greet = $('#greet');
-  if (greet) new MutationObserver(() => { const s = $('#osSay'); s.style.opacity = 0; setTimeout(() => { s.textContent = greet.textContent; s.style.opacity = 1; }, 200); }).observe(greet, { childList: true, characterData: true, subtree: true });
+  if (greet) new MutationObserver(() => { if (!['listening', 'speaking', 'muted'].includes(V().state)) return; const s = $('#osSay'); s.style.opacity = 0; setTimeout(() => { s.textContent = greet.textContent; s.style.opacity = 1; }, 200); }).observe(greet, { childList: true, characterData: true, subtree: true });
 
   /* ---------- Kern (Partikel-Sphäre, reagiert auf die Stimme) ---------- */
   const oc = $('#osOrb'), ox = oc.getContext('2d');

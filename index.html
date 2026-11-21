@@ -247,7 +247,7 @@ input[type=range]{-webkit-appearance:auto;appearance:auto;padding:0;height:28px;
 @media (max-width:899px){.otag{font-size:9px;letter-spacing:.14em}.otag b{padding:5px 8px}.ohud b{font-size:13px}.ohud{font-size:8.5px}}
 
 </style>
-<link rel="stylesheet" href="theme.css?v=5">
+<link rel="stylesheet" href="theme.css?v=6">
 <link rel="stylesheet" href="lage.css?v=3">
 </head>
 <body class="hero">
@@ -839,7 +839,7 @@ const sfx=(()=>{let ac=null;const api={get ac(){return ac},init(){try{if(!ac){co
 
 const holo=(()=>{
  const api={attach(){},burst(){},setDim(){return false},refresh(){},DIMS:{},dim:'humanoid',speaking:false,thinking:false,listening:false,analyser:null,auto:true};
- if(typeof THREE==='undefined')return api;
+ if(typeof THREE==='undefined'||!window.__useOldHolo)return api; // alter 3D-Avatar ersetzt durch den neuen Kern (os.js)
  const N=isMobile?11000:18000;
  const renderer=new THREE.WebGLRenderer({antialias:false,alpha:false,powerPreference:'high-performance'});
  const PR=Math.min(devicePixelRatio,isMobile?1.5:2);renderer.setPixelRatio(PR);renderer.setClearColor(0x01030a,1);
@@ -1105,7 +1105,7 @@ window.J={BRIEF,go,summary,analyze,holo,toast,addMsg,TYPES,REGIONS,DE,chf,get S(
 <script src="office.js?v=4"></script>
 <script src="lage.js?v=6"></script>
 <script src="theme.js?v=3"></script>
-<script src="os.js?v=1"></script>
+<script src="os.js?v=2"></script>
 <script src="travel.js?v=2"></script>
 <script type="module" src="omega.js?v=18"></script>
 </body>
