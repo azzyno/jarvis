@@ -248,7 +248,7 @@ input[type=range]{-webkit-appearance:auto;appearance:auto;padding:0;height:28px;
 @media (max-width:899px){.otag{font-size:9px;letter-spacing:.14em}.otag b{padding:5px 8px}.ohud b{font-size:13px}.ohud{font-size:8.5px}}
 
 </style>
-<link rel="stylesheet" href="theme.css?v=9">
+<link rel="stylesheet" href="theme.css?v=10">
 </head>
 <body class="hero">
 <div class="vg"></div><div class="grain"></div>
@@ -1099,11 +1099,12 @@ window.J={BRIEF,go,summary,analyze,holo,toast,addMsg,TYPES,REGIONS,DE,chf,get S(
 })();
 </script>
 <script src="lib/maplibre-gl.js"></script>
+<script type="module">import * as s from "./lib/sat/entry.js"; window.satellite = s; window.dispatchEvent(new Event("sat-ready"));</script>
 <script src="core.js?v=2"></script>
 <script src="office.js?v=8"></script>
 <script src="theme.js?v=5"></script>
-<script src="os.js?v=5"></script>
+<script src="os.js?v=6"></script>
 <script src="travel.js?v=2"></script>
-<script type="module" src="omega.js?v=19"></script>
+<script type="module" src="omega.js?v=20"></script>
 </body>
 </html>

@@ -15,7 +15,30 @@ const FEEDS = [
   { u: 'https://www.aljazeera.com/xml/rss/all.xml', world: true, src: 'Al Jazeera' },
   { u: 'https://news.google.com/rss/search?q=Kurdistan+OR+Rojava+OR+Kurden&hl=de&gl=CH&ceid=CH:de', world: false },
   { u: 'https://news.google.com/rss/search?q=Kurdistan+OR+Rojava+OR+Kurdish&hl=en-US&gl=US&ceid=US:en', world: false },
+  { u: 'https://news.google.com/rss/headlines/section/topic/WORLD?hl=en-GB&gl=GB&ceid=GB:en', world: true },
+  { u: 'https://news.google.com/rss/headlines/section/topic/WORLD?hl=fr&gl=CH&ceid=CH:fr', world: true },
+  { u: 'https://news.google.com/rss/headlines/section/topic/NATION?hl=de&gl=CH&ceid=CH:de', world: false },
+  { u: 'https://news.google.com/rss/headlines/section/topic/TECHNOLOGY?hl=de&gl=CH&ceid=CH:de', world: false },
+  { u: 'https://news.google.com/rss/headlines/section/topic/BUSINESS?hl=en-US&gl=US&ceid=US:en', world: false },
+  { u: 'https://www.srf.ch/news/bnf/rss/1646', world: false, src: 'SRF' },
+  { u: 'https://www.srf.ch/news/bnf/rss/1922', world: true, src: 'SRF' },
+  { u: 'https://www.nzz.ch/recent.rss', world: false, src: 'NZZ' },
+  { u: 'https://www.tagesschau.de/xml/rss2', world: true, src: 'Tagesschau' },
+  { u: 'https://www.spiegel.de/ausland/index.rss', world: true, src: 'Spiegel' },
+  { u: 'https://www.theguardian.com/world/rss', world: true, src: 'The Guardian' },
+  { u: 'https://rss.nytimes.com/services/xml/rss/nyt/World.xml', world: true, src: 'New York Times' },
+  { u: 'https://feeds.npr.org/1004/rss.xml', world: true, src: 'NPR' },
+  { u: 'https://www.france24.com/en/rss', world: true, src: 'France 24' },
+  { u: 'https://www.cnbc.com/id/100727362/device/rss/rss.html', world: true, src: 'CNBC' },
+  { u: 'https://feeds.bbci.co.uk/news/business/rss.xml', world: false, src: 'BBC' },
+  { u: 'https://www.rudaw.net/rss/english', world: false, src: 'Rudaw' },
 ];
+// GDELT: weltweite Echtzeit-Auswertung von Nachrichtenseiten in über 100 Sprachen (ein Abruf pro 10 Minuten).
+const GDELT = 'https://api.gdeltproject.org/api/v2/doc/doc?query=' + encodeURIComponent('(theme:ARMEDCONFLICT OR theme:TERROR OR theme:PROTEST OR theme:ECON_STOCKMARKET OR theme:NATURAL_DISASTER OR theme:MILITARY OR theme:ELECTION)') + '&mode=ArtList&maxrecords=250&timespan=3h&sort=DateDesc&format=json';
+export async function gdelt(url = GDELT, ms = 7000) {
+  try { const t = await get(url, ms); const j = JSON.parse(t); return (j.articles || []).map(a => ({ t: String(a.title || '').trim(), s: a.domain || '', u: a.url, d: a.seendate, lang: a.language, land: a.sourcecountry, img: a.socialimage || '' })).filter(a => a.t); }
+  catch (e) { return []; }
+}
 
 const dec = s => String(s || '')
   .replace(/<!\[CDATA\[([\s\S]*?)\]\]>/g, '$1')
@@ -60,7 +83,9 @@ export default async function handler(req, res) {
   if (ALLOWED.includes(origin)) { res.setHeader('Access-Control-Allow-Origin', origin); res.setHeader('Vary', 'Origin'); }
   if (req.method === 'OPTIONS') { res.setHeader('Access-Control-Allow-Methods', 'GET'); return res.status(204).end(); }
 
-  const results = await Promise.allSettled(FEEDS.map(f => get(f.u).then(x => ({ f, items: parseRss(x) }))));
+  const results = await Promise.allSettled([...FEEDS.map(f => get(f.u).then(x => ({ f, items: parseRss(x) }))), gdelt().then(items => ({ f: { world: true, src: 'GDELT', gdelt: true }, items }))]);
+  const okFeeds = results.filter(r => r.status === 'fulfilled' && r.value.items.length).length;
+  const gd = results[results.length - 1]; const gdN = gd.status === 'fulfilled' ? gd.value.items.length : 0;
   const seen = new Set(); const all = [];
   for (const r of results) {
     if (r.status !== 'fulfilled') continue;
@@ -76,7 +101,7 @@ export default async function handler(req, res) {
   for (const it of all) for (const c of it.c) score[c] = (score[c] || 0) + (it.world ? 1 : 0.5) * (c === 'CH' ? 0.5 : 1);
   // Gaza/Israel nicht doppelt: wenn beide vorkommen, zusammenlegen auf das stärkere.
   if (score.PS && score.IL) { const k = score.IL >= score.PS ? 'IL' : 'PS', o = k === 'IL' ? 'PS' : 'IL'; score[k] += score[o] * 0.5; delete score[o]; }
-  const top = Object.entries(score).filter(([c]) => byCode[c]).sort((a, b) => b[1] - a[1]).slice(0, 3).map(([c]) => byCode[c]);
+  const top = Object.entries(score).filter(([c]) => byCode[c]).sort((a, b) => b[1] - a[1]).slice(0, 5).map(([c]) => byCode[c]);
   const topCodes = new Set(top.map(c => c.c));
   const list = [...top.map(c => ({ c, watch: false })), ...WATCH.filter(w => !topCodes.has(w)).map(w => ({ c: byCode[w], watch: true }))];
 
@@ -94,8 +119,8 @@ export default async function handler(req, res) {
 
   res.setHeader('Cache-Control', 's-maxage=600, stale-while-revalidate=1800');
   return res.status(200).json({
-    stand: new Date().toISOString(), quelle: 'Google News (RSS), Bilder: Bing News, Wetter: Open-Meteo',
-    total: all.length, headlines: all.slice(0, 320).map(({ t, s, c }) => ({ t, s, c })), hotspots,
+    stand: new Date().toISOString(), quelle: `${okFeeds} Quellen live: GDELT (weltweit, ${gdN} Artikel der letzten 3 Std.), Google News, SRF, NZZ, Tagesschau, Spiegel, BBC, Guardian, NYT, DW, Al Jazeera, France 24, CNBC u. a. · Bilder: Bing · Wetter: Open-Meteo`, quellen_ok: okFeeds, gdelt_artikel: gdN,
+    total: all.length, headlines: all.slice(0, 500).map(({ t, s, c, u }) => ({ t, s, c, u })), hotspots,
     counts: Object.fromEntries(COUNTRIES.map(x => [x.c, all.filter(it => it.c.includes(x.c)).length])),
     geo: Object.fromEntries(COUNTRIES.map(x => [x.c, [x.lat, x.lon, x.n, x.en]])),
   });

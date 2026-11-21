@@ -84,10 +84,19 @@
         <div class="sv-t"><span id="shState">BEREIT · KERN ANTIPPEN</span><p id="shSay">—</p></div></div>
       <form id="shAsk" autocomplete="off"><span>›</span><input id="shAskIn" placeholder="BEFEHL AN JARVIS …" enterkeyhint="send"><button type="submit">SENDEN</button></form>
       <div class="sh-cmds" id="shCmds">
-        <button data-c="scan">◎ WELTLAGE</button><button data-r="Genf">⌖ ROUTE GENF</button><button data-c="route">⌖ ROUTE …</button>
+        <button data-c="scan">◎ WELTLAGE</button><button data-c="orbit">✦ SATELLITEN</button><button data-c="news">⌕ NEWS-SUCHE</button><button data-r="Genf">⌖ ROUTE GENF</button><button data-c="route">⌖ ROUTE …</button>
         <button data-c="wx">☁ WETTER</button><button data-v="port">▣ KONTO</button><button data-v="office">◧ BÜRO</button><button data-c="home">⌂ ZÜRICH</button>
       </div>
     </div>
+    <aside id="shOrbit" class="sh-pan"><button class="sd-x" id="obX" aria-label="Schliessen">✕</button>
+      <div class="sd-k">◤ ORBIT · SATELLITENÜBERWACHUNG</div><h2 id="obH">ÜBER ZÜRICH</h2>
+      <div class="sd-st"><div><span>VERFOLGT</span><b id="obN">—</b></div><div><span>ÜBER IHNEN</span><b id="obO">—</b></div><div><span>MILITÄR</span><b id="obM">—</b></div></div>
+      <div class="ob-f" id="obF"><button data-f="">ALLE</button><button data-f="Militär">MILITÄR</button><button data-f="Navigation">NAVIGATION</button><button data-f="Wetter">WETTER</button><button data-f="Raumstation">STATIONEN</button><button data-l="starlink">+ STARLINK</button><button data-l="active">+ ALLE AKTIVEN</button></div>
+      <div id="obSel" class="ob-sel" hidden></div><ul id="obL" class="ob-l"></ul><div class="ob-src" id="obSrc"></div></aside>
+    <aside id="shNews" class="sh-pan"><button class="sd-x" id="nwX" aria-label="Schliessen">✕</button>
+      <div class="sd-k">◤ NACHRICHTEN · WELTWEIT</div><h2 id="nwH">SUCHE</h2>
+      <form id="nwF" class="nw-f"><input id="nwQ" placeholder="THEMA, PERSON, FIRMA …" enterkeyhint="search"><button>SUCHEN</button></form>
+      <div class="ob-src" id="nwSrc"></div><ul id="nwL" class="ob-l nw-l"></ul></aside>
     <div class="sh-rt" id="shRt" hidden><span>⌖ ZIEL</span><input id="shRtIn" placeholder="ORT EINGEBEN" enterkeyhint="go"><button id="shRtGo">LOS</button><button id="shRtX">✕</button></div>`;
   document.body.appendChild(hud);
 
@@ -173,6 +182,8 @@
             lab: { type: 'raster', tiles: ['https://server.arcgisonline.com/ArcGIS/rest/services/Reference/World_Boundaries_and_Places/MapServer/tile/{z}/{y}/{x}'], tileSize: 256, maxzoom: 19 },
             links: { type: 'geojson', data: { type: 'FeatureCollection', features: [] } },
             route: { type: 'geojson', data: { type: 'FeatureCollection', features: [] } },
+            sats: { type: 'geojson', data: { type: 'FeatureCollection', features: [] } },
+            strack: { type: 'geojson', data: { type: 'FeatureCollection', features: [] } },
           },
           layers: [
             { id: 'bg', type: 'background', paint: { 'background-color': '#010307' } },
@@ -183,12 +194,15 @@
             { id: 'links', type: 'line', source: 'links', paint: { 'line-color': ['get', 'c'], 'line-width': 1.3, 'line-opacity': 0.85, 'line-dasharray': [2, 2] } },
             { id: 'route-glow', type: 'line', source: 'route', layout: { 'line-cap': 'round' }, paint: { 'line-color': '#4fd8ff', 'line-width': 10, 'line-opacity': 0.2, 'line-blur': 6 } },
             { id: 'route', type: 'line', source: 'route', layout: { 'line-cap': 'round' }, paint: { 'line-color': '#4fd8ff', 'line-width': 2.4 } },
+            { id: 'strack', type: 'line', source: 'strack', paint: { 'line-color': '#ffffff', 'line-width': 1.2, 'line-opacity': .7, 'line-dasharray': [1, 2] } },
+            { id: 'sats-glow', type: 'circle', source: 'sats', filter: ['any', ['==', ['get', 'sel'], 1], ['==', ['get', 'over'], 1]], paint: { 'circle-radius': ['case', ['==', ['get', 'sel'], 1], 14, 7], 'circle-color': ['get', 'col'], 'circle-opacity': .22, 'circle-blur': .8 } },
+            { id: 'sats', type: 'circle', source: 'sats', paint: { 'circle-radius': ['interpolate', ['linear'], ['zoom'], 1, ['*', ['get', 'r'], 1.5], 6, ['*', ['get', 'r'], 2.2]], 'circle-color': ['get', 'col'], 'circle-stroke-color': '#000', 'circle-stroke-width': .5, 'circle-opacity': .95 } },
           ],
           sky: { 'sky-color': '#000000', 'horizon-color': '#0b2a44', 'fog-color': '#010307', 'sky-horizon-blend': 0.6, 'horizon-fog-blend': 0.6, 'fog-ground-blend': 0.4, 'atmosphere-blend': ['interpolate', ['linear'], ['zoom'], 0, 1, 5, 1, 7, 0] },
         },
       });
     } catch (e) { $('#sitMap').classList.add('nomap'); funk('3D-GRAFIK NICHT VERFÜGBAR', 'warn'); map = null; return; }
-    map.on('load', () => { ready = true; setTimeout(() => document.querySelectorAll('.maplibregl-compact-show').forEach(x => x.classList.remove('maplibregl-compact-show')), 4000); funk('SATELLITENVERBINDUNG STEHT · ESRI / NASA', 'ok'); placeHome(); if (live.lage) placeHotspots(); });
+    map.on('load', () => { ready = true; try { ORBIT.bindMap(); } catch (e) {} setTimeout(() => document.querySelectorAll('.maplibregl-compact-show').forEach(x => x.classList.remove('maplibregl-compact-show')), 4000); funk('SATELLITENVERBINDUNG STEHT · ESRI / NASA', 'ok'); placeHome(); if (live.lage) placeHotspots(); });
     ['dragstart', 'zoomstart', 'rotatestart', 'pitchstart'].forEach(ev => map.on(ev, e => { if (e.originalEvent) { lastUser = performance.now(); idleSpin = false; } }));
     map.on('error', () => {});
   }
@@ -292,6 +306,8 @@
     if (c === 'home') { closeDossier(); }
     if (c === 'wx') window.TRAVEL && window.TRAVEL.weather('Zürich');
     if (c === 'route') { $('#shRt').hidden = false; $('#shRtIn').focus(); }
+    if (c === 'orbit') ORBIT.toggle();
+    if (c === 'news') NEWS.open();
   };
   const route = z => { z = String(z || '').trim(); if (!z || !window.TRAVEL) return; funk('BERECHNE ROUTE › ' + z.toUpperCase(), ''); window.TRAVEL.route(z).catch(err => funk('ROUTE FEHLGESCHLAGEN · ' + err.message, 'warn')); };
   $('#shRtGo').onclick = () => { route($('#shRtIn').value); $('#shRt').hidden = true; $('#shRtIn').value = ''; };
@@ -326,6 +342,117 @@
     async briefing() { if (!live.lage) await loadLage(); const d = live.lage; if (!d) return { fehler: 'Weltlage nicht erreichbar' };
       return { stand: d.stand, quelle: d.quelle, gescannte_schlagzeilen: d.total, brennpunkte: d.hotspots.map(h => ({ land: h.n, beobachtet: !!h.watch, meldungen: h.count, top_schlagzeile: h.headline, weitere: (h.items || []).slice(1, 4).map(x => x.t), ortszeit: h.tz ? new Date().toLocaleTimeString('de-CH', { timeZone: h.tz, hour: '2-digit', minute: '2-digit' }) : null, wetter: h.weather })) }; },
   };
+
+  /* =====================================================================
+     ORBIT · Satelliten live (CelesTrak + SGP4 im Browser)
+     ===================================================================== */
+  const OBS = { latitude: HOME[1] * Math.PI / 180, longitude: HOME[0] * Math.PI / 180, height: .41 };
+  const TYPE_COL = { 'Militär': '#ff3d3d', 'Navigation': '#ffb020', 'Wetter': '#4fd8ff', 'Raumstation': '#ffffff', 'Starlink': '#7e93a3', 'OneWeb': '#7e93a3', 'Erdbeobachtung': '#3dffa0', 'Sonstige': '#b7d7ea' };
+  function typeOf(s) {
+    const n = s.n.toUpperCase(), g = s.g;
+    if (g === 'stations' || /^(ISS|CSS|TIANHE|TIANGONG|WENTIAN|MENGTIAN)\b/.test(n)) return 'Raumstation';
+    if (g === 'military' || /^(USA \d|NROL|COSMOS|KOSMOS|YAOGAN|OFEK|SAR-LUPE|CSO-|HELIOS|SBIRS|DMSP|WGS|MUOS|AEHF|LACROSSE|TOPAZ|GEO-IK|SKYNET|SYRACUSE|SICRAL|PERSONA|BARS-M|KONDOR|LOTOS|PION|TJS|SHIYAN)/.test(n)) return 'Militär';
+    if (/^(GPS|NAVSTAR|GALILEO|GSAT0|GLONASS|COSMOS 2[45]\d\d|BEIDOU|QZS|IRNSS)/.test(n) || ['gps-ops', 'galileo', 'glo-ops', 'beidou'].includes(g)) return 'Navigation';
+    if (/^(NOAA|GOES|METEOSAT|METOP|FENGYUN|FY-|HIMAWARI|ELEKTRO|METEOR|DMSP|SUOMI|JPSS|GCOM)/.test(n) || g === 'weather') return 'Wetter';
+    if (/^STARLINK/.test(n)) return 'Starlink'; if (/^ONEWEB/.test(n)) return 'OneWeb';
+    if (/^(SENTINEL|LANDSAT|WORLDVIEW|PLEIADES|SPOT|TERRA|AQUA|SKYSAT|FLOCK|ICEYE|CAPELLA|GAOFEN|SUPERVIEW|KOMPSAT|RADARSAT)/.test(n) || g === 'resource') return 'Erdbeobachtung';
+    return 'Sonstige';
+  }
+  const ORBIT = (() => {
+    let on = false, sats = [], loaded = new Set(), timer = 0, filt = '', sel = null, meta = null, last = null;
+    const lib = () => window.satellite;
+    async function load(groups) {
+      const r = await fetch(API + 'sats?g=' + groups); const d = await r.json(); if (!r.ok) throw new Error(d.error || r.status);
+      const S = lib(); const have = new Set(sats.map(x => x.id));
+      for (const s of d.sats) { if (have.has(s.id)) continue; try { const rec = S.twoline2satrec(s.l1, s.l2); const t = typeOf(s); sats.push({ id: s.id, n: s.n, g: s.g, rec, t, col: TYPE_COL[t] }); } catch (e) {} }
+      groups.split(',').forEach(g => loaded.add(g)); meta = d; $('#obSrc').textContent = `QUELLE: ${d.quelle} · STAND ${new Date(d.stand).toLocaleTimeString('de-CH', { timeZone: ZTZ, hour: '2-digit', minute: '2-digit' })}`;
+      return d;
+    }
+    function compute(now = new Date()) {
+      const S = lib(); if (!S) return null; const gm = S.gstime(now); const feats = [], over = [];
+      for (const s of sats) {
+        if (filt && s.t !== filt) continue;
+        const pv = S.propagate(s.rec, now); if (!pv || !pv.position || typeof pv.position === 'boolean') continue;
+        const gd = S.eciToGeodetic(pv.position, gm); const lat = S.degreesLat(gd.latitude), lon = S.degreesLong(gd.longitude), h = gd.height;
+        if (!isFinite(lat) || !isFinite(h) || h < 80) continue;
+        const la = S.ecfToLookAngles(OBS, S.eciToEcf(pv.position, gm)); const el = la.elevation * 180 / Math.PI;
+        const v = pv.velocity ? Math.hypot(pv.velocity.x, pv.velocity.y, pv.velocity.z) : 0;
+        s.lat = lat; s.lon = lon; s.h = h; s.el = el; s.v = v; s.az = la.azimuth * 180 / Math.PI;
+        const isOver = el > 10; if (isOver) over.push(s);
+        feats.push({ type: 'Feature', properties: { id: s.id, col: s.col, r: s.t === 'Raumstation' ? 4 : s.t === 'Starlink' || s.t === 'OneWeb' ? 1.1 : s.t === 'Militär' ? 2.6 : 2, sel: sel === s.id ? 1 : 0, over: isOver ? 1 : 0 }, geometry: { type: 'Point', coordinates: [lon, lat] } });
+      }
+      over.sort((a, b) => b.el - a.el);
+      return last = { feats, over, n: feats.length, mil: sats.filter(s => s.t === 'Militär').length };
+    }
+    function render() {
+      const c = compute(); if (!c) return;
+      if (map && ready) map.getSource('sats').setData({ type: 'FeatureCollection', features: c.feats });
+      $('#obN').textContent = c.n.toLocaleString('de-CH'); $('#obO').textContent = c.over.length; $('#obM').textContent = c.mil;
+      $('#obL').innerHTML = c.over.slice(0, 40).map(s => `<li data-id="${s.id}" class="${sel === s.id ? 'on' : ''}"><i style="background:${s.col}"></i><b>${esc(s.n)}</b><span>${esc(s.t.toUpperCase())} · ${Math.round(s.h)} KM · ${Math.round(s.el)}° HOCH</span></li>`).join('') || '<li><span>GERADE KEIN SATELLIT DIESER AUSWAHL HÖHER ALS 10° ÜBER ZÜRICH</span></li>';
+      if (sel) { const s = sats.find(x => x.id === sel); if (s) $('#obSel').innerHTML = `<b>${esc(s.n)}</b><span>NORAD ${s.id} · ${esc(s.t.toUpperCase())}</span><div class="sd-st"><div><span>HÖHE</span><b>${Math.round(s.h)} km</b></div><div><span>TEMPO</span><b>${(s.v * 3600).toLocaleString('de-CH', { maximumFractionDigits: 0 })} km/h</b></div><div><span>VON ZÜRICH</span><b>${Math.round(s.el)}°</b></div></div><small>POSITION ${s.lat.toFixed(2)}° ${s.lon.toFixed(2)}° · RICHTUNG ${Math.round(s.az)}°</small>`; }
+    }
+    function track(s) {
+      const S = lib(), pts = []; const t0 = Date.now();
+      for (let m = -10; m <= 95; m += 1) { const d = new Date(t0 + m * 60000); const pv = S.propagate(s.rec, d); if (!pv || !pv.position || typeof pv.position === 'boolean') continue; const gd = S.eciToGeodetic(pv.position, S.gstime(d)); pts.push([S.degreesLong(gd.longitude), S.degreesLat(gd.latitude)]); }
+      const segs = [[]]; pts.forEach((p, i) => { if (i && Math.abs(p[0] - pts[i - 1][0]) > 180) segs.push([]); segs[segs.length - 1].push(p); });
+      map && map.getSource('strack').setData({ type: 'FeatureCollection', features: segs.filter(x => x.length > 1).map(c => ({ type: 'Feature', properties: {}, geometry: { type: 'LineString', coordinates: c } })) });
+    }
+    function select(id) {
+      sel = id; const s = sats.find(x => x.id === id); if (!s) return; $('#obSel').hidden = false; render(); track(s);
+      funk(`ZIEL ERFASST · ${s.n} · ${s.t.toUpperCase()} · ${Math.round(s.h)} KM`, s.t === 'Militär' ? 'warn' : 'ok');
+      map && map.flyTo({ center: [s.lon, s.lat], zoom: Math.max(2.4, map.getZoom() > 4 ? 3 : map.getZoom()), duration: 1800 });
+    }
+    async function start() {
+      if (!lib()) { await new Promise(r => { window.addEventListener('sat-ready', r, { once: true }); setTimeout(r, 4000); }); }
+      if (!lib()) { funk('BAHNRECHNER NICHT GELADEN', 'warn'); return; }
+      on = true; document.body.classList.add('orbit'); $('#shOrbit').classList.add('on');
+      if (!sats.length) { funk('ORBIT · LADE ÖFFENTLICHEN SATELLITENKATALOG …', ''); try { await load('stations,visual,military,gps-ops,galileo,glo-ops,beidou,weather'); } catch (e) { funk('SATELLITENKATALOG NICHT ERREICHBAR · ' + e.message, 'warn'); return; } }
+      render(); const c = last; clearInterval(timer); timer = setInterval(() => !document.hidden && render(), sats.length > 3000 ? 3000 : 1000);
+      funk(`ORBIT AKTIV · ${c.n} SATELLITEN VERFOLGT · ${c.over.length} GERADE ÜBER ZÜRICH`, 'ok');
+      const iss = sats.find(s => /^ISS/.test(s.n)); if (iss && iss.h) funk(`ISS · ${Math.round(iss.h)} KM HÖHE · ${iss.lat.toFixed(1)}° ${iss.lon.toFixed(1)}°`, 'dim');
+      if (map) map.flyTo({ center: [HOME[0], HOME[1] - 8], zoom: 1.7, pitch: 0, bearing: 0, duration: 2400 });
+    }
+    function stop() { on = false; clearInterval(timer); document.body.classList.remove('orbit'); $('#shOrbit').classList.remove('on'); sel = null; if (map && ready) { map.getSource('sats').setData({ type: 'FeatureCollection', features: [] }); map.getSource('strack').setData({ type: 'FeatureCollection', features: [] }); } goHome(); }
+    $('#obX').onclick = stop;
+    $('#obL').onclick = e => { const li = e.target.closest('li[data-id]'); if (li) select(li.dataset.id); };
+    $('#obF').onclick = async e => { const b = e.target.closest('button'); if (!b) return;
+      if (b.dataset.l) { if (loaded.has(b.dataset.l)) return; b.textContent = 'LÄDT …'; try { const d = await load(b.dataset.l); b.textContent = `✓ ${b.dataset.l.toUpperCase()}`; funk(`${d.total} WEITERE BAHNEN GELADEN (${b.dataset.l.toUpperCase()})`, 'ok'); clearInterval(timer); timer = setInterval(() => !document.hidden && render(), sats.length > 3000 ? 3000 : 1000); render(); } catch (er) { b.textContent = 'FEHLER'; } return; }
+      filt = b.dataset.f; $$('#obF button[data-f]').forEach(x => x.classList.toggle('on', x === b)); render(); };
+    const bindMap = () => { if (!map) return; map.on('click', 'sats', e => { const f = e.features && e.features[0]; if (f) select(f.properties.id); }); map.on('mouseenter', 'sats', () => map.getCanvas().style.cursor = 'pointer'); map.on('mouseleave', 'sats', () => map.getCanvas().style.cursor = ''); };
+    return {
+      toggle: () => on ? stop() : start(), start, stop, bindMap,
+      async summary() {
+        if (!sats.length) { try { if (!lib()) await new Promise(r => { window.addEventListener('sat-ready', r, { once: true }); setTimeout(r, 4000); }); await load('stations,visual,military,gps-ops,galileo,glo-ops,beidou,weather'); } catch (e) { return { fehler: 'Satellitenkatalog nicht erreichbar' }; } }
+        const c = compute(); if (!c) return { fehler: 'Bahnrechner nicht geladen' }; const iss = sats.find(s => /^ISS/.test(s.n));
+        return { quelle: 'CelesTrak (öffentlicher NORAD-Katalog), Positionen per SGP4 live berechnet', hinweis: 'Geheime Satelliten ohne veröffentlichte Bahndaten sind nicht enthalten.', verfolgt: c.n, militaer_im_katalog: c.mil,
+          ueber_zuerich_hoeher_10_grad: c.over.length, darueber: c.over.slice(0, 10).map(s => ({ name: s.n, typ: s.t, hoehe_km: Math.round(s.h), elevation_grad: Math.round(s.el) })),
+          iss: iss && iss.h ? { breite: +iss.lat.toFixed(2), laenge: +iss.lon.toFixed(2), hoehe_km: Math.round(iss.h), ueber_zuerich_sichtbar: iss.el > 10 } : null };
+      },
+    };
+  })();
+  window.ORBIT = ORBIT;
+
+  /* =====================================================================
+     NEWS · weltweite Suche (GDELT + Google News + Bing)
+     ===================================================================== */
+  const NEWS = (() => {
+    async function search(q) { const r = await fetch(API + 'search?q=' + encodeURIComponent(q)); const d = await r.json(); if (!r.ok) throw new Error(d.error || r.status); return d; }
+    async function show(q) {
+      $('#shNews').classList.add('on'); document.body.classList.add('newsp'); $('#nwQ').value = q; $('#nwH').textContent = q.toUpperCase(); $('#nwL').innerHTML = '<li><span>DURCHSUCHE WELTWEITE QUELLEN …</span></li>';
+      funk('WELTWEITE SUCHE › ' + q.toUpperCase(), '');
+      try { const d = await search(q); const qq = d.quellen;
+        $('#nwSrc').textContent = `${d.total} TREFFER · GDELT ${qq.gdelt} · GOOGLE CH ${qq.google_ch} · DE ${qq.google_de} · US ${qq.google_us} · BING ${qq.bing}`;
+        $('#nwL').innerHTML = d.artikel.map(a => `<li><span>${esc((a.s || a.via).toUpperCase())}${a.zeit ? ' · ' + new Date(a.zeit).toLocaleString('de-CH', { timeZone: ZTZ, day: '2-digit', month: '2-digit', hour: '2-digit', minute: '2-digit' }) : ''}</span><a href="${esc(a.u)}" target="_blank" rel="noopener">${esc(a.t)}</a></li>`).join('') || '<li><span>KEINE TREFFER</span></li>';
+        funk(`${d.total} MELDUNGEN ZU „${q.toUpperCase()}“ GEFUNDEN`, 'ok');
+      } catch (e) { $('#nwL').innerHTML = `<li><span>SUCHE FEHLGESCHLAGEN · ${esc(e.message)}</span></li>`; }
+    }
+    $('#nwX').onclick = () => { $('#shNews').classList.remove('on'); document.body.classList.remove('newsp'); };
+    $('#nwF').onsubmit = e => { e.preventDefault(); const q = $('#nwQ').value.trim(); if (q) show(q); };
+    const open = () => { $('#shNews').classList.add('on'); document.body.classList.add('newsp'); setTimeout(() => $('#nwQ').focus(), 300); };
+    return { search, show, open };
+  })();
+  window.NEWS = NEWS;
+
   window.SIT = { scan, dossier, showRoute, funk, goHome };
 
   /* ---------- Takt ---------- */
