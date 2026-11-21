@@ -11,9 +11,9 @@
 <link rel="manifest" href="manifest.json">
 <link rel="apple-touch-icon" href="icon-512.png">
 <link rel="preconnect" href="https://fonts.googleapis.com">
-<link href="https://fonts.googleapis.com/css2?family=Geist:wght@200;300;400;500;600;700&family=Geist+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Instrument+Serif:ital@0;1&family=Geist:wght@200;300;400;500;600;700&family=Geist+Mono:wght@400;500;600&display=swap" rel="stylesheet">
 <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
-<script src="https://cdn.jsdelivr.net/npm/three@0.128.0/examples/js/shaders/CopyShader.js"></script><script src="https://cdn.jsdelivr.net/npm/three@0.128.0/examples/js/shaders/LuminosityHighPassShader.js"></script><script src="https://cdn.jsdelivr.net/npm/three@0.128.0/examples/js/postprocessing/EffectComposer.js"></script><script src="https://cdn.jsdelivr.net/npm/three@0.128.0/examples/js/postprocessing/ShaderPass.js"></script><script src="https://cdn.jsdelivr.net/npm/three@0.128.0/examples/js/postprocessing/MaskPass.js"></script><script src="https://cdn.jsdelivr.net/npm/three@0.128.0/examples/js/postprocessing/RenderPass.js"></script><script src="https://cdn.jsdelivr.net/npm/three@0.128.0/examples/js/postprocessing/UnrealBloomPass.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/three@0.128.0/examples/js/shaders/CopyShader.js"></script><script src="https://cdn.jsdelivr.net/npm/three@0.128.0/examples/js/shaders/LuminosityHighPassShader.js"></script><script src="https://cdn.jsdelivr.net/npm/three@0.128.0/examples/js/postprocessing/EffectComposer.js"></script><script src="https://cdn.jsdelivr.net/npm/three@0.128.0/examples/js/postprocessing/ShaderPass.js"></script><script src="https://cdn.jsdelivr.net/npm/three@0.128.0/examples/js/postprocessing/MaskPass.js"></script><script src="https://cdn.jsdelivr.net/npm/three@0.128.0/examples/js/postprocessing/RenderPass.js"></script><script src="https://cdn.jsdelivr.net/npm/three@0.128.0/examples/js/postprocessing/UnrealBloomPass.js"></script><script src="https://cdn.jsdelivr.net/npm/three@0.128.0/examples/js/objects/Reflector.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/echarts@4.9.0/dist/echarts.min.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/echarts@4.9.0/map/js/world.js"></script>
 <style>
@@ -247,7 +247,7 @@ input[type=range]{-webkit-appearance:auto;appearance:auto;padding:0;height:28px;
 @media (max-width:899px){.otag{font-size:9px;letter-spacing:.14em}.otag b{padding:5px 8px}.ohud b{font-size:13px}.ohud{font-size:8.5px}}
 
 </style>
-<link rel="stylesheet" href="theme.css?v=6">
+<link rel="stylesheet" href="theme.css?v=8">
 <link rel="stylesheet" href="lage.css?v=3">
 </head>
 <body class="hero">
@@ -309,13 +309,9 @@ input[type=range]{-webkit-appearance:auto;appearance:auto;padding:0;height:28px;
 <!-- ===== BÜRO ===== -->
 <section class="view" id="v-office">
   <div id="officeStage">
-    <div class="ohud"><b>INVESTMENT-BÜRO</b>ZIEHEN ZUM UMSEHEN · ANTIPPEN ZUM ÖFFNEN</div>
-    <button class="otag" data-a="port" data-go="port"><b>PORTFOLIO</b><i></i></button>
-    <button class="otag o" data-a="order" data-go="port"><b>ORDER</b><i></i></button>
-    <button class="otag" data-a="invest" data-go="invest"><b>MARKT</b><i></i></button>
-    <button class="otag" data-a="welt" data-go="welt"><b>WELT</b><i></i></button>
-    <button class="otag o" data-a="calc" data-go="calc"><b>IMMOBILIEN</b><i></i></button>
-    <div class="obar"><button class="o" data-go="lage">🌐 Weltlage</button><button class="o" data-go="port">📈 Investieren</button><button data-go="invest">🔎 Markt</button><button data-go="welt">🌍 Welt</button><button data-go="calc">🏠 Immobilien</button><button data-go="cockpit">◉ JARVIS</button></div>
+    <div class="of-top"><span class="of-k">Investment-Atrium</span><h1 class="of-h">Willkommen im Büro,<br><em>Master.</em></h1></div>
+    <div class="of-cap"><div><span id="ofIdx">KERN</span><b id="ofName">JARVIS</b></div><button id="ofOpen" type="button">Sprechen</button></div>
+    <div class="of-hint">Wischen zum Wechseln · Tippen zum Öffnen</div>
   </div>
 </section>
 
@@ -1102,10 +1098,11 @@ const bootCbs=[];$('#boot').addEventListener('click',()=>{sfx.init();setTimeout(
 window.J={BRIEF,go,summary,analyze,holo,toast,addMsg,TYPES,REGIONS,DE,chf,get S(){return S},save,setTextHandler:f=>{textHandler=f},onView:f=>viewCbs.push(f),onBoot:f=>bootCbs.push(f)};
 })();
 </script>
-<script src="office.js?v=4"></script>
+<script src="core.js?v=2"></script>
+<script src="office.js?v=7"></script>
 <script src="lage.js?v=6"></script>
-<script src="theme.js?v=3"></script>
-<script src="os.js?v=2"></script>
+<script src="theme.js?v=4"></script>
+<script src="os.js?v=4"></script>
 <script src="travel.js?v=2"></script>
 <script type="module" src="omega.js?v=18"></script>
 </body>

@@ -1,7 +1,7 @@
 /* =====================================================================
-   JARVIS · OBSIDIAN-OBERFLÄCHE
-   Neue Zentrale mit lebendem Kern, Live-Kacheln (Wetter, Börsen,
-   Weltlage, Route, Konto, Büro), Aurora-Hintergrund, Dock-Navigation.
+   JARVIS · MERIDIAN-OBERFLÄCHE
+   Zentrale mit flüssigem Chrom-Kern, Tiefen-Karussell mit Live-Daten,
+   Vollbild-Menü, Sprach-Knopf auf jeder Seite, Vorhang-Übergänge.
    Alle Zahlen kommen live aus echten Quellen; ohne Daten: „—“.
    ===================================================================== */
 (function () {
@@ -10,239 +10,232 @@
   const API = 'https://jarvis-iota-weld.vercel.app/api/';
   const esc = s => String(s ?? '').replace(/[&<>"]/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c]));
   const V = () => window.JARVIS || {};
-
-  // Alter 3D-Avatar bleibt aus (spart Akku und Rechenzeit, damit die Stimme flüssig bleibt)
+  const words = (html, d0 = 0) => html.split('|').map((w, i) => `<span class="w"><i style="animation-delay:${(d0 + i * .09).toFixed(2)}s">${w}</i></span>`).join(' ');
   try { Object.defineProperty(window, '__holoPause', { get: () => true, set() {}, configurable: true }); } catch (e) {}
 
-  /* ---------- Hintergrund ---------- */
-  const bg = document.createElement('div'); bg.id = 'osBg'; bg.innerHTML = '<i></i><i></i><i></i><canvas></canvas>';
-  document.body.prepend(bg);
-  const bc = bg.querySelector('canvas'), bx = bc.getContext('2d');
-  const dots = Array.from({ length: 46 }, () => ({ x: Math.random(), y: Math.random(), vx: (Math.random() - .5) * .00012, vy: (Math.random() - .5) * .00012 }));
-  let bgOn = true;
-  function bgFrame() {
-    const dpr = Math.min(2, devicePixelRatio || 1), w = innerWidth, h = innerHeight;
-    if (bc.width !== w * dpr) { bc.width = w * dpr; bc.height = h * dpr; }
-    bx.setTransform(dpr, 0, 0, dpr, 0, 0); bx.clearRect(0, 0, w, h);
-    for (const d of dots) { d.x = (d.x + d.vx + 1) % 1; d.y = (d.y + d.vy + 1) % 1; }
-    bx.lineWidth = .6;
-    for (let i = 0; i < dots.length; i++) {
-      const a = dots[i], ax = a.x * w, ay = a.y * h;
-      for (let j = i + 1; j < dots.length; j++) {
-        const b = dots[j], dx = ax - b.x * w, dy = ay - b.y * h, dd = dx * dx + dy * dy;
-        if (dd < 22000) { bx.strokeStyle = `rgba(160,190,255,${.12 * (1 - dd / 22000)})`; bx.beginPath(); bx.moveTo(ax, ay); bx.lineTo(b.x * w, b.y * h); bx.stroke(); }
-      }
-      bx.fillStyle = 'rgba(200,220,255,.35)'; bx.fillRect(ax - .8, ay - .8, 1.6, 1.6);
-    }
+  /* ---------- Grundgerüst ---------- */
+  document.body.insertAdjacentHTML('afterbegin', '<div id="osGrain"></div><div id="osTop"></div><div id="osCurtain"></div>');
+  const brand = $('.brand'); if (brand) { brand.innerHTML = 'Jarvis<small>Ω</small>'; brand.onclick = () => J.go('cockpit'); }
+  document.body.insertAdjacentHTML('beforeend', `
+    <button id="osMenuBtn" aria-label="Menü"><span id="osMenuT">MENÜ</span><i></i></button>
+    <nav id="osMenu" aria-label="Hauptmenü"><ol>
+      <li><a data-v="cockpit"><span>01</span><b>Zentrale</b><em id="mm1"></em></a></li>
+      <li><a data-v="office"><span>02</span><b>Atrium</b><em>3D-BÜRO</em></a></li>
+      <li><a data-v="lage"><span>03</span><b>Weltlage</b><em id="mm3"></em></a></li>
+      <li><a data-v="port"><span>04</span><b>Finanzen</b><em id="mm4"></em></a></li>
+      <li><a data-v="invest"><span>05</span><b>Märkte</b><em id="mm5"></em></a></li>
+      <li><a data-v="calc"><span>06</span><b>Immobilien</b><em>RECHNER</em></a></li>
+      <li><a data-v="hub"><span>07</span><b>Verbindungen</b><em id="mm7"></em></a></li>
+    </ol><div class="mf"><span>JARVIS · ZÜRICH</span><span id="mmT"></span></div></nav>
+    <button id="osFab" aria-label="Mit JARVIS sprechen" data-s="off"></button>`);
+  $$('#osMenu a').forEach((a, i) => a.style.transitionDelay = (.12 + i * .05) + 's');
+  const menu = on => { document.body.classList.toggle('menu', on); $('#osMenuT').textContent = on ? 'SCHLIESSEN' : 'MENÜ'; if (on) refreshMenu(); };
+  $('#osMenuBtn').onclick = () => menu(!document.body.classList.contains('menu'));
+  $('#osMenu').onclick = e => { const a = e.target.closest('a[data-v]'); if (!a) return; menu(false); setTimeout(() => J.go(a.dataset.v), 250); };
+  $('#osFab').onclick = () => { const s = V().state; if (!s || s === 'off' || s === 'err') V().start && V().start(); else { V().end && V().end(); J.toast('Gespräch beendet'); } };
+
+  /* ---------- Seitenköpfe ---------- */
+  const HEAD = {
+    port: ['04', 'FINANZEN · SAXO · ORDER', 'Ihre|<em>Finanzen</em>'],
+    invest: ['05', 'MÄRKTE · ANALYSE', 'Die|<em>Märkte</em>'],
+    calc: ['06', 'IMMOBILIEN · RECHNER', 'Ihr|<em>Zuhause</em>'],
+    hub: ['07', 'VERBINDUNGEN · EINSTELLUNGEN', 'Ver|<em>bindungen</em>'],
+    welt: ['—', 'VERMÖGEN NACH LÄNDERN', 'Die|<em>Welt</em>'],
+    jarvis: ['—', 'GESPRÄCH', 'Im|<em>Dialog</em>'],
+  };
+  function head(v) {
+    const h = HEAD[v], sec = document.getElementById('v-' + v); if (!h || !sec) return;
+    let el = sec.querySelector('.os-ph'); if (!el) { el = document.createElement('div'); el.className = 'os-ph'; sec.prepend(el); }
+    el.innerHTML = `<span><i>${h[0]}</i> — ${h[1]}</span><h1>${words(h[2], .15)}</h1><div class="ln"></div>`;
   }
 
-  /* ---------- Dock-Navigation ---------- */
-  const nav = $('#nav'); const pill = document.createElement('i'); pill.id = 'osPill'; nav.prepend(pill);
-  function movePill() { const b = nav.querySelector('button.on'); if (!b) { pill.style.opacity = 0; return; } pill.style.opacity = 1; pill.style.width = b.offsetWidth + 'px'; pill.style.transform = `translateX(${b.offsetLeft - 6}px)`; pill.style.left = '6px'; }
-
-  /* ---------- Emojis aus Knöpfen entfernen (ruhigeres Bild) ---------- */
+  /* ---------- Beschriftungen beruhigen ---------- */
   const EMO = /^\s*(?:[\p{Extended_Pictographic}←-⇿⌀-⏿■-➿⬀-⯿]️?‍?)+\s*/u;
-  const tc = w => w.toLowerCase().replace(/(^|[\s\-\/(·])(\p{L})/gu, (m, a, b) => a + b.toUpperCase()).replace(/\b(Und|Oder|Der|Die|Das|Mit|Von|Nach|Pro|Im|In|Am|Zu|Je|Ohne|Für|Nur|Auf|Des|Dein|Deine|Deines)\b/g, x => x.toLowerCase()).replace(/^./, c => c.toUpperCase()).replace(/\b(Etf|Etfs|Ch|Usa|Smi|Saxo|Ai|Ki)\b/g, x => ({ Etf: 'ETF', Etfs: 'ETFs', Ch: 'CH', Usa: 'USA', Smi: 'SMI', Saxo: 'Saxo', Ai: 'AI', Ki: 'KI' }[x]));
-  function cleanTitles(root = document) {
-    root.querySelectorAll('.ct').forEach(ct => { const t = [...ct.childNodes].find(n => n.nodeType === 3 && n.textContent.trim()); if (t && /^[^a-zäöü]+$/.test(t.textContent.trim())) t.textContent = tc(t.textContent.trim()) + ' '; });
+  function clean(root = document) {
+    root.querySelectorAll('button, .btn, a.btn').forEach(b => { const t = [...b.childNodes].find(n => n.nodeType === 3 && n.textContent.trim()); if (t && EMO.test(t.textContent)) t.textContent = t.textContent.replace(EMO, ''); });
     root.querySelectorAll('.card[style*="border-color"]').forEach(c => c.style.removeProperty('border-color'));
     root.querySelectorAll('.ct[style*="color"]').forEach(c => c.style.removeProperty('color'));
   }
-  function cleanLabels(root = document) {
-    cleanTitles(root);
-    root.querySelectorAll('button, .btn, a.btn, .obar button, .lg-bar button').forEach(b => {
-      const t = [...b.childNodes].find(n => n.nodeType === 3 && n.textContent.trim()); if (t && EMO.test(t.textContent)) t.textContent = t.textContent.replace(EMO, '');
-    });
-  }
 
-  /* ---------- Zentrale ---------- */
+  /* =====================================================================
+     ZENTRALE
+     ===================================================================== */
   const sec = $('#v-cockpit');
   const home = document.createElement('div'); home.id = 'osHome';
-  const IC = {
-    wx: '<svg viewBox="0 0 24 24"><path d="M7 18a4 4 0 1 1 .6-7.95A6 6 0 0 1 19 12a3 3 0 0 1-1 5.83V18H7z"/></svg>',
-    mk: '<svg viewBox="0 0 24 24"><path d="M3 17l6-6 4 4 8-8M15 7h6v6"/></svg>',
-    globe: '<svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="9"/><path d="M3 12h18M12 3c3 3.5 3 14.5 0 18M12 3c-3 3.5-3 14.5 0 18"/></svg>',
-    car: '<svg viewBox="0 0 24 24"><path d="M5 16V11l2-5h10l2 5v5M5 16h14M5 16v2M19 16v2M7.5 13h.01M16.5 13h.01"/></svg>',
-    bank: '<svg viewBox="0 0 24 24"><path d="M3 10l9-6 9 6M5 10v8M9 10v8M15 10v8M19 10v8M3 20h18"/></svg>',
-    room: '<svg viewBox="0 0 24 24"><path d="M3 21h18M5 21V8l7-4 7 4v13M9 21v-4h6v4"/></svg>',
-    go: '<svg viewBox="0 0 24 24"><path d="M5 12h14M13 6l6 6-6 6"/></svg>',
-  };
+  const ARROW = '<svg viewBox="0 0 24 24"><path d="M4 12h16M14 6l6 6-6 6"/></svg>';
   home.innerHTML = `
-    <div class="os-top"><div><div class="os-date" id="osDate"></div><div class="os-hi" id="osHi"></div></div>
-      <div class="os-clock"><span id="osClock">--:--</span><small>ZÜRICH</small></div></div>
-    <div class="os-orbwrap" id="osOrbWrap" role="button" aria-label="Mit JARVIS sprechen"><canvas id="osOrb"></canvas></div>
-    <div class="os-state" id="osState" data-s="off"><i></i><span>Tippen Sie auf den Kern, um zu sprechen</span></div>
-    <div class="os-ctl"><button id="osMute" hidden>Stumm</button><button id="osEnd" hidden>Beenden</button><button id="osLog">Protokoll</button></div>
-    <div class="os-say" id="osSay"></div>
-    <form class="os-ask" id="osAsk" autocomplete="off"><input id="osAskIn" placeholder="Fragen Sie JARVIS …" enterkeyhint="send"><button type="submit" aria-label="Senden">${IC.go}</button></form>
-    <div class="os-chips" id="osChips">
-      <button data-ask="Wie ist die Weltlage gerade?">Weltlage jetzt</button>
-      <button data-ask="Wie ist der Verkehr nach Genf?">Verkehr nach Genf</button>
-      <button data-ask="Wie wird das Wetter morgen in Zürich?">Wetter morgen</button>
-      <button data-ask="Wie steht mein Saxo-Konto?">Mein Konto</button>
-      <button data-ask="Ich will nach Berlin.">Nach Berlin</button>
+    <section class="oh-hero">
+      <div class="oh-glow"></div>
+      <div class="oh-ring"><svg viewBox="-100 -100 200 200" fill="none">
+        <g class="a"><circle r="96" stroke="rgba(239,238,233,.10)" stroke-width=".3"/><circle r="96" stroke="rgba(239,238,233,.35)" stroke-width=".3" stroke-dasharray=".4 3.6"/>
+          <path d="M0 -96 A96 96 0 0 1 60 -75" stroke="#ff6a2b" stroke-width=".5"/></g>
+        <g class="b"><circle r="84" stroke="rgba(239,238,233,.08)" stroke-width=".3" stroke-dasharray="20 6 2 6"/></g>
+      </svg></div>
+      <div id="ohCore" role="button" aria-label="Mit JARVIS sprechen"></div>
+      <div class="oh-meta"><span><i></i><b id="ohDate">—</b></span><span id="ohWx">ZÜRICH —</span></div>
+      <div class="oh-txt"><h1 class="oh-hi" id="ohHi"></h1></div>
+      <div class="oh-st" id="ohSt" data-s="off"><i></i><span id="ohStT">Bereit · Kern antippen</span><span class="sp"></span><button id="ohMute" hidden>Stumm</button><button id="ohEnd" hidden>Beenden</button><button id="ohLog">Protokoll</button></div>
+      <div class="oh-say" id="ohSay"></div>
+      <form class="oh-ask" id="ohAsk" autocomplete="off"><input id="ohAskIn" placeholder="Was darf ich für Sie tun?" enterkeyhint="send"><button type="submit" aria-label="Senden">${ARROW}</button></form>
+      <div class="oh-chips" id="ohChips">
+        <button data-ask="Wie ist die Weltlage gerade?">Weltlage</button><button data-ask="Wie ist der Verkehr nach Genf?">Verkehr Genf</button>
+        <button data-ask="Wie wird das Wetter morgen in Zürich?">Wetter morgen</button><button data-ask="Wie steht mein Saxo-Konto?">Mein Konto</button><button data-ask="Ich will nach Berlin.">Nach Berlin</button>
+      </div>
+    </section>
+    <div class="oh-sec"><span>01</span><h2>Live-<em>Lage</em></h2><small id="ohStamp">—</small></div>
+    <div class="oh-deck" id="ohDeck">
+      <button class="oh-card" id="cWx"><div class="n"><span><b>01</b> · ZÜRICH</span><span class="lv">LIVE</span></div><div id="cWxB"><span class="oh-shim" style="width:60%"></span><span class="oh-shim" style="width:40%"></span></div><canvas class="sp" id="cWxS"></canvas><div class="ft">Prognose öffnen</div></button>
+      <button class="oh-card" id="cLage"><div class="n"><span><b>02</b> · WELTLAGE</span><span class="lv" id="cLageN">LIVE</span></div><h3>Brenn-<em>punkte</em></h3><ul class="oh-news" id="cLageB"><li><span class="oh-shim" style="width:80%"></span></li></ul><div class="ft">Globus öffnen</div></button>
+      <div class="oh-card" id="cRoute" style="cursor:default"><div class="n"><span><b>03</b> · ROUTE</span><span>LIVE-VERKEHR</span></div><h3>Wohin,<br><em>Master?</em></h3>
+        <form class="oh-route" id="ohRoute"><input id="ohRouteIn" placeholder="Ziel …" enterkeyhint="go"><button type="submit">LOS →</button></form>
+        <div class="oh-rq"><span>Genf</span><span>Bern</span><span>Basel</span><span>Luzern</span><span>Mailand</span><span>Berlin</span></div><div class="ft" style="pointer-events:none">Stau · Zug · Wetter</div></div>
+      <button class="oh-card" id="cMk"><div class="n"><span><b>04</b> · BÖRSEN</span><span class="lv">LIVE</span></div><h3>Han<em>del</em></h3><div class="oh-mk" id="cMkB"></div><div class="ft">Märkte öffnen</div></button>
+      <button class="oh-card" id="cSx"><div class="n"><span><b>05</b> · KONTO</span><span id="cSxE">SAXO</span></div><div id="cSxB"><h3>…</h3></div><div class="ft">Finanzen öffnen</div></button>
+      <button class="oh-card oh-off" id="cOff"><div class="n"><span><b>06</b> · ATRIUM</span><span>3D</span></div><h3>Das<br><em>Büro</em></h3><div class="pv"><i></i><i></i></div><div class="ft">Eintreten</div></button>
     </div>
-    <div class="os-sec"><h2>Live-Lage</h2><span id="osStamp">—</span></div>
-    <div class="os-grid">
-      <button class="os-tile" id="tWx" style="animation-delay:.05s"><div class="os-k">${IC.wx}Zürich<span class="live">LIVE</span></div><div id="tWxB"><span class="os-shim" style="width:60%"></span><span class="os-shim" style="width:40%"></span></div><canvas class="os-spark" id="tWxS"></canvas></button>
-      <button class="os-tile" id="tMk" style="animation-delay:.1s"><div class="os-k">${IC.mk}Börsen<span class="live">LIVE</span></div><div class="os-mk" id="tMkB"></div></button>
-      <button class="os-tile w2 os-lage-t" id="tLage" style="animation-delay:.15s"><div class="os-k">${IC.globe}Weltlage<span class="live" id="tLageN">LIVE</span></div><ul class="os-news" id="tLageB"><li><span class="os-shim" style="width:90%"></span></li><li><span class="os-shim" style="width:75%"></span></li></ul><span class="os-go">${IC.go}</span></button>
-      <div class="os-tile w2" id="tRoute" style="animation-delay:.2s;cursor:default"><div class="os-k">${IC.car}Route mit Live-Verkehr</div>
-        <form class="os-route" id="osRoute"><input id="osRouteIn" placeholder="Wohin, Master?" enterkeyhint="go"><button type="submit">Los</button></form>
-        <div class="os-route-q"><span>Genf</span><span>Bern</span><span>Basel</span><span>Luzern</span><span>Mailand</span><span>Berlin</span></div></div>
-      <button class="os-tile" id="tSx" style="animation-delay:.25s"><div class="os-k">${IC.bank}Saxo-Konto</div><div id="tSxB"><div class="os-big" style="font-size:30px">—</div><div class="os-sub">Wird geladen …</div></div><span class="os-go">${IC.go}</span></button>
-      <button class="os-tile os-office" id="tOff" style="animation-delay:.3s"><div class="os-k" style="color:#dfe3ff">${IC.room}3D</div><div class="os-big">Investment-<br>Büro betreten</div><span class="os-go">${IC.go}</span></button>
-    </div>
-    <div class="os-sec"><h2>Vermögen</h2><span>PORTFOLIO</span></div>`;
+    <div class="oh-sec"><span>02</span><h2>Ihr <em>Vermögen</em></h2><small>APP-PORTFOLIO</small></div>`;
   sec.prepend(home);
 
-  /* Kopfzeile: Uhr, Datum, Begrüssung */
-  function tickClock() {
+  /* ---------- Uhr & Begrüssung ---------- */
+  let lastHi = '';
+  function tick() {
     const now = new Date();
-    $('#osClock').textContent = now.toLocaleTimeString('de-CH', { timeZone: 'Europe/Zurich', hour: '2-digit', minute: '2-digit' });
-    $('#osDate').textContent = now.toLocaleDateString('de-CH', { timeZone: 'Europe/Zurich', weekday: 'long', day: 'numeric', month: 'long' });
+    const d = now.toLocaleDateString('de-CH', { timeZone: 'Europe/Zurich', weekday: 'short', day: '2-digit', month: '2-digit' }).toUpperCase();
+    const t = now.toLocaleTimeString('de-CH', { timeZone: 'Europe/Zurich', hour: '2-digit', minute: '2-digit' });
+    $('#ohDate').textContent = `${d} · ${t}`; $('#mmT').textContent = t; const m1 = $('#mm1'); if (m1) m1.textContent = t;
     const h = +now.toLocaleString('en-GB', { timeZone: 'Europe/Zurich', hour: '2-digit', hour12: false });
-    const g = h < 5 ? 'Gute Nacht' : h < 11 ? 'Guten Morgen' : h < 17 ? 'Guten Tag' : h < 22 ? 'Guten Abend' : 'Gute Nacht';
-    const hi = `${g},<br><em>Master.</em>`; if ($('#osHi').innerHTML !== hi) $('#osHi').innerHTML = hi;
+    const g = h < 5 ? 'Gute|Nacht,' : h < 11 ? 'Guten|Morgen,' : h < 17 ? 'Guten|Tag,' : h < 22 ? 'Guten|Abend,' : 'Gute|Nacht,';
+    if (g !== lastHi) { lastHi = g; $('#ohHi').innerHTML = words(g, .3) + '<br>' + words('<em>Master.</em>', .5); }
   }
 
-  /* Sprechen */
-  const STXT = { off: 'Tippen Sie auf den Kern, um zu sprechen', busy: 'Verbinde …', err: 'Fehler – nochmals tippen', listening: 'Ich höre zu, Master', speaking: 'JARVIS spricht', muted: 'Mikrofon stumm' };
-  $('#osOrbWrap').onclick = () => { const s = V().state; if (s === 'off' || s === 'err' || !s) V().start && V().start(); else if (s === 'muted') V().mute(); };
-  $('#osMute').onclick = () => V().mute && V().mute();
-  $('#osEnd').onclick = () => V().end && V().end();
-  $('#osLog').onclick = () => { const w = $('#vLogWrap'); w && w.classList.toggle('open'); };
-  const ask = t => { t = String(t || '').trim(); if (!t) return; if (V().send) V().send(t); };
-  $('#osAsk').onsubmit = e => { e.preventDefault(); const i = $('#osAskIn'); ask(i.value); i.value = ''; i.blur(); };
-  $('#osChips').onclick = e => { const b = e.target.closest('[data-ask]'); if (b) ask(b.dataset.ask); };
-  // Letzte JARVIS-Antwort spiegeln
+  /* ---------- Stimme ---------- */
+  const STXT = { off: 'Bereit · Kern antippen', busy: 'Verbinde …', err: 'Fehler · erneut antippen', listening: 'Ich höre zu', speaking: 'JARVIS spricht', muted: 'Mikrofon stumm' };
+  $('#ohCore').onclick = () => { const s = V().state; if (!s || s === 'off' || s === 'err') V().start && V().start(); else if (s === 'muted') V().mute(); };
+  $('#ohMute').onclick = () => V().mute && V().mute();
+  $('#ohEnd').onclick = () => V().end && V().end();
+  $('#ohLog').onclick = () => { const w = $('#vLogWrap'); w && w.classList.toggle('open'); };
+  const ask = t => { t = String(t || '').trim(); if (t && V().send) V().send(t); };
+  $('#ohAsk').onsubmit = e => { e.preventDefault(); const i = $('#ohAskIn'); ask(i.value); i.value = ''; i.blur(); };
+  $('#ohChips').onclick = e => { const b = e.target.closest('[data-ask]'); if (b) ask(b.dataset.ask); };
   const greet = $('#greet');
-  if (greet) new MutationObserver(() => { if (!['listening', 'speaking', 'muted'].includes(V().state)) return; const s = $('#osSay'); s.style.opacity = 0; setTimeout(() => { s.textContent = greet.textContent; s.style.opacity = 1; }, 200); }).observe(greet, { childList: true, characterData: true, subtree: true });
-
-  /* ---------- Kern (Partikel-Sphäre, reagiert auf die Stimme) ---------- */
-  const oc = $('#osOrb'), ox = oc.getContext('2d');
-  const N = 760, P = [];
-  for (let i = 0; i < N; i++) { const y = 1 - (i / (N - 1)) * 2, r = Math.sqrt(1 - y * y), t = i * 2.399963; P.push([Math.cos(t) * r, y, Math.sin(t) * r]); }
-  const COL = [[109, 124, 255], [56, 214, 255], [255, 138, 92], [235, 240, 255]];
-  let rot = 0, lvl = 0, amp = .04, spin = .15, hue = 0, lastS = '';
-  function orbFrame(t) {
-    const dpr = Math.min(2, devicePixelRatio || 1), S = oc.clientWidth; if (!S) return;
-    if (oc.width !== S * dpr) { oc.width = oc.height = S * dpr; }
-    ox.setTransform(dpr, 0, 0, dpr, 0, 0); ox.clearRect(0, 0, S, S);
-    const st = V().state || 'off';
-    const raw = Math.min(1, (V().level ? V().level() : 0) * 2.4); lvl += (raw - lvl) * .18;
-    const tgtAmp = st === 'speaking' ? .04 + lvl * .12 : st === 'listening' ? .03 + lvl * .08 : st === 'busy' ? .06 : .02;
-    const tgtSpin = st === 'busy' ? 1.6 : st === 'speaking' ? .5 : st === 'listening' ? .3 : .12;
-    const tgtHue = st === 'speaking' ? 1 : st === 'listening' ? .5 : 0;
-    amp += (tgtAmp - amp) * .08; spin += (tgtSpin - spin) * .05; hue += (tgtHue - hue) * .04; rot += spin * .016;
-    const T = t / 1000, c = S / 2, R = S * .3, cy = Math.cos(rot), sy = Math.sin(rot), tx = .35, cx = Math.cos(tx), sx = Math.sin(tx);
-    // Glühen
-    const g = ox.createRadialGradient(c, c, R * .1, c, c, R * 1.7);
-    const gc = hue > .7 ? '255,150,100' : hue > .3 ? '90,200,255' : '120,130,255';
-    g.addColorStop(0, `rgba(${gc},${.28 + lvl * .25})`); g.addColorStop(.45, `rgba(${gc},.08)`); g.addColorStop(1, 'rgba(0,0,0,0)');
-    ox.fillStyle = g; ox.fillRect(0, 0, S, S);
-    ox.globalCompositeOperation = 'lighter';
-    for (let i = 0; i < N; i++) {
-      let [x, y, z] = P[i];
-      const n = Math.sin(x * 3.1 + T * 1.3) * Math.sin(y * 3.7 - T * 1.1) * Math.sin(z * 2.9 + T * .8);
-      const k = 1 + amp * n * 1.6 + (st === 'speaking' ? lvl * .05 * Math.sin(T * 7 + y * 5) : 0);
-      x *= k; y *= k; z *= k;
-      const x1 = x * cy - z * sy, z1 = x * sy + z * cy; const y2 = y * cx - z1 * sx, z2 = y * sx + z1 * cx;
-      const p = 2.6 / (2.6 + z2), px = c + x1 * R * p, py = c + y2 * R * p;
-      const d = (z2 + 1) / 2; const a = .12 + (1 - d) * .75;
-      const m = (y + 1) / 2; const A = COL[hue > .5 ? 2 : 0], B = COL[1];
-      const r = A[0] + (B[0] - A[0]) * m, gg = A[1] + (B[1] - A[1]) * m, b = A[2] + (B[2] - A[2]) * m;
-      ox.fillStyle = `rgba(${r | 0},${gg | 0},${b | 0},${a})`; const s = (.55 + (1 - d) * .75) * p; ox.beginPath(); ox.arc(px, py, s, 0, 6.283); ox.fill();
-    }
-    // Umlaufbahnen
-    ox.lineWidth = 1;
-    for (let k = 0; k < 2; k++) {
-      ox.save(); ox.translate(c, c); ox.rotate(T * (k ? -.25 : .18) + k * 1.2);
-      ox.strokeStyle = `rgba(200,220,255,${.16 + lvl * .25})`; ox.beginPath(); ox.ellipse(0, 0, R * (1.42 + k * .14), R * (.36 + k * .1), 0, 0, Math.PI * 2); ox.stroke();
-      const a = T * (k ? 1.1 : .8); ox.fillStyle = k ? '#ffb38a' : '#8fe6ff'; ox.beginPath(); ox.arc(Math.cos(a) * R * (1.42 + k * .14), Math.sin(a) * R * (.36 + k * .1), 2.2, 0, 7); ox.fill(); ox.restore();
-    }
-    // Kern
-    const cg = ox.createRadialGradient(c, c, 0, c, c, R * .5);
-    cg.addColorStop(0, `rgba(255,255,255,${.5 + lvl * .4})`); cg.addColorStop(.4, `rgba(${gc},.25)`); cg.addColorStop(1, 'rgba(0,0,0,0)');
-    ox.fillStyle = cg; ox.beginPath(); ox.arc(c, c, R * (.5 + lvl * .2), 0, 7); ox.fill();
-    ox.globalCompositeOperation = 'source-over';
-    if (st !== lastS) {
-      lastS = st; const el = $('#osState'); el.dataset.s = st; el.querySelector('span').textContent = STXT[st] || STXT.off;
-      const live = st === 'listening' || st === 'speaking' || st === 'muted';
-      $('#osMute').hidden = $('#osEnd').hidden = !live; $('#osMute').textContent = st === 'muted' ? 'Mikrofon an' : 'Stumm';
-      document.body.classList.toggle('voice-speaking', st === 'speaking'); document.body.classList.toggle('voice-listening', st === 'listening');
-    }
+  if (greet) new MutationObserver(() => { if (!['listening', 'speaking', 'muted'].includes(V().state)) return; const s = $('#ohSay'); s.style.opacity = 0; setTimeout(() => { s.textContent = greet.textContent; s.style.opacity = 1; }, 250); }).observe(greet, { childList: true, characterData: true, subtree: true });
+  let lastS = '';
+  function voiceUI() {
+    const st = V().state || 'off'; if (st === lastS) return; lastS = st;
+    $('#ohSt').dataset.s = st; $('#ohStT').textContent = STXT[st] || STXT.off; $('#osFab').dataset.s = st;
+    const live = ['listening', 'speaking', 'muted'].includes(st);
+    $('#ohMute').hidden = $('#ohEnd').hidden = !live; $('#ohMute').textContent = st === 'muted' ? 'Mikro an' : 'Stumm';
+    document.body.classList.toggle('voice-speaking', st === 'speaking'); document.body.classList.toggle('voice-listening', st === 'listening');
   }
 
-  /* ---------- Live-Kacheln ---------- */
+  /* ---------- Chrom-Kern ---------- */
+  let core = null;
+  (function makeCore() {
+    const host = $('#ohCore'); if (typeof THREE === 'undefined' || !window.JCore) return;
+    let r; try { r = new THREE.WebGLRenderer({ antialias: true, alpha: true, powerPreference: 'high-performance' }); } catch (e) { host.innerHTML = '<div style="position:absolute;inset:28%;border-radius:50%;background:radial-gradient(circle at 35% 28%,#fff,#bfc2c8 18%,#55575d 45%,#141417 70%)"></div>'; return; }
+    r.setPixelRatio(Math.min(devicePixelRatio || 1, 2)); r.setClearColor(0, 0); host.appendChild(r.domElement);
+    const sc = new THREE.Scene(), cam = new THREE.PerspectiveCamera(26, 1, .1, 50); cam.position.set(0, 0, 6.2);
+    const mat = window.JCore.material(); const m = new THREE.Mesh(new THREE.SphereGeometry(1, 192, 144), mat); sc.add(m);
+    let tx = 0, ty = 0, rx = 0, ry = 0, vis = true, w = 0;
+    host.addEventListener('pointermove', e => { const b = host.getBoundingClientRect(); tx = ((e.clientX - b.left) / b.width - .5) * .6; ty = ((e.clientY - b.top) / b.height - .5) * .4; });
+    host.addEventListener('pointerleave', () => { tx = ty = 0; });
+    new IntersectionObserver(es => es.forEach(e => vis = e.isIntersecting)).observe(host);
+    core = {
+      frame(T) {
+        if (!vis) return; const s = host.clientWidth; if (!s) return; if (s !== w) { w = s; r.setSize(s, s, false); cam.aspect = 1; cam.updateProjectionMatrix(); }
+        const st = window.JCore.update(mat, T); rx += (ty - rx) * .05; ry += (tx - ry) * .05;
+        m.rotation.y = T * .15 + ry; m.rotation.x = rx; m.position.y = Math.sin(T * .8) * .04; m.scale.setScalar(1 + st.lvl * .06);
+        r.render(sc, cam);
+      },
+    };
+  })();
+
+  /* ---------- Tiefen-Karussell ---------- */
+  const deck = $('#ohDeck');
+  function flow() {
+    const dr = deck.getBoundingClientRect(), cx = dr.left + dr.width / 2;
+    deck.querySelectorAll('.oh-card').forEach(c => { const b = c.getBoundingClientRect(); const o = (b.left + b.width / 2 - cx) / b.width; const a = Math.min(1.6, Math.abs(o));
+      c.style.transform = `translateZ(${-a * 110}px) rotateY(${Math.max(-1.6, Math.min(1.6, o)) * -16}deg) scale(${1 - a * .05})`; c.style.opacity = 1 - a * .38; });
+  }
+  deck.addEventListener('scroll', () => requestAnimationFrame(flow), { passive: true });
+  addEventListener('resize', flow);
+
+  /* ---------- Live-Daten ---------- */
   const MK = [
-    { n: 'SIX', tz: 'Europe/Zurich', o: 540, c: 1050 }, { n: 'XETRA', tz: 'Europe/Berlin', o: 540, c: 1050 }, { n: 'LSE', tz: 'Europe/London', o: 480, c: 990 },
-    { n: 'NYSE', tz: 'America/New_York', o: 570, c: 960 }, { n: 'TSE', tz: 'Asia/Tokyo', o: 540, c: 930 }, { n: 'HKEX', tz: 'Asia/Hong_Kong', o: 570, c: 960 },
+    { n: 'SIX', c: 'Zürich', tz: 'Europe/Zurich', o: 540, e: 1050 }, { n: 'XETRA', c: 'Frankfurt', tz: 'Europe/Berlin', o: 540, e: 1050 }, { n: 'LSE', c: 'London', tz: 'Europe/London', o: 480, e: 990 },
+    { n: 'NYSE', c: 'New York', tz: 'America/New_York', o: 570, e: 960 }, { n: 'TSE', c: 'Tokio', tz: 'Asia/Tokyo', o: 540, e: 930 }, { n: 'HKEX', c: 'Hongkong', tz: 'Asia/Hong_Kong', o: 570, e: 960 },
   ];
   const tzp = tz => { const o = {}; new Intl.DateTimeFormat('en-GB', { timeZone: tz, weekday: 'short', hour: '2-digit', minute: '2-digit', hour12: false }).formatToParts(new Date()).forEach(p => o[p.type] = p.value); return o; };
+  const isOpen = m => { const p = tzp(m.tz); if (p.weekday === 'Sat' || p.weekday === 'Sun') return false; const t = (+p.hour % 24) * 60 + +p.minute; return t >= m.o && t < m.e; };
   function renderMk() {
-    $('#tMkB').innerHTML = MK.map(m => { const p = tzp(m.tz), we = p.weekday === 'Sat' || p.weekday === 'Sun', t = (+p.hour % 24) * 60 + +p.minute, on = !we && t >= m.o && t < m.c;
-      return `<div><b><i class="${on ? 'on' : ''}"></i>${m.n}</b><small>${(+p.hour % 24 + '').padStart(2, '0')}:${p.minute} · ${on ? 'offen' : 'zu'}</small></div>`; }).join('');
+    $('#cMkB').innerHTML = MK.map(m => { const p = tzp(m.tz), on = isOpen(m); return `<div><i class="${on ? 'on' : ''}"></i><span>${m.n} <small>${m.c}</small></span><small>${(+p.hour % 24 + '').padStart(2, '0')}:${p.minute} · ${on ? 'OFFEN' : 'ZU'}</small></div>`; }).join('');
+    const open = MK.filter(isOpen).length; const m5 = $('#mm5'); if (m5) m5.textContent = open ? `${open} BÖRSEN OFFEN` : 'ALLE BÖRSEN ZU';
   }
   function spark(cv, vals) {
-    const dpr = Math.min(2, devicePixelRatio || 1), w = cv.clientWidth, h = cv.clientHeight; if (!w || !vals.length) return;
+    const dpr = Math.min(2, devicePixelRatio || 1), w = cv.clientWidth, h = cv.clientHeight; if (!w || vals.length < 2) return;
     cv.width = w * dpr; cv.height = h * dpr; const x = cv.getContext('2d'); x.scale(dpr, dpr);
-    const mn = Math.min(...vals) - .5, mx = Math.max(...vals) + .5, pt = i => [i / (vals.length - 1) * w, h - 6 - (vals[i] - mn) / (mx - mn) * (h - 14)];
-    const gr = x.createLinearGradient(0, 0, w, 0); gr.addColorStop(0, '#6d7cff'); gr.addColorStop(.5, '#38d6ff'); gr.addColorStop(1, '#ff8a5c');
-    x.beginPath(); vals.forEach((v, i) => { const [a, b] = pt(i); i ? x.lineTo(a, b) : x.moveTo(a, b); }); x.strokeStyle = gr; x.lineWidth = 1.6; x.stroke();
-    x.lineTo(w, h); x.lineTo(0, h); x.closePath(); const fg = x.createLinearGradient(0, 0, 0, h); fg.addColorStop(0, 'rgba(56,214,255,.18)'); fg.addColorStop(1, 'rgba(56,214,255,0)'); x.fillStyle = fg; x.fill();
+    const mn = Math.min(...vals) - .5, mx = Math.max(...vals) + .5, pt = i => [i / (vals.length - 1) * w, h - 10 - (vals[i] - mn) / (mx - mn) * (h - 24)];
+    const gr = x.createLinearGradient(0, 0, w, 0); gr.addColorStop(0, '#9fd4ff'); gr.addColorStop(1, '#ff6a2b');
+    x.beginPath(); vals.forEach((v, i) => { const [a, b] = pt(i); i ? x.lineTo(a, b) : x.moveTo(a, b); }); x.strokeStyle = gr; x.lineWidth = 1.4; x.stroke();
+    x.lineTo(w, h); x.lineTo(0, h); x.closePath(); const fg = x.createLinearGradient(0, 0, 0, h); fg.addColorStop(0, 'rgba(255,106,43,.16)'); fg.addColorStop(1, 'rgba(255,106,43,0)'); x.fillStyle = fg; x.fill();
+    vals.forEach((v, i) => { if (i % 3) return; const [a, b] = pt(i); x.fillStyle = '#efeee9'; x.beginPath(); x.arc(a, b, 1.6, 0, 7); x.fill(); });
   }
   async function loadWx() {
     try {
       const r = await fetch(API + 'weather?q=Z%C3%BCrich'); const d = await r.json(); if (!r.ok) throw 0;
-      const j = d.jetzt, t0 = d.tage?.[0];
-      $('#tWxB').innerHTML = `<div class="os-big">${Math.round(j.temp)}<small>°</small></div><div class="os-sub"><b>${esc(j.wetter)}</b>${t0 ? ` · H ${Math.round(t0.max)}° T ${Math.round(t0.min)}°` : ''}<br>Wind ${Math.round(j.wind)} km/h${j.boeen ? ', Böen ' + Math.round(j.boeen) : ''}</div>`;
-      spark($('#tWxS'), (d.stunden || []).map(s => s.temp));
-    } catch (e) { $('#tWxB').innerHTML = '<div class="os-big">—</div><div class="os-sub">Wetter nicht erreichbar</div>'; }
+      const j = d.jetzt, t0 = (d.tage || [])[0];
+      $('#cWxB').innerHTML = `<div class="big">${Math.round(j.temp)}<sup>°</sup></div><p><b>${esc(j.wetter)}</b>${t0 ? ` · H ${Math.round(t0.max)}° · T ${Math.round(t0.min)}°` : ''}<br>Wind ${Math.round(j.wind)} km/h${j.boeen ? ' · Böen ' + Math.round(j.boeen) : ''}</p>`;
+      $('#ohWx').textContent = `ZÜRICH ${Math.round(j.temp)}° · ${String(j.wetter).toUpperCase()}`;
+      spark($('#cWxS'), (d.stunden || []).map(s => s.temp));
+    } catch (e) { $('#cWxB').innerHTML = '<div class="big">—</div><p>Wetter nicht erreichbar</p>'; }
   }
   async function loadLage() {
     try {
-      const d = window.__lageData && Date.now() - (window.__lageT || 0) < 6e5 ? window.__lageData : await (await fetch(API + 'news')).json();
-      window.__lageData = d; window.__lageT = window.__lageT || Date.now();
-      const hs = (d.hotspots || []).slice(0, 5);
-      $('#tLageN').textContent = `${d.total || 0} MELDUNGEN`;
-      $('#tLageB').innerHTML = hs.map(h => `<li class="${h.watch ? 'w' : ''}"><b>${esc(h.c)}</b><span><strong style="color:#fff;font-weight:500">${esc(h.n)}</strong> · ${esc(h.headline || '')}</span></li>`).join('') || '<li><span>Keine Meldungen</span></li>';
-      $('#osStamp').textContent = 'STAND ' + new Date(d.stand || Date.now()).toLocaleTimeString('de-CH', { timeZone: 'Europe/Zurich', hour: '2-digit', minute: '2-digit' });
-    } catch (e) { $('#tLageB').innerHTML = '<li><span>Nachrichtendienst nicht erreichbar</span></li>'; }
+      const d = window.__lageData && window.__lageData.hotspots ? window.__lageData : await (await fetch(API + 'news')).json();
+      window.__lageData = d;
+      $('#cLageN').textContent = `${d.total || 0} MELD.`; const m3 = $('#mm3'); if (m3) m3.textContent = `${d.total || 0} MELDUNGEN`;
+      $('#cLageB').innerHTML = (d.hotspots || []).slice(0, 4).map(h => `<li class="${h.watch ? 'w' : ''}"><b>${esc(h.c)}</b><span><strong>${esc(h.n)}</strong> — ${esc(h.headline || '')}</span></li>`).join('');
+      $('#ohStamp').textContent = 'STAND ' + new Date(d.stand || Date.now()).toLocaleTimeString('de-CH', { timeZone: 'Europe/Zurich', hour: '2-digit', minute: '2-digit' });
+    } catch (e) { $('#cLageB').innerHTML = '<li><span>Nachrichtendienst nicht erreichbar</span></li>'; }
   }
+  const hasSaxo = () => { try { return !!(JSON.parse(localStorage.getItem('omega-saxo') || 'null') || {}).token; } catch (e) { return false; } };
   async function loadSx() {
-    const hasTok = (() => { try { return !!(JSON.parse(localStorage.getItem('omega-saxo') || 'null') || {}).token; } catch (e) { return false; } })();
-    if (!hasTok) { $('#tSxB').innerHTML = '<div class="os-big t2">Nicht<br>verbunden</div><div class="os-sub">Tippen, um Saxo zu verbinden</div>'; return; }
-    try { if (window.__saxoRefresh) await window.__saxoRefresh(); } catch (e) {}
+    const m4 = $('#mm4'), m7 = $('#mm7');
+    if (!hasSaxo()) { $('#cSxB').innerHTML = '<h3>Nicht<br><em>verbunden</em></h3><p>Tippen, um Ihr Saxo-Konto zu verbinden.</p>'; if (m4) m4.textContent = 'SAXO AUS'; if (m7) m7.textContent = 'SAXO AUS'; return; }
+    try { window.__saxoRefresh && await window.__saxoRefresh(); } catch (e) {}
     const s = window.__saxoSnap;
-    if (!s || s.gesamtwert == null) { $('#tSxB').innerHTML = '<div class="os-big t2">Verbunden</div><div class="os-sub">Kontostand gerade nicht abrufbar</div>'; return; }
-    const v = Math.round(s.gesamtwert).toLocaleString('de-CH');
-    $('#tSxB').innerHTML = `<div class="os-big" style="font-size:30px">${v}</div><div class="os-sub"><b>${esc(s.waehrung || '')}</b> · ${esc(s.umgebung)} · ${(s.positionen || []).length} Positionen</div>`;
+    if (!s || s.gesamtwert == null) { $('#cSxB').innerHTML = '<h3><em>Verbunden</em></h3><p>Kontostand gerade nicht abrufbar.</p>'; if (m4) m4.textContent = 'SAXO VERBUNDEN'; return; }
+    $('#cSxE').textContent = 'SAXO · ' + (s.umgebung === 'SIM' ? 'DEMO' : 'LIVE');
+    $('#cSxB').innerHTML = `<div class="big" style="font-size:78px;margin-top:30px">${Math.round(s.gesamtwert).toLocaleString('de-CH')}</div><p><b>${esc(s.waehrung || '')}</b> · ${(s.positionen || []).length} Positionen<br>Cash ${Math.round(s.cash || 0).toLocaleString('de-CH')} ${esc(s.waehrung || '')}</p>`;
+    if (m4) m4.textContent = `${Math.round(s.gesamtwert).toLocaleString('de-CH')} ${s.waehrung || ''}`; if (m7) m7.textContent = 'SAXO VERBUNDEN';
   }
-  $('#tWx').onclick = () => window.TRAVEL && window.TRAVEL.weather('Zürich');
-  $('#tMk').onclick = () => J.go('invest');
-  $('#tLage').onclick = () => J.go('lage');
-  $('#tSx').onclick = () => J.go('port');
-  $('#tOff').onclick = () => J.go('office');
+  function refreshMenu() { renderMk(); tick(); $$('#osMenu a').forEach(a => a.classList.toggle('on', a.dataset.v === view)); }
+
+  $('#cWx').onclick = () => window.TRAVEL && window.TRAVEL.weather('Zürich');
+  $('#cLage').onclick = () => J.go('lage');
+  $('#cMk').onclick = () => J.go('invest');
+  $('#cSx').onclick = () => J.go('port');
+  $('#cOff').onclick = () => J.go('office');
   const route = z => { z = String(z || '').trim(); if (z && window.TRAVEL) window.TRAVEL.route(z).catch(e => J.toast('Route: ' + e.message)); };
-  $('#osRoute').onsubmit = e => { e.preventDefault(); route($('#osRouteIn').value); $('#osRouteIn').blur(); };
-  $('#tRoute').querySelector('.os-route-q').onclick = e => { if (e.target.tagName === 'SPAN') route(e.target.textContent); };
-  $$('.os-tile').forEach(t => t.addEventListener('pointermove', e => { const r = t.getBoundingClientRect(); t.style.setProperty('--mx', (e.clientX - r.left) + 'px'); t.style.setProperty('--my', (e.clientY - r.top) + 'px'); }));
+  $('#ohRoute').onsubmit = e => { e.preventDefault(); route($('#ohRouteIn').value); $('#ohRouteIn').blur(); };
+  $('#cRoute .oh-rq').onclick = e => { if (e.target.tagName === 'SPAN') route(e.target.textContent); };
+
+  /* ---------- Seitenwechsel ---------- */
+  let view = 'cockpit', first = true;
+  const curtain = $('#osCurtain');
+  J.onView(v => {
+    const prev = view; view = v;
+    [...document.body.classList].filter(c => c.startsWith('v-')).forEach(c => document.body.classList.remove(c)); document.body.classList.add('v-' + v);
+    if (!first && prev !== v) { curtain.classList.remove('go'); void curtain.offsetWidth; curtain.classList.add('go'); }
+    first = false; head(v); setTimeout(() => clean(), 30);
+    if (v === 'cockpit') { loadSx(); renderMk(); setTimeout(flow, 60); }
+  });
+  document.body.classList.add('v-cockpit');
 
   /* ---------- Taktgeber ---------- */
-  let view = 'cockpit';
-  J.onView(v => { view = v; setTimeout(() => { movePill(); cleanLabels(); }, 20); if (v === 'cockpit') { loadSx(); renderMk(); } });
-  addEventListener('resize', movePill);
-  let fr = 0;
-  (function loop(t) {
-    requestAnimationFrame(loop); if (document.hidden) return;
-    const heavy = view === 'lage' || view === 'office';
-    if (view === 'cockpit') orbFrame(t);
-    if (!heavy && (++fr % 2 === 0)) bgFrame();
-  })(performance.now());
-  tickClock(); renderMk(); loadWx(); loadLage(); loadSx(); cleanLabels();
-  setTimeout(movePill, 300); setTimeout(movePill, 1500);
-  setInterval(tickClock, 5000); setInterval(renderMk, 30000);
-  setInterval(loadWx, 10 * 60000); setInterval(() => { window.__lageT = 0; loadLage(); }, 10 * 60000);
-  document.addEventListener('visibilitychange', () => { if (!document.hidden) { tickClock(); renderMk(); } });
+  (function loop(t) { requestAnimationFrame(loop); if (document.hidden) return; voiceUI(); if (view === 'cockpit' && core) core.frame(t / 1000); })(performance.now());
+  tick(); renderMk(); loadWx(); loadLage(); loadSx(); clean(); setTimeout(flow, 100); setTimeout(flow, 800);
+  setInterval(tick, 5000); setInterval(renderMk, 30000); setInterval(loadWx, 10 * 60000);
+  setInterval(() => { window.__lageData = null; loadLage(); }, 10 * 60000);
+  document.addEventListener('visibilitychange', () => { if (!document.hidden) { tick(); renderMk(); } });
 })();

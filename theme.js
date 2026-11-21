@@ -66,7 +66,7 @@
         <path d="M60 64c3-5 9-8 15-8s12 3 15 8M58 74h34M62 84c4 4 8 6 13 6s9-2 13-6" stroke="rgba(143,230,255,.6)" stroke-width="1"/>
         <path d="M8 26V8h18M124 8h18v18M142 124v18h-18M26 142H8v-18" stroke="#8fe6ff" stroke-width="1.5"/>
       </svg><div class="sc"></div></div>
-      <h1>JARVIS</h1><p>PROJECT OMEGA · COMMAND</p>
+      <h1><span class="w"><i>Jar</i></span><span class="w"><i style="animation-delay:.12s"><em>vis</em></i></span></h1><p>PERSÖNLICHES SYSTEM · ZÜRICH</p>
       <div class="cmd-prog"><i id="bootProg"></i></div>
       <div id="bootlog"></div><div id="tap" style="opacity:.35">PRÜFE SYSTEME …</div>`;
     const log = (t, st, cls) => { $('#bootlog').insertAdjacentHTML('beforeend', `<div>› ${t} <span class="${cls}">${st}</span></div>`); };
@@ -80,7 +80,7 @@
         ['IDENTITÄT', async () => ['MASTER', 'ok']],
       ];
       for (let i = 0; i < steps.length; i++) { const [n, f] = steps[i]; let r; try { r = await f(); } catch (e) { r = ['FEHLER', 'wn']; } log(n, r[0], r[1]); $('#bootProg').style.width = ((i + 1) / steps.length * 100) + '%'; await new Promise(r => setTimeout(r, 180)); }
-      const tap = $('#tap'); tap.textContent = 'JARVIS starten'; tap.style.opacity = 1;
+      const tap = $('#tap'); tap.textContent = 'Eintreten'; tap.style.opacity = 1;
       renderBar();
     })();
   }
