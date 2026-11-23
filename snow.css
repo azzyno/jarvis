@@ -397,3 +397,47 @@ body.pan #atlasBar{opacity:.0;pointer-events:none}
 .cm-live{font:600 11px var(--sans);color:#c4553f;white-space:nowrap;animation:osBlink 1.6s infinite}
 @media (min-width:900px){#atlasBar{top:calc(80px + env(safe-area-inset-top))}}
 body.deep #atlasBar,body.pan #atlasBar{top:calc(80px + env(safe-area-inset-top))}
+
+/* ===== LIQUID GLASS ===== */
+.sc,#shAsk,.sh-cmds.dock,#atlasBar,#osMenuBtn,.sh-pan,.of-cap,.card,.kpi{
+  background-image:radial-gradient(160px circle at var(--mx,30%) var(--my,0%),rgba(255,255,255,.75),rgba(255,255,255,0) 70%),linear-gradient(135deg,rgba(255,255,255,.6),rgba(255,255,255,.12) 45%,rgba(255,255,255,.4))!important;
+  box-shadow:inset 0 1px 0 rgba(255,255,255,.95),inset 0 -1px 0 rgba(28,43,74,.06),inset 1px 0 0 rgba(255,255,255,.55),inset -1px 0 0 rgba(255,255,255,.3),0 1px 2px rgba(28,43,74,.04),0 14px 40px rgba(28,43,74,.1)!important}
+.lg-real .sc,.lg-real #shAsk,.lg-real .sh-cmds.dock,.lg-real #atlasBar,.lg-real #osMenuBtn{backdrop-filter:url(#lgF) blur(3px) saturate(180%) brightness(1.08)!important;-webkit-backdrop-filter:blur(18px) saturate(180%)}
+
+/* ===== DOCK ===== */
+.sh-cmds.dock{display:flex;justify-content:center;align-items:flex-end;gap:5px;overflow:visible;padding:7px 9px;margin:0 auto 12px;width:max-content;max-width:100%;border-radius:26px;background-color:rgba(255,255,255,.5);border:.5px solid var(--line2);-webkit-mask-image:none;mask-image:none;backdrop-filter:var(--blur);-webkit-backdrop-filter:var(--blur)}
+.sh-cmds.dock button{--s:1;position:relative;flex:0 0 auto;width:40px;height:40px;padding:0;border-radius:13px;justify-content:center;gap:0;background:#fff;border:.5px solid var(--line2);box-shadow:0 4px 12px rgba(28,43,74,.1);transform-origin:50% 100%;transform:scale(var(--s));margin:0 calc((var(--s) - 1) * 12px);transition:transform .18s cubic-bezier(.2,.7,.2,1),margin .18s cubic-bezier(.2,.7,.2,1)}
+.sh-cmds.dock button svg{width:19px;height:19px;color:var(--ink)}
+.sh-cmds.dock button[data-c="orbit"] svg,.sh-cmds.dock button[data-c="cams"] svg{color:var(--ch)}
+.sh-cmds.dock button span{position:absolute;bottom:calc(100% + 10px);left:50%;transform:translateX(-50%) scale(calc(1 / var(--s)));white-space:nowrap;font:500 11px var(--sans);color:var(--ink);background:rgba(255,255,255,.95);padding:4px 9px;border-radius:8px;box-shadow:0 4px 14px rgba(28,43,74,.12);opacity:0;pointer-events:none;transition:opacity .2s}
+.sh-cmds.dock button.big span{opacity:1}
+.sh-cmds.dock button.hop{animation:dHop .6s cubic-bezier(.3,1.6,.5,1)}
+@keyframes dHop{30%{translate:0 -14px}60%{translate:0 0}80%{translate:0 -4px}}
+.sh-cmds.dock button:after{content:'';position:absolute;bottom:-6px;left:50%;width:4px;height:4px;margin-left:-2px;border-radius:50%;background:var(--ch);opacity:0}
+body.pan .sh-cmds.dock button[data-c="orbit"]:after{opacity:0}
+
+/* ===== STIMME IN PARTIKELN ===== */
+#voiceFx{position:fixed;inset:0;width:100%;height:100%;z-index:7;pointer-events:none}
+
+/* ===== MÄRKTE LIVE ===== */
+.mk-board{position:relative;margin:0 0 16px;padding:22px 20px 16px;border-radius:28px;background:linear-gradient(160deg,#fff,#f6f3ec);border:.5px solid var(--line2);box-shadow:var(--sh);overflow:hidden;animation:osUp .9s var(--ez) both}
+.mk-head{display:flex;justify-content:space-between;align-items:flex-end;gap:12px;flex-wrap:wrap}
+.mk-head span{font:500 10.5px var(--sans);letter-spacing:.16em;text-transform:uppercase;color:var(--ch)}
+.mk-head h2{font:300 34px/1.05 var(--serif);color:var(--ink);margin-top:4px}
+.mk-big{text-align:right}
+.mk-big b{display:block;font:200 38px/1 var(--sans);color:var(--ink);letter-spacing:-.02em;font-variant-numeric:tabular-nums}
+.mk-big em{display:block;font:500 13px var(--sans);font-style:normal;margin-top:6px}
+.mk-board .up{color:var(--ok)}.mk-board .dn{color:var(--bad)}
+#mkChart{display:block;width:100%;height:180px;margin:14px 0 2px;touch-action:pan-y;cursor:crosshair}
+#mkDot{filter:drop-shadow(0 0 6px rgba(168,134,74,.7));transition:cx .15s,cy .15s}
+.mk-time{font:400 11.5px var(--sans);color:var(--mut);min-height:16px}
+.mk-tiles{display:grid;grid-template-columns:repeat(2,1fr);gap:8px;margin-top:14px}
+@media (min-width:700px){.mk-tiles{grid-template-columns:repeat(4,1fr)}}
+.mk-t{position:relative;text-align:left;border:.5px solid var(--line2);background:rgba(255,255,255,.8);border-radius:18px;padding:11px 12px 6px;cursor:pointer;color:var(--ink);animation:osUp .7s var(--ez) both;transition:transform .3s var(--ez),box-shadow .3s}
+.mk-t:active{transform:scale(.97)}
+.mk-t.on{border-color:var(--ch);box-shadow:0 0 0 3px var(--chs)}
+.mk-t span{display:block;font:400 11px var(--sans);color:var(--mut)}
+.mk-t b{display:block;font:400 17px var(--sans);margin-top:2px;font-variant-numeric:tabular-nums}
+.mk-t em{display:block;font:500 11px var(--sans);font-style:normal}
+.mk-t svg{display:block;width:100%;height:24px;margin-top:4px}
+.mk-src{font:400 10.5px var(--sans);color:var(--mut);margin-top:10px}
