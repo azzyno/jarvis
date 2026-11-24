@@ -441,3 +441,30 @@ body.pan .sh-cmds.dock button[data-c="orbit"]:after{opacity:0}
 .mk-t em{display:block;font:500 11px var(--sans);font-style:normal}
 .mk-t svg{display:block;width:100%;height:24px;margin-top:4px}
 .mk-src{font:400 10.5px var(--sans);color:var(--mut);margin-top:10px}
+
+/* ===== SICHTMODI ===== */
+#sitMap .maplibregl-canvas{transition:filter .6s}
+body.vis-thermal #sitMap .maplibregl-canvas{filter:url(#vThermal) contrast(1.15)}
+body.vis-night #sitMap .maplibregl-canvas{filter:url(#vNight) contrast(1.25) brightness(1.1)}
+body.vis-scope #sitMap .maplibregl-canvas{filter:grayscale(.35) contrast(1.15) brightness(.95)}
+body.vis-thermal,body.vis-night,body.vis-scope{background:#05070a!important}
+body.vis-thermal #sitMap,body.vis-night #sitMap,body.vis-scope #sitMap{background:#05070a}
+body.vis-thermal #sitMap:after,body.vis-night #sitMap:after,body.vis-scope #sitMap:after{opacity:0}
+#visionOv{position:fixed;inset:0;z-index:1;pointer-events:none;opacity:0;transition:opacity .6s;color:rgba(255,255,255,.75)}
+body.v-cockpit:is(.vis-thermal,.vis-night,.vis-scope) #visionOv{opacity:1}
+.vo-lines{position:absolute;inset:0;background:repeating-linear-gradient(0deg,rgba(0,0,0,.18) 0 1px,transparent 1px 3px);mix-blend-mode:multiply}
+.vo-noise{position:absolute;inset:-50%;opacity:.12;background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='160' height='160'%3E%3Cfilter id='n'%3E%3CfeTurbulence baseFrequency='.9' numOctaves='2'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E");animation:voN .4s steps(4) infinite}
+@keyframes voN{25%{transform:translate(-5%,3%)}50%{transform:translate(4%,-4%)}75%{transform:translate(-3%,-2%)}}
+body.vis-night #visionOv{color:#8dff9a}body.vis-night .vo-noise{opacity:.22}
+body.vis-thermal #visionOv{color:#ffd9a0}
+.vo-lens{position:absolute;left:50%;top:50%;width:min(86vw,72vh);aspect-ratio:1;transform:translate(-50%,-50%);border-radius:50%;opacity:0;transition:opacity .6s}
+.vo-lens svg{width:100%;height:100%}
+body.vis-scope .vo-lens{opacity:1;box-shadow:0 0 0 200vmax rgba(5,7,10,.9),inset 0 0 60px rgba(0,0,0,.65)}
+body.vis-scope .vo-lines{-webkit-mask:radial-gradient(circle,#000 0,#000 40%,transparent 40%);mask:none}
+.vo-hud{position:absolute;left:50%;bottom:calc(178px + env(safe-area-inset-bottom));transform:translateX(-50%);text-align:center;font:500 10.5px/1.6 ui-monospace,Menlo,monospace;letter-spacing:.12em;text-shadow:0 1px 2px #000;white-space:nowrap}
+.vo-hud span{display:block;color:inherit;font-weight:700;letter-spacing:.3em}
+.vo-hud b{display:block;font-weight:500}.vo-hud em{display:block;font-style:normal;opacity:.75}
+/* Oberfläche in dunklen Modi lesbar halten */
+body:is(.vis-thermal,.vis-night,.vis-scope) .sh-greet small,body:is(.vis-thermal,.vis-night,.vis-scope) .sh-time,body:is(.vis-thermal,.vis-night,.vis-scope) .brand{color:#fff!important}
+body:is(.vis-thermal,.vis-night,.vis-scope) .sh-greet span{color:rgba(255,255,255,.7)}
+#visionBtn.on{background:#c4553f!important;color:#fff}
