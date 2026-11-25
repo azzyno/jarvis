@@ -487,7 +487,7 @@ body:is(.vis-thermal,.vis-night,.vis-scope) .sh-greet span{color:rgba(255,255,25
 .sh-pan.min .pn-min svg{transform:rotate(180deg)}
 .sh-pan.min>*:not(.pn-grip):not(.pn-min):not(.sd-x):not(.sd-k):not(h2){display:none!important}
 .sh-pan.min h2{font-size:24px;margin-bottom:0;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
-body.pan-min .sh-dock{opacity:1!important;pointer-events:auto!important;transform:none!important;bottom:calc(112px + env(safe-area-inset-bottom))}
+body.pan-min .sh-dock{opacity:1!important;pointer-events:auto!important;transform:none!important;bottom:calc(164px + env(safe-area-inset-bottom))}
 @media (min-width:900px){.pn-grip{display:none}.sh-pan.min{max-height:96px!important;bottom:auto}}
 /* Fenster offen: rechte Leiste auf dem Handy weg, damit nichts überdeckt */
 @media (max-width:899px){body.v-cockpit.entered.pan:not(.pan-min) #atlasBar,body.v-cockpit.pan:not(.pan-min) #barTog{opacity:0!important;pointer-events:none!important}}
