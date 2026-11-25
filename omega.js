@@ -62,7 +62,7 @@ async function startVoice() {
       clientTools,
       onConnect: () => { retries = 0; wasLive = true; setVoiceUI('live'); J.holo.speaking = false; try { conv.setVolume({ volume: +cfg.volume }); } catch (e) {} },
       onDisconnect: () => { conv = null; J.holo.speaking = false; J.holo.listening = false; J.holo.levelFn = null; setVoiceUI('off');
-        if (!wasLive) { J.toast('Stimme gerade nicht verfügbar – das ElevenLabs-Guthaben ist aufgebraucht. Tippen Sie unten, um zu schreiben.'); return; }
+        if (!wasLive) { J.toast('Stimme gerade nicht verfügbar – das ElevenLabs-Guthaben ist aufgebraucht.'); return; }
         wasLive = false;
         if (!userEnded && retries < 2) { retries++; J.toast('Verbindung unterbrochen – verbinde neu …'); setTimeout(startVoice, 1500); } },
       onModeChange: m => { mode = m.mode; J.holo.speaking = mode === 'speaking'; J.holo.listening = mode === 'listening'; setVoiceUI('live'); },
