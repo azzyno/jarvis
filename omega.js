@@ -25,7 +25,7 @@ function renderStatus() {
 }
 
 /* ============ VOICE (ElevenLabs Agents, WebRTC) ============ */
-let EL = null, conv = null, userEnded = false, retries = 0, wasLive = false, muted = false, mode = 'idle';
+let lastAct = 0, EL = null, conv = null, userEnded = false, retries = 0, wasLive = false, muted = false, mode = 'idle';
 async function loadEL() {
   if (EL) return EL;
   EL = await import('https://esm.sh/@elevenlabs/client');
@@ -60,13 +60,13 @@ async function startVoice() {
       agentId: cfg.agentId,
       connectionType: 'webrtc',
       clientTools,
-      onConnect: () => { retries = 0; wasLive = true; setVoiceUI('live'); J.holo.speaking = false; try { conv.setVolume({ volume: +cfg.volume }); } catch (e) {} },
+      onConnect: () => { retries = 0; wasLive = true; lastAct = Date.now(); if (!greeted) { greeted = true; greetFacts().then(t => setTimeout(() => { try { sayT = Date.now(); conv && conv.sendUserMessage('[START] ' + t); } catch (e) {} }, 300)); } setVoiceUI('live'); J.holo.speaking = false; try { conv.setVolume({ volume: +cfg.volume }); } catch (e) {} },
       onDisconnect: () => { conv = null; J.holo.speaking = false; J.holo.listening = false; J.holo.levelFn = null; setVoiceUI('off');
         if (!wasLive) { J.toast('Stimme gerade nicht verfügbar – das ElevenLabs-Guthaben ist aufgebraucht.'); return; }
         wasLive = false;
         if (!userEnded && retries < 2) { retries++; J.toast('Verbindung unterbrochen – verbinde neu …'); setTimeout(startVoice, 1500); } },
-      onModeChange: m => { mode = m.mode; J.holo.speaking = mode === 'speaking'; J.holo.listening = mode === 'listening'; setVoiceUI('live'); },
-      onMessage: m => logLine(m.source === 'user' ? 'user' : 'ai', m.message),
+      onModeChange: m => { mode = m.mode; lastAct = Date.now(); J.holo.speaking = mode === 'speaking'; J.holo.listening = mode === 'listening'; setVoiceUI('live'); },
+      onMessage: m => (lastAct = Date.now(), logLine)(m.source === 'user' ? 'user' : 'ai', m.message),
       onError: e => { console.warn('voice error', e); },
     });
     J.holo.levelFn = () => { try { return mode === 'speaking' ? Math.min(1.2, conv.getOutputVolume() * 3) : Math.min(.5, conv.getInputVolume() * 1.5); } catch (e) { return 0; } };
@@ -123,14 +123,9 @@ async function greetFacts() {
   if (window.__saxoSnap && window.__saxoSnap.gesamtwert != null) f.push(`Saxo-Konto: ${Math.round(window.__saxoSnap.gesamtwert)} ${window.__saxoSnap.waehrung || ''}.`);
   return f.join(' ');
 }
-async function greetOnOpen() {
-  if (greeted) return; greeted = true;
-  const facts = greetFacts();
-  await startVoice(); if (!conv) return;
-  const txt = await facts;
-  setTimeout(() => { try { sayT = Date.now(); conv && conv.sendUserMessage('[START] ' + txt); } catch (e) {} }, 300);
-}
-document.getElementById('boot')?.addEventListener('click', () => { greetOnOpen(); }, { once: true });
+// Spart Guthaben: JARVIS startet erst, wenn der Master aufs Mikrofon tippt,
+// und legt nach 45 Sekunden Stille von selbst auf.
+setInterval(() => { if (conv && status.voice === 'live' && mode !== 'speaking' && Date.now() - lastAct > 45000) { endVoice(); J.toast('JARVIS ruht – zum Sprechen aufs Mikrofon tippen.'); } }, 5000);
 
 /* ============ CLIENT TOOLS (called by the agent) ============ */
 const VIEWS = { core: 'cockpit', office: 'office', weltlage: 'lage', news: 'lage', finance: 'port', market: 'invest', realestate: 'calc', world: 'welt', hub: 'hub' };
