@@ -25,7 +25,7 @@ function renderStatus() {
 }
 
 /* ============ VOICE (ElevenLabs Agents, WebRTC) ============ */
-let EL = null, conv = null, userEnded = false, retries = 0, muted = false, mode = 'idle';
+let EL = null, conv = null, userEnded = false, retries = 0, wasLive = false, muted = false, mode = 'idle';
 async function loadEL() {
   if (EL) return EL;
   EL = await import('https://esm.sh/@elevenlabs/client');
@@ -60,12 +60,14 @@ async function startVoice() {
       agentId: cfg.agentId,
       connectionType: 'webrtc',
       clientTools,
-      onConnect: () => { retries = 0; setVoiceUI('live'); J.holo.speaking = false; try { conv.setVolume({ volume: +cfg.volume }); } catch (e) {} },
+      onConnect: () => { retries = 0; wasLive = true; setVoiceUI('live'); J.holo.speaking = false; try { conv.setVolume({ volume: +cfg.volume }); } catch (e) {} },
       onDisconnect: () => { conv = null; J.holo.speaking = false; J.holo.listening = false; J.holo.levelFn = null; setVoiceUI('off');
+        if (!wasLive) { J.toast('Stimme gerade nicht verfügbar – das ElevenLabs-Guthaben ist aufgebraucht. Tippen Sie unten, um zu schreiben.'); return; }
+        wasLive = false;
         if (!userEnded && retries < 2) { retries++; J.toast('Verbindung unterbrochen – verbinde neu …'); setTimeout(startVoice, 1500); } },
       onModeChange: m => { mode = m.mode; J.holo.speaking = mode === 'speaking'; J.holo.listening = mode === 'listening'; setVoiceUI('live'); },
       onMessage: m => logLine(m.source === 'user' ? 'user' : 'ai', m.message),
-      onError: e => { console.warn('voice error', e); J.toast('Sprachverbindung: ' + (e?.message || e)); },
+      onError: e => { console.warn('voice error', e); },
     });
     J.holo.levelFn = () => { try { return mode === 'speaking' ? Math.min(1.2, conv.getOutputVolume() * 3) : Math.min(.5, conv.getInputVolume() * 1.5); } catch (e) { return 0; } };
   } catch (e) {
