@@ -476,3 +476,26 @@ body:is(.vis-thermal,.vis-night,.vis-scope) .sh-greet span{color:rgba(255,255,25
   #osMenu{backdrop-filter:none!important;-webkit-backdrop-filter:none!important;background:rgba(251,251,253,.98)!important}
   .vo-noise{animation:none}
 }
+
+/* ===== BEDIENBARE FENSTER ===== */
+.pn-grip{position:sticky;top:-22px;margin:-22px -20px 6px;height:30px;display:grid;place-items:center;cursor:grab;touch-action:none;z-index:3;background:linear-gradient(rgba(255,255,255,.97),rgba(255,255,255,0))}
+.pn-grip i{width:42px;height:5px;border-radius:3px;background:rgba(28,43,74,.22)}
+.pn-min{position:absolute;right:56px;top:14px;width:34px;height:34px;border-radius:50%;border:none;background:rgba(28,43,74,.06);color:var(--ink);cursor:pointer;display:grid;place-items:center;z-index:4}
+.pn-min svg,#barTog svg{width:16px;height:16px;fill:none;stroke:currentColor;stroke-width:2;stroke-linecap:round;stroke-linejoin:round;transition:transform .4s var(--ez)}
+.sh-pan .sd-x{z-index:4;width:38px;height:38px;background:rgba(28,43,74,.09)}
+.sh-pan.min{max-height:92px!important;overflow:hidden;transform:translateY(0)}
+.sh-pan.min .pn-min svg{transform:rotate(180deg)}
+.sh-pan.min>*:not(.pn-grip):not(.pn-min):not(.sd-x):not(.sd-k):not(h2){display:none!important}
+.sh-pan.min h2{font-size:24px;margin-bottom:0;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+body.pan-min .sh-dock{opacity:1!important;pointer-events:auto!important;transform:none!important;bottom:calc(112px + env(safe-area-inset-bottom))}
+@media (min-width:900px){.pn-grip{display:none}.sh-pan.min{max-height:96px!important;bottom:auto}}
+/* Fenster offen: rechte Leiste auf dem Handy weg, damit nichts überdeckt */
+@media (max-width:899px){body.v-cockpit.entered.pan:not(.pan-min) #atlasBar,body.v-cockpit.pan:not(.pan-min) #barTog{opacity:0!important;pointer-events:none!important}}
+/* Leiste einklappen */
+#barTog{position:fixed;right:0;z-index:7;width:26px;height:56px;border:none;border-radius:14px 0 0 14px;background:rgba(255,255,255,.92);color:var(--ink);box-shadow:var(--sh);display:grid;place-items:center;cursor:pointer;opacity:0;pointer-events:none;transition:opacity .5s,top .5s var(--ez);top:calc(290px + env(safe-area-inset-top))}
+body.v-cockpit.entered:not(.menu) #barTog{opacity:1;pointer-events:auto}
+body.deep #barTog,body.pan #barTog{top:calc(52px + env(safe-area-inset-top))}
+@media (min-width:900px){#barTog{top:calc(52px + env(safe-area-inset-top))}}
+#atlasBar{transition:opacity .6s,transform .6s var(--ez),top .5s var(--ez)}
+body.bar-hid #atlasBar{transform:translateX(calc(100% + 30px))!important;pointer-events:none!important}
+body.bar-hid #barTog svg{transform:rotate(180deg)}
