@@ -499,3 +499,16 @@ body.deep #barTog,body.pan #barTog{top:calc(52px + env(safe-area-inset-top))}
 #atlasBar{transition:opacity .6s,transform .6s var(--ez),top .5s var(--ez)}
 body.bar-hid #atlasBar{transform:translateX(calc(100% + 30px))!important;pointer-events:none!important}
 body.bar-hid #barTog svg{transform:rotate(180deg)}
+
+/* Schliessen + Einklappen oben LINKS, gross */
+.sh-pan .sd-x{left:14px!important;right:auto!important;top:12px!important;width:44px!important;height:44px!important;background:var(--ink)!important;color:#fff!important;box-shadow:0 4px 14px rgba(28,43,74,.25)}
+.sh-pan .sd-x svg{width:16px;height:16px}
+.sh-pan .pn-min{left:66px!important;right:auto!important;top:12px!important;width:44px!important;height:44px!important;background:rgba(28,43,74,.08)!important}
+.sh-pan .sd-k{margin-top:44px}
+.sh-pan h2{margin-right:0!important}
+.sh-pan.min{max-height:150px!important}
+/* Leisten-Pfeil gut sichtbar */
+#barTog{width:34px!important;height:64px!important;background:var(--ink)!important;color:#fff!important}
+#barTog svg{width:18px;height:18px}
+@media (max-width:899px){body.v-cockpit.pan:not(.pan-min) #barTog{opacity:1!important;pointer-events:auto!important}}
+@media (max-width:899px){body.v-cockpit.pan.bar-force #atlasBar{opacity:1!important;pointer-events:auto!important;z-index:8}}

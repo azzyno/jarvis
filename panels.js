@@ -42,7 +42,7 @@
     document.body.insertAdjacentHTML('beforeend', `<button id="barTog" aria-label="Leiste ein- oder ausblenden"><svg viewBox="0 0 24 24"><path d="M9 6l6 6-6 6"/></svg></button>`);
     let hid = false; try { hid = localStorage.getItem('bar-hidden') === '1'; } catch (e) {}
     const set = h => { hid = h; document.body.classList.toggle('bar-hid', h); try { localStorage.setItem('bar-hidden', h ? '1' : '0'); } catch (e) {} };
-    set(hid); $('#barTog').onclick = () => set(!hid);
+    set(hid); $('#barTog').onclick = () => { if (document.body.classList.contains('pan') && innerWidth < 900) { document.body.classList.toggle('bar-force'); return; } set(!hid); };
     // nach rechts wischen auf der Leiste = wegschieben
     let x0 = null; bar.addEventListener('touchstart', e => { x0 = e.touches[0].clientX; }, { passive: true });
     bar.addEventListener('touchend', e => { if (x0 != null && e.changedTouches[0].clientX - x0 > 40) set(true); x0 = null; });
