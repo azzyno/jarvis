@@ -528,8 +528,8 @@
     requestAnimationFrame(loop); if (document.hidden) return; const T = t / 1000;
     voiceUI(); if (view === 'cockpit') waveFrame(T);
     if (map && ready && view === 'cockpit') {
-      if (!introDone) { const c = map.getCenter(); map.setCenter([c.lng + .05, c.lat]); }
-      else if (idleSpin && !openH && !document.body.classList.contains('pan') && performance.now() - lastUser > 12000 && !map.isMoving() && map.getZoom() < 4.5) { const c = map.getCenter(); map.setCenter([c.lng + .02, c.lat]); }
+      
+      
     }
   })(performance.now());
   setTimeout(() => { // nach travel.js: Routen auch auf der Karte zeigen

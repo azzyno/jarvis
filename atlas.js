@@ -83,7 +83,7 @@
     try {
       const r = await fetch(`${API}flights?lat=${c.lat.toFixed(3)}&lon=${c.lng.toFixed(3)}&nm=${nm}`); if (!r.ok) return; const d = await r.json();
       const now = Date.now(), keep = new Map();
-      d.ac.forEach(a => { const o = planes.get(a.h); keep.set(a.h, Object.assign(o || {}, a, { t0: now, la0: a.la, lo0: a.lo })); });
+      (innerWidth < 900 ? d.ac.slice(0, 350) : d.ac).forEach(a => { const o = planes.get(a.h); keep.set(a.h, Object.assign(o || {}, a, { t0: now, la0: a.la, lo0: a.lo })); });
       if (sel && planes.has(sel) && !keep.has(sel)) keep.set(sel, planes.get(sel));
       planes = keep; cnt('planes', planes.size); drawPlanes(); if (sel) flightPanel();
     } catch (e) {}
@@ -99,7 +99,7 @@
     const s = sel && planes.get(sel);
     map.getSource('at-sel').setData(FC(s ? [{ type: 'Feature', properties: {}, geometry: { type: 'Point', coordinates: [s.lo, s.la] } }] : []));
   }
-  setInterval(() => { if (!document.hidden && L.planes && planes.size) drawPlanes(); }, 1000);
+  setInterval(() => { if (!document.hidden && L.planes && planes.size && window.SIT && window.SIT.view === 'cockpit') drawPlanes(); }, innerWidth < 900 ? 2000 : 1000);
   setInterval(() => { if (!document.hidden && L.planes && window.SIT && window.SIT.view === 'cockpit') loadPlanes(true); }, 12000);
 
   const ft2m = f => f == null ? null : Math.round(f * .3048);

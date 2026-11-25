@@ -21,7 +21,7 @@
   const GLASS = '.sc,#shAsk,.sh-cmds,#atlasBar,#osMenuBtn,.sh-pan,.sm-lab,.of-cap,.card,.kpi';
   // Lichtreflex folgt Finger oder Maus
   let raf = 0, px = 0, py = 0;
-  addEventListener('pointermove', e => { px = e.clientX; py = e.clientY; if (!raf) raf = requestAnimationFrame(sheen); }, { passive: true });
+  addEventListener('pointermove', e => { if (e.pointerType !== 'mouse') return; px = e.clientX; py = e.clientY; if (!raf) raf = requestAnimationFrame(sheen); }, { passive: true });
   function sheen() {
     raf = 0;
     $$(GLASS).forEach(el => { const r = el.getBoundingClientRect(); if (r.bottom < 0 || r.top > innerHeight) return;
@@ -61,8 +61,9 @@
     let lvl = 0; try { lvl = window.JARVIS && window.JARVIS.level ? window.JARVIS.level() : 0; } catch (e) {}
     const active = ['speaking', 'listening', 'busy'].includes(st);
     const btn = document.body.classList.contains('v-cockpit') ? $('#shTalk') : $('#osFab');
-    g.setTransform(dpr, 0, 0, dpr, 0, 0); g.clearRect(0, 0, W, H);
-    if (!btn || (!active && !P.length)) return;
+    if (!active && !P.length) { if (cv.dataset.dirty) { g.setTransform(dpr, 0, 0, dpr, 0, 0); g.clearRect(0, 0, W, H); delete cv.dataset.dirty; } return; }
+    cv.dataset.dirty = 1; g.setTransform(dpr, 0, 0, dpr, 0, 0); g.clearRect(0, 0, W, H);
+    if (!btn) return;
     const r = btn.getBoundingClientRect(); const cx = r.left + r.width / 2, cy = r.top + r.height / 2;
     const c = COL[st] || COL.busy;
     if (active && !reduce) {
