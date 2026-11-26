@@ -143,7 +143,7 @@ function hush() { speakId++; try { cur && cur.stop(); } catch (e) {} cur = null;
 /* ---------- Ohr: eigenes Mikrofon (kein iPhone-Diktat, keine Pieptöne) ----------
    Ein einziger Mikrofon-Strom bleibt offen. JARVIS erkennt selbst, wann Sie sprechen
    und wann Ihr Satz fertig ist, und lässt ihn von Google (gratis) in Text umwandeln. */
-const STT = 'https://jarvis-iota-weld.vercel.app/api/stt';
+const STT = 'https://jarvis-iota-weld.vercel.app/api/tts';
 const recOK = !!(navigator.mediaDevices && navigator.mediaDevices.getUserMedia);
 const IOS = /iPhone|iPad|iPod/.test(navigator.userAgent) || (navigator.platform === 'MacIntel' && navigator.maxTouchPoints > 1);
 let micStream = null, micSrc = null, proc = null, earOn = false, earStarting = null;
