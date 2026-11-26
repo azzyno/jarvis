@@ -21,7 +21,7 @@
 
   /* ---------- Erde ---------- */
   const zStage = () => (innerWidth < 500 ? 0.82 : innerWidth < 900 ? 1.1 : 1.45);
-  const map = new maplibregl.Map({
+  let map; try { map = new maplibregl.Map({
     container: 'globe', attributionControl: { compact: true }, center: [HOME[0] - 40, 18], zoom: zStage(), maxZoom: 18, renderWorldCopies: false, fadeDuration: 200,
     interactive: false, pixelRatio: Math.min(devicePixelRatio || 1, mobile ? 2 : 2),
     style: {
@@ -47,6 +47,11 @@
       sky: { 'sky-color': '#ffffff', 'horizon-color': '#f1f4f9', 'fog-color': '#fbfbfd', 'sky-horizon-blend': .5, 'horizon-fog-blend': .8, 'fog-ground-blend': .3, 'atmosphere-blend': ['interpolate', ['linear'], ['zoom'], 0, 1, 5, 1, 8, 0] },
     },
   });
+  } catch (e) {               // ohne 3D-Grafik läuft trotzdem alles andere
+    console.warn('Karte', e);
+    const noop = () => stub; const stub = new Proxy(function () {}, { get: (_, k) => k === 'getCenter' ? () => ({ lng: HOME[0], lat: HOME[1] }) : k === 'getZoom' ? () => 1 : k === 'getSource' ? () => ({ setData() {} }) : noop, apply: () => stub });
+    map = stub;
+  }
   window.MAP = map;
 
   // langsames Drehen (nur im Ruhezustand, 30 Bilder/s – schont den Akku)
