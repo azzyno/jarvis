@@ -31,10 +31,10 @@ async function call(url, key, model, messages) {
   key = String(key || '').replace(/[\s"'`]/g, '');
   const ac = new AbortController(); const to = setTimeout(() => ac.abort(), 25000);
   try {
-    const r = await fetch(url, { method: 'POST', signal: ac.signal, headers: { 'Content-Type': 'application/json', ...(key ? { Authorization: 'Bearer ' + key } : {}), ...(key && url.includes('googleapis') ? { 'x-goog-api-key': key } : {}) },
+    const r = await fetch(url, { method: 'POST', signal: ac.signal, headers: { 'Content-Type': 'application/json', ...(key && !url.includes('googleapis') ? { Authorization: 'Bearer ' + key } : {}), ...(key && url.includes('googleapis') ? { 'x-goog-api-key': key } : {}) },
       body: JSON.stringify({ model, messages, tools: TOOLS, tool_choice: 'auto', temperature: 0.7, max_tokens: 600 }) });
     const d = await r.json().catch(() => ({}));
-    if (!r.ok) throw new Error((d.error && (d.error.message || d.error)) || 'HTTP ' + r.status);
+    if (!r.ok) { const e0 = Array.isArray(d) ? d[0] && d[0].error : d.error; throw new Error('HTTP ' + r.status + ' ' + ((e0 && (e0.message || JSON.stringify(e0))) || '')); }
     const m = d.choices && d.choices[0] && d.choices[0].message; if (!m) throw new Error('leere Antwort');
     return { role: 'assistant', content: m.content || '', tool_calls: m.tool_calls && m.tool_calls.length ? m.tool_calls : undefined };
   } finally { clearTimeout(to); }
