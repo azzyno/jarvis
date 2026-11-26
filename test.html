@@ -15,6 +15,7 @@ button{width:100%;border:0;border-radius:14px;background:#1c2b4a;color:#fff;font
 <div class="t"><button id="b2b">2b · Mikrofon OHNE Filter testen</button><div class="r" id="r2b"></div></div>
 <div class="t"><button id="b3">3 · Erkennung testen</button><div class="r" id="r3"></div></div>
 <div class="t"><button id="b4">4 · Ton nach Mikrofon testen</button><div class="r" id="r4"></div></div>
+<div class="t"><button id="b5">5 · Ohne Knacken: Mikro bleibt offen + Ton</button><div class="r" id="r5"></div></div>
 <div class="r" id="info" style="color:#8a93a6;font-size:12px"></div>
 <script>
 const API='https://jarvis-iota-weld.vercel.app/api/tts';
@@ -65,6 +66,14 @@ $('b3').onclick=async()=>{
   }catch(e){say('r3','Fehler: '+e.message,false)}
 };
 $('b4').onclick=()=>playTTS('r4').catch(e=>say('r4','Fehler: '+e.message,false));
+let held=null;
+$('b5').onclick=async()=>{
+  try{
+    if(navigator.audioSession) navigator.audioSession.type='play-and-record';
+    if(!held){held=await navigator.mediaDevices.getUserMedia({audio:true});say('r5','Mikro dauerhaft offen. Jetzt nochmals 5 antippen …')}
+    else{await playTTS('r5');$('r5').textContent+='\n→ Knackt es jetzt noch? Kommt der Ton laut aus dem Lautsprecher oder leise oben?'}
+  }catch(e){say('r5','Fehler: '+e.name+' '+e.message,false)}
+};
 function wav(ab){const src=ab.getChannelData(0),ratio=ab.sampleRate/16000,len=Math.floor(src.length/ratio),pcm=new Int16Array(len);
 for(let i=0;i<len;i++){const a=Math.floor(i*ratio),b=Math.min(src.length,Math.floor((i+1)*ratio));let v=0;for(let j=a;j<b;j++)v+=src[j];v/=Math.max(1,b-a);pcm[i]=Math.max(-1,Math.min(1,v))*32767}
 const buf=new ArrayBuffer(44+len*2),dv=new DataView(buf),w=(p,t)=>{for(let i=0;i<t.length;i++)dv.setUint8(p+i,t.charCodeAt(i))};
