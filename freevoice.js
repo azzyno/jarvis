@@ -113,7 +113,7 @@ function bestVoice() {
 if (window.speechSynthesis) speechSynthesis.onvoiceschanged = () => {};
 function sysSay(text) {
   return new Promise(res => {
-    if (!window.speechSynthesis) return res();
+    if (!window.speechSynthesis || IOS) return res();
     const u = new SpeechSynthesisUtterance(text); const v = bestVoice(); if (v) { u.voice = v; u.lang = v.lang; } else u.lang = 'de-DE';
     u.rate = 1.03; u.pitch = .92;
     let iv = setInterval(() => { fakeLvl = .2 + Math.random() * .5; }, 90);
@@ -161,7 +161,7 @@ async function speak(text) {
 let reopen = false;
 function afterSpeak() { lastAct = Date.now(); if (state !== 'off') state = 'off'; diag('bereit – tippen zum Sprechen'); }
 function diag(t) { try { let d = document.getElementById('jvDiag'); if (!d) { d = document.createElement('div'); d.id = 'jvDiag'; d.style.cssText = 'position:fixed;left:8px;bottom:4px;font:10px/1.2 Inter,system-ui;color:#8a93a6;z-index:99999;pointer-events:none;opacity:.8'; document.body.appendChild(d); } d.textContent = 'JARVIS · ' + t + ' · ' + new Date().toLocaleTimeString('de-CH'); } catch (e) {} }
-function hush() { speakId++; try { cur && cur.stop(); } catch (e) {} cur = null; try { speechSynthesis.cancel(); } catch (e) {} }
+function hush() { speakId++; try { cur && cur.stop(); } catch (e) {} cur = null; try { if (window.speechSynthesis && speechSynthesis.speaking) speechSynthesis.cancel(); } catch (e) {} }
 
 /* ---------- Ohr: Funkgerät-Prinzip (stabil auf dem iPhone) ----------
    Antippen → Mikrofon an → Sie sprechen → nach kurzer Pause geht es von selbst aus.
@@ -281,8 +281,6 @@ async function think(text) {
 let unlocked = false;
 function unlock(sayHi) {
   try { const a = getPlayer(); a.src = SILENT; const p = a.play(); p && p.catch && p.catch(() => {}); } catch (e) {}
-  try { const c = audio(); const b = c.createBuffer(1, 1, 22050); const s = c.createBufferSource(); s.buffer = b; s.connect(c.destination); s.start(0); } catch (e) {}
-  if (!sayHi) try { if (window.speechSynthesis) { speechSynthesis.cancel(); const u = new SpeechSynthesisUtterance(' '); u.lang = 'de-DE'; const v = bestVoice(); if (v) { u.voice = v; u.lang = v.lang; } u.volume = 0; u.rate = 1.03; u.pitch = .92; speechSynthesis.speak(u); } } catch (e) {}
   unlocked = true;
 }
 async function start() {
