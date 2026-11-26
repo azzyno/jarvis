@@ -196,7 +196,7 @@ function hear(d, sr) {
   if (rms > thr * 0.75) { vad.silence = 0; vad.loud += dt; } else vad.silence += dt;
   if (vad.silence > 0.85 || vad.dur > 14) {
     const chunks = vad.chunks, loud = vad.loud; vad.on = false; vad.chunks = [];
-    if (loud >= 0.3) transcribe(chunks, sr);              // zu kurz = Geräusch, ignorieren
+    if (loud >= 0.3) transcribe(chunks, sr); else showHeard('Ich höre, Master …');   // zu kurz = Geräusch
   }
 }
 
