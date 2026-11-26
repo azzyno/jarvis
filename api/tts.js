@@ -34,7 +34,7 @@ export default async function handler(req, res) {
   const text = String((body && body.text) || q.text || '').slice(0, 1200).trim();
   if (!text) return res.status(400).json({ error: 'kein Text' });
   const voice = VOICES.includes((body && body.voice) || q.voice) ? ((body && body.voice) || q.voice) : 'Charon';
-  const prompt = q.raw ? text : 'Say in German, in a calm, deep, elegant and confident butler voice, at a natural pace: ' + text;
+  const prompt = text;   // Stilanweisungen würden mitgesprochen – die Stimme Charon ist von Natur aus tief und ruhig
   const errs = [];
   for (const model of goodModel ? [goodModel, ...MODELS.filter(m => m !== goodModel)] : MODELS) {
     try {

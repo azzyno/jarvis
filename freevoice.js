@@ -71,6 +71,19 @@ function playBuf(ab) {
     src.onended = () => { cur = null; res(); }; src.start(); });
 }
 
+/* ---------- Stimme: Google Gemini (Charon, gratis) ---------- */
+const TTS = 'https://jarvis-iota-weld.vercel.app/api/tts';
+let gemFail = 0;
+async function gemSynth(text) {
+  if (gemFail >= 3) return null;
+  try {
+    const r = await fetch(TTS, { method: 'POST', headers: { 'Content-Type': 'text/plain' }, body: JSON.stringify({ text, voice: LS('jarvis-voice') || 'Charon' }) });
+    if (!r.ok) throw new Error('HTTP ' + r.status);
+    const ab = await audio().decodeAudioData(await r.arrayBuffer());
+    gemFail = 0; return ab;
+  } catch (e) { console.warn('gemini-tts', e); gemFail++; return null; }
+}
+
 /* ---------- Stimme: beste Systemstimme ---------- */
 function bestVoice() {
   const vs = speechSynthesis.getVoices().filter(v => /^de/i.test(v.lang)); if (!vs.length) return null;
@@ -96,8 +109,20 @@ function sentences(t) { return (t.match(/[^.!?…]+[.!?…]+["“”»]?|[^.!?�
 async function speak(text) {
   text = clean(text); if (!text) return;
   const id = ++speakId; stopRec(); setState('speaking'); sayLine(text);
-  loadPiper();                                     // lädt im Hintergrund, falls noch nicht da
   const parts = sentences(text);
+  // Gemini: erster Satz sofort, Rest parallel vorbereiten
+  if (gemFail < 3) {
+    const chunks = parts.length > 1 ? [parts[0], parts.slice(1).join(' ')] : [text];
+    const jobs = chunks.map(gemSynth);
+    let ok = true;
+    for (let i = 0; i < chunks.length; i++) {
+      const ab = await jobs[i]; if (id !== speakId) return;
+      if (ab) await playBuf(ab); else { ok = false; for (const p of (i === 0 ? parts : sentences(chunks[i]))) { if (id !== speakId) return; await sysSay(p); } break; }
+    }
+    if (id !== speakId) return;
+    return afterSpeak(ok);
+  }
+  if (gemFail >= 3) loadPiper();
   let next = piper ? synth(parts[0]) : null;
   for (let i = 0; i < parts.length; i++) {
     if (id !== speakId) return;
@@ -107,8 +132,11 @@ async function speak(text) {
     if (ab) await playBuf(ab); else await sysSay(parts[i]);
   }
   if (id !== speakId) return;
+  afterSpeak(true);
+}
+function afterSpeak() {
   lastAct = Date.now();
-  if (state !== 'off') { if (!muted && recOK) listen(); else setState('idle'); }
+  if (state !== 'off') { if (!muted && recOK) setTimeout(() => state === 'speaking' && listen(), 250); else setState('idle'); }
 }
 function hush() { speakId++; try { cur && cur.stop(); } catch (e) {} cur = null; try { speechSynthesis.cancel(); } catch (e) {} }
 
@@ -120,11 +148,12 @@ function listen() {
   if (!recOK || muted || state === 'off') { setState('idle'); return; }
   try { rec && rec.abort(); } catch (e) {}
   rec = new SR(); rec.lang = 'de-CH'; rec.interimResults = true; rec.continuous = false; rec.maxAlternatives = 1;
-  let finalT = '';
-  rec.onresult = e => { let t = ''; for (const r of e.results) { t += r[0].transcript; if (r.isFinal) finalT = t; } lastAct = Date.now(); const s = document.getElementById('shSay'); if (s) s.textContent = '„' + t + '“'; };
+  let finalT = '', lastT = '';
+  rec.onresult = e => { let t = ''; for (const r of e.results) { t += r[0].transcript; if (r.isFinal) finalT = t; } lastT = t; lastAct = Date.now(); const s = document.getElementById('shSay'); if (s) s.textContent = '„' + t + '“'; };
   rec.onerror = e => { if (e.error === 'not-allowed' || e.error === 'service-not-allowed') { J.toast && J.toast('Mikrofon nicht erlaubt – bitte in Safari erlauben oder schreiben.'); muted = true; } };
   rec.onend = () => { recOn = false; if (state === 'off') return;
-    if (finalT.trim()) think(finalT.trim());
+    const said = (finalT || lastT).trim();
+    if (said) think(said);
     else if (state === 'listening' && Date.now() - lastAct < 45000) setTimeout(() => state === 'listening' && listen(), 150);
     else if (state === 'listening') { end(); J.toast && J.toast('JARVIS ruht – zum Sprechen aufs Mikrofon tippen.'); } };
   try { rec.start(); recOn = true; setState('listening'); state = 'listening'; } catch (e) { setState('idle'); }
@@ -148,6 +177,7 @@ async function runTool(name, args) {
 async function think(text) {
   if (busyTurn) return; busyTurn = true; stopRec(); speakId++; try { cur && cur.stop(); } catch (e) {} cur = null; setState('busy');
   hist.push({ role: 'user', content: text });
+  if (!/^\[/.test(text)) sayLine('Einen Moment, Master …');
   try {
     for (let round = 0; round < 5; round++) {
       const r = await fetch(API, { method: 'POST', headers: { 'Content-Type': 'text/plain' }, body: JSON.stringify({ messages: hist.slice(-24) }) });
@@ -170,7 +200,7 @@ async function think(text) {
 let unlocked = false;
 function unlock(sayHi) {
   try { const c = audio(); const b = c.createBuffer(1, 1, 22050); const s = c.createBufferSource(); s.buffer = b; s.connect(c.destination); s.start(0); } catch (e) {}
-  try { if (window.speechSynthesis) { speechSynthesis.cancel(); const u = new SpeechSynthesisUtterance(sayHi ? 'Ja, Master?' : ' '); u.lang = 'de-DE'; const v = bestVoice(); if (v) { u.voice = v; u.lang = v.lang; } if (!sayHi) u.volume = 0; u.rate = 1.03; u.pitch = .92; speechSynthesis.speak(u); } } catch (e) {}
+  try { if (window.speechSynthesis) { speechSynthesis.cancel(); const u = new SpeechSynthesisUtterance(' '); u.lang = 'de-DE'; const v = bestVoice(); if (v) { u.voice = v; u.lang = v.lang; } u.volume = 0; u.rate = 1.03; u.pitch = .92; speechSynthesis.speak(u); } } catch (e) {}
   unlocked = true;
 }
 async function start() {
