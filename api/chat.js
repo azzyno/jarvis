@@ -31,7 +31,7 @@ async function call(url, key, model, messages) {
   key = String(key || '').replace(/[\s"'`]/g, '');
   const ac = new AbortController(); const to = setTimeout(() => ac.abort(), 25000);
   try {
-    const r = await fetch(url, { method: 'POST', signal: ac.signal, headers: { 'Content-Type': 'application/json', ...(key && !url.includes('googleapis') ? { Authorization: 'Bearer ' + key } : {}), ...(key && url.includes('googleapis') ? { 'x-goog-api-key': key } : {}) },
+    const r = await fetch(url, { method: 'POST', signal: ac.signal, headers: { 'Content-Type': 'application/json', ...(key ? { Authorization: 'Bearer ' + key } : {}) },
       body: JSON.stringify({ model, messages, tools: TOOLS, tool_choice: 'auto', temperature: 0.7, max_tokens: 600 }) });
     const d = await r.json().catch(() => ({}));
     if (!r.ok) { const e0 = Array.isArray(d) ? d[0] && d[0].error : d.error; throw new Error('HTTP ' + r.status + ' ' + ((e0 && (e0.message || JSON.stringify(e0))) || '')); }
@@ -46,8 +46,12 @@ export default async function handler(req, res) {
   if (req.method === 'GET') {
     const st = { groq: !!process.env.GROQ_KEY, gemini: !!process.env.GEMINI_KEY };
     if (req.query && req.query.test && process.env.GEMINI_KEY) {
-      try { const m = await call('https://generativelanguage.googleapis.com/v1beta/openai/chat/completions', process.env.GEMINI_KEY, 'gemini-2.5-flash', [{ role: 'user', content: 'Sag nur: bereit' }]); st.test = 'ok: ' + String(m.content).slice(0, 40); }
-      catch (e) { st.test = 'fehler: ' + String(e.message).slice(0, 160); }
+      const k = String(process.env.GEMINI_KEY).replace(/[\s"'`]/g, '');
+      st.klen = k.length; st.kpre = k.slice(0, 3);
+      try { const m = await call('https://generativelanguage.googleapis.com/v1beta/openai/chat/completions', k, 'gemini-2.5-flash', [{ role: 'user', content: 'Sag nur: bereit' }]); st.test = 'ok: ' + String(m.content).slice(0, 40); }
+      catch (e) { st.test = 'fehler: ' + String(e.message).slice(0, 200); }
+      try { const r = await fetch('https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent', { method: 'POST', headers: { 'Content-Type': 'application/json', 'x-goog-api-key': k }, body: JSON.stringify({ contents: [{ parts: [{ text: 'Sag nur: bereit' }] }] }) });
+        const t = await r.text(); st.nativ = r.status + ' ' + t.slice(0, 200); } catch (e) { st.nativ = 'x ' + e.message; }
     }
     return res.status(200).json(st);
   }
