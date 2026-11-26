@@ -34,7 +34,7 @@ export default async function handler(req, res) {
   const text = String((body && body.text) || q.text || '').slice(0, 1200).trim();
   if (!text) return res.status(400).json({ error: 'kein Text' });
   const voice = VOICES.includes((body && body.voice) || q.voice) ? ((body && body.voice) || q.voice) : 'Charon';
-  const prompt = 'Sprich auf Hochdeutsch als JARVIS: ruhig, tief, edel und selbstsicher wie ein eleganter britischer Butler, mit einem Hauch Ironie, flüssig und nicht zu langsam:\n' + text;
+  const prompt = 'Say in German, in a calm, deep, elegant and confident butler voice, at a natural pace: ' + text;
   const errs = [];
   for (const model of goodModel ? [goodModel, ...MODELS.filter(m => m !== goodModel)] : MODELS) {
     try {
