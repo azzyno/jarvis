@@ -42,7 +42,7 @@ async function call(url, key, model, messages) {
 export default async function handler(req, res) {
   cors(req, res);
   if (req.method === 'OPTIONS') return res.status(204).end();
-  if (req.method === 'GET') return res.status(200).json({ groq: !!process.env.GROQ_KEY });
+  if (req.method === 'GET') return res.status(200).json({ groq: !!process.env.GROQ_KEY, gemini: !!process.env.GEMINI_KEY });
   let body = req.body; if (typeof body === 'string') try { body = JSON.parse(body); } catch (e) { body = {}; }
   const hist = (body && Array.isArray(body.messages) ? body.messages : []).slice(-24);
   const zeit = new Date().toLocaleString('de-CH', { timeZone: 'Europe/Zurich', weekday: 'long', day: 'numeric', month: 'long', year: 'numeric', hour: '2-digit', minute: '2-digit' });
@@ -52,6 +52,12 @@ export default async function handler(req, res) {
     for (const model of ['llama-3.3-70b-versatile', 'llama-3.1-8b-instant']) {
       try { return res.status(200).json({ message: await call('https://api.groq.com/openai/v1/chat/completions', process.env.GROQ_KEY, model, messages), quelle: 'groq:' + model }); }
       catch (e) { errs.push('groq ' + model + ': ' + e.message); }
+    }
+  }
+  if (process.env.GEMINI_KEY) {
+    for (const model of ['gemini-2.5-flash', 'gemini-2.0-flash']) {
+      try { return res.status(200).json({ message: await call('https://generativelanguage.googleapis.com/v1beta/openai/chat/completions', process.env.GEMINI_KEY, model, messages), quelle: 'gemini:' + model }); }
+      catch (e) { errs.push('gemini ' + model + ': ' + e.message); }
     }
   }
   try { return res.status(200).json({ message: await call('https://text.pollinations.ai/openai', '', 'openai', messages), quelle: 'pollinations' }); }
