@@ -30,7 +30,7 @@ const TOOLS = [
 async function call(url, key, model, messages) {
   const ac = new AbortController(); const to = setTimeout(() => ac.abort(), 25000);
   try {
-    const r = await fetch(url, { method: 'POST', signal: ac.signal, headers: { 'Content-Type': 'application/json', ...(key ? { Authorization: 'Bearer ' + key } : {}) },
+    const r = await fetch(url, { method: 'POST', signal: ac.signal, headers: { 'Content-Type': 'application/json', ...(key ? { Authorization: 'Bearer ' + key } : {}), ...(key && url.includes('googleapis') ? { 'x-goog-api-key': key } : {}) },
       body: JSON.stringify({ model, messages, tools: TOOLS, tool_choice: 'auto', temperature: 0.7, max_tokens: 600 }) });
     const d = await r.json().catch(() => ({}));
     if (!r.ok) throw new Error((d.error && (d.error.message || d.error)) || 'HTTP ' + r.status);
@@ -42,7 +42,14 @@ async function call(url, key, model, messages) {
 export default async function handler(req, res) {
   cors(req, res);
   if (req.method === 'OPTIONS') return res.status(204).end();
-  if (req.method === 'GET') return res.status(200).json({ groq: !!process.env.GROQ_KEY, gemini: !!process.env.GEMINI_KEY });
+  if (req.method === 'GET') {
+    const st = { groq: !!process.env.GROQ_KEY, gemini: !!process.env.GEMINI_KEY };
+    if (req.query && req.query.test && process.env.GEMINI_KEY) {
+      try { const m = await call('https://generativelanguage.googleapis.com/v1beta/openai/chat/completions', process.env.GEMINI_KEY, 'gemini-2.5-flash', [{ role: 'user', content: 'Sag nur: bereit' }]); st.test = 'ok: ' + String(m.content).slice(0, 40); }
+      catch (e) { st.test = 'fehler: ' + String(e.message).slice(0, 160); }
+    }
+    return res.status(200).json(st);
+  }
   let body = req.body; if (typeof body === 'string') try { body = JSON.parse(body); } catch (e) { body = {}; }
   const hist = (body && Array.isArray(body.messages) ? body.messages : []).slice(-24);
   const zeit = new Date().toLocaleString('de-CH', { timeZone: 'Europe/Zurich', weekday: 'long', day: 'numeric', month: 'long', year: 'numeric', hour: '2-digit', minute: '2-digit' });
@@ -55,7 +62,7 @@ export default async function handler(req, res) {
     }
   }
   if (process.env.GEMINI_KEY) {
-    for (const model of ['gemini-2.5-flash', 'gemini-2.0-flash']) {
+    for (const model of ['gemini-flash-latest', 'gemini-2.5-flash', 'gemini-2.0-flash']) {
       try { return res.status(200).json({ message: await call('https://generativelanguage.googleapis.com/v1beta/openai/chat/completions', process.env.GEMINI_KEY, model, messages), quelle: 'gemini:' + model }); }
       catch (e) { errs.push('gemini ' + model + ': ' + e.message); }
     }
