@@ -59,7 +59,7 @@
   function open() {
     if (opened) return; opened = true; spin = false;
     B.classList.remove('stage'); B.classList.add('open');
-    map.easeTo({ center: HOME, zoom: mobile ? 1.9 : 2.6, padding: { top: mobile ? 260 : 120, bottom: mobile ? 230 : 200 }, duration: 2400, easing: t => 1 - Math.pow(1 - t, 3) });
+    map.easeTo({ center: HOME, zoom: mobile ? 1.15 : 2.0, padding: { top: mobile ? 170 : 80, bottom: mobile ? 150 : 140 }, duration: 2400, easing: t => 1 - Math.pow(1 - t, 3) });
     ['dragPan', 'scrollZoom', 'touchZoomRotate', 'doubleClickZoom', 'dragRotate', 'keyboard'].forEach(h => map[h] && map[h].enable());
     try { map.touchZoomRotate.disableRotation(); } catch (e) {}
     let f = 0; const fade = () => { f = Math.min(1, f + .05); map.setPaintProperty('lab', 'raster-opacity', .75 * f); map.setPaintProperty('home', 'circle-opacity', f); map.setPaintProperty('home', 'circle-stroke-opacity', f); if (f < 1) requestAnimationFrame(fade); }; fade();
