@@ -17,7 +17,7 @@ button{font:inherit;color:inherit;border:0;background:none;cursor:pointer}
 .stage #orbit{animation:float 7s ease-in-out infinite}
 @keyframes float{0%,100%{transform:translateY(-1.2%)}50%{transform:translateY(1.2%)}}
 #halo{position:fixed;left:50%;top:50%;width:min(70vw,520px);height:min(70vw,520px);margin:calc(min(70vw,520px) / -2) 0 0 calc(min(70vw,520px) / -2);border-radius:50%;pointer-events:none;
-  box-shadow:0 40px 120px rgba(28,43,74,.16),0 0 0 1px rgba(168,134,74,.08),0 0 90px 10px rgba(168,134,74,.10);transition:opacity 1s,transform 1.4s var(--ease)}
+  box-shadow:0 50px 110px -10px rgba(28,43,74,.28),0 0 70px 6px rgba(168,134,74,.12);transition:opacity 1s,transform 1.4s var(--ease)}
 .stage #halo{animation:float 7s ease-in-out infinite}
 body:not(.stage) #halo{opacity:0}
 .maplibregl-ctrl-attrib{font-size:9px!important;background:transparent!important;opacity:.5}

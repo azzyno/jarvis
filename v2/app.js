@@ -20,7 +20,7 @@
   paintLine(); setInterval(paintLine, 30000);
 
   /* ---------- Erde ---------- */
-  const zStage = () => (innerWidth < 500 ? 0.55 : innerWidth < 900 ? 0.95 : 1.35);
+  const zStage = () => (innerWidth < 500 ? 0.82 : innerWidth < 900 ? 1.1 : 1.45);
   const map = new maplibregl.Map({
     container: 'globe', attributionControl: { compact: true }, center: [HOME[0] - 40, 18], zoom: zStage(), maxZoom: 18, renderWorldCopies: false, fadeDuration: 200,
     interactive: false, pixelRatio: Math.min(devicePixelRatio || 1, mobile ? 2 : 2),
@@ -44,7 +44,7 @@
         { id: 'home-g', type: 'circle', source: 'home', paint: { 'circle-radius': 14, 'circle-color': '#a8864a', 'circle-opacity': 0 } },
         { id: 'home', type: 'circle', source: 'home', paint: { 'circle-radius': 5, 'circle-color': '#1c2b4a', 'circle-stroke-width': 2.5, 'circle-stroke-color': '#fff', 'circle-opacity': 0, 'circle-stroke-opacity': 0 } },
       ],
-      sky: { 'sky-color': '#ffffff', 'horizon-color': '#e8eef7', 'fog-color': '#fbfbfd', 'sky-horizon-blend': .5, 'horizon-fog-blend': .8, 'fog-ground-blend': .3, 'atmosphere-blend': ['interpolate', ['linear'], ['zoom'], 0, 1, 5, 1, 8, 0] },
+      sky: { 'sky-color': '#ffffff', 'horizon-color': '#f1f4f9', 'fog-color': '#fbfbfd', 'sky-horizon-blend': .5, 'horizon-fog-blend': .8, 'fog-ground-blend': .3, 'atmosphere-blend': ['interpolate', ['linear'], ['zoom'], 0, 1, 5, 1, 8, 0] },
     },
   });
   window.MAP = map;
@@ -53,13 +53,17 @@
   let spin = true, lastT = 0;
   const turn = t => { if (spin && !document.hidden) { if (t - lastT > 33) { const c = map.getCenter(); map.jumpTo({ center: [c.lng + (t - (lastT || t)) * 0.0045, 18] }); lastT = t; } } else lastT = 0; requestAnimationFrame(turn); };
   map.on('load', () => requestAnimationFrame(turn));
+  // Schatten-Ring passt sich der Grösse der Erde an
+  const halo = document.getElementById('halo');
+  const fitHalo = () => { const d = Math.round(512 * Math.pow(2, map.getZoom()) / Math.PI); halo.style.width = halo.style.height = d + 'px'; halo.style.margin = (-d / 2) + 'px 0 0 ' + (-d / 2) + 'px'; };
+  map.on('zoom', fitHalo); fitHalo();
 
   /* ---------- Öffnen / Schliessen ---------- */
   let opened = false, loaded = false;
   function open() {
     if (opened) return; opened = true; spin = false;
     B.classList.remove('stage'); B.classList.add('open');
-    map.easeTo({ center: HOME, zoom: mobile ? 1.15 : 2.0, padding: { top: mobile ? 170 : 80, bottom: mobile ? 150 : 140 }, duration: 2400, easing: t => 1 - Math.pow(1 - t, 3) });
+    map.easeTo({ center: HOME, zoom: mobile ? 0.95 : 1.9, padding: { top: mobile ? 150 : 80, bottom: mobile ? 170 : 140 }, duration: 2400, easing: t => 1 - Math.pow(1 - t, 3) });
     ['dragPan', 'scrollZoom', 'touchZoomRotate', 'doubleClickZoom', 'dragRotate', 'keyboard'].forEach(h => map[h] && map[h].enable());
     try { map.touchZoomRotate.disableRotation(); } catch (e) {}
     let f = 0; const fade = () => { f = Math.min(1, f + .05); map.setPaintProperty('lab', 'raster-opacity', .75 * f); map.setPaintProperty('home', 'circle-opacity', f); map.setPaintProperty('home', 'circle-stroke-opacity', f); if (f < 1) requestAnimationFrame(fade); }; fade();
