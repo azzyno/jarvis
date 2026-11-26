@@ -1,0 +1,71 @@
+<!DOCTYPE html>
+<html lang="de"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>JARVIS · Selbsttest</title>
+<style>
+body{margin:0;font:16px/1.4 -apple-system,Inter,system-ui;background:#fbfbfd;color:#1c2b4a;padding:24px 18px 60px}
+h1{font-weight:500;letter-spacing:.2em;font-size:14px;margin:0 0 4px}p.s{color:#8a93a6;margin:0 0 22px;font-size:14px}
+.t{background:#fff;border-radius:18px;box-shadow:0 6px 24px rgba(28,43,74,.08);padding:16px;margin-bottom:14px}
+button{width:100%;border:0;border-radius:14px;background:#1c2b4a;color:#fff;font-size:17px;padding:14px;margin-bottom:10px}
+.r{font-size:15px;min-height:20px;white-space:pre-wrap}.ok{color:#2e7d4f}.no{color:#b3402f}
+.bar{height:10px;border-radius:6px;background:#eef0f5;overflow:hidden;margin-top:8px}.bar i{display:block;height:100%;width:0;background:#a8864a}
+</style></head><body>
+<h1>JARVIS · SELBSTTEST</h1><p class="s">Bitte die Tests der Reihe nach antippen, dann einen Screenshot schicken.</p>
+<div class="t"><button id="b1">1 · Ton testen</button><div class="r" id="r1"></div></div>
+<div class="t"><button id="b2">2 · Mikrofon testen (3 Sek. sprechen)</button><div class="bar"><i id="lv"></i></div><div class="r" id="r2"></div></div>
+<div class="t"><button id="b3">3 · Erkennung testen</button><div class="r" id="r3"></div></div>
+<div class="t"><button id="b4">4 · Ton nach Mikrofon testen</button><div class="r" id="r4"></div></div>
+<div class="r" id="info" style="color:#8a93a6;font-size:12px"></div>
+<script>
+const API='https://jarvis-iota-weld.vercel.app/api/tts';
+const $=id=>document.getElementById(id);
+const say=(id,t,ok)=>{$(id).textContent=t;$(id).className='r '+(ok===true?'ok':ok===false?'no':'')};
+$('info').textContent=navigator.userAgent+' · MediaRecorder:'+!!window.MediaRecorder+' · audioSession:'+!!navigator.audioSession;
+const player=new Audio();player.playsInline=true;
+let lastBlob=null,lastMime='';
+async function playTTS(id){
+  say(id,'Lade Stimme …');
+  const t0=performance.now();
+  const r=await fetch(API,{method:'POST',headers:{'Content-Type':'text/plain'},body:JSON.stringify({text:'Guten Abend, Master. Ton funktioniert.'})});
+  if(!r.ok){say(id,'Stimme-Server Fehler '+r.status,false);return}
+  const b=await r.blob();player.src=URL.createObjectURL(b);
+  try{await player.play();say(id,'Ton spielt ('+Math.round(performance.now()-t0)+' ms). Hören Sie etwas? Wenn nicht: Lautlos-Schalter/Lautstärke.',true)}
+  catch(e){say(id,'Ton blockiert: '+e.name+' '+e.message,false)}
+}
+$('b1').onclick=()=>{player.src='data:audio/wav;base64,UklGRiQAAABXQVZFZm10IBAAAAABAAEAQB8AAIA+AAACABAAZGF0YQAAAAA=';player.play().catch(()=>{});playTTS('r1').catch(e=>say('r1','Fehler: '+e.message,false))};
+$('b2').onclick=async()=>{
+  try{
+    say('r2','Frage nach Mikrofon …');
+    const st=await navigator.mediaDevices.getUserMedia({audio:{echoCancellation:true,noiseSuppression:true,autoGainControl:true}});
+    const ctx=new (window.AudioContext||window.webkitAudioContext)();await ctx.resume();
+    const an=ctx.createAnalyser();an.fftSize=1024;ctx.createMediaStreamSource(st).connect(an);
+    const mime=['audio/mp4','audio/webm;codecs=opus','audio/webm'].find(m=>{try{return MediaRecorder.isTypeSupported(m)}catch(e){return false}})||'';
+    const ch=[];const mr=new MediaRecorder(st,mime?{mimeType:mime}:undefined);mr.ondataavailable=e=>e.data.size&&ch.push(e.data);
+    let max=0;const d=new Float32Array(1024);
+    const iv=setInterval(()=>{an.getFloatTimeDomainData(d);let s=0;for(const v of d)s+=v*v;const r=Math.sqrt(s/d.length);max=Math.max(max,r);$('lv').style.width=Math.min(100,r*800)+'%'},80);
+    mr.start();say('r2','🎙 Jetzt sprechen … ('+ctx.state+', '+(mime||'standard')+')');
+    await new Promise(r=>setTimeout(r,3000));clearInterval(iv);
+    await new Promise(r=>{mr.onstop=r;mr.stop()});st.getTracks().forEach(t=>t.stop());
+    lastBlob=new Blob(ch,{type:mr.mimeType||mime});lastMime=lastBlob.type;
+    say('r2','Aufnahme: '+Math.round(lastBlob.size/1024)+' KB · höchster Pegel '+Math.round(max*1000)+(max>0.01?' ✓ Stimme kam an':' ✗ kein Signal'),max>0.01);
+    window._ctx=ctx;
+  }catch(e){say('r2','Mikrofon-Fehler: '+e.name+' '+e.message,false)}
+};
+$('b3').onclick=async()=>{
+  if(!lastBlob){say('r3','Zuerst Test 2 machen.',false);return}
+  try{
+    say('r3','Sende an Erkennung …');
+    let b64,mime='audio/wav';
+    try{const ab=await window._ctx.decodeAudioData(await lastBlob.arrayBuffer());b64=wav(ab)}
+    catch(e){mime=lastMime;b64=await new Promise(ok=>{const r=new FileReader();r.onload=()=>ok(String(r.result).split(',')[1]);r.readAsDataURL(lastBlob)});$('r3').textContent+=' (Umwandlung: '+e.name+')'}
+    const r=await fetch(API,{method:'POST',headers:{'Content-Type':'text/plain'},body:JSON.stringify({audio:b64,mime})});
+    const j=await r.json().catch(()=>({}));
+    say('r3',r.ok?(j.text?'Verstanden: „'+j.text+'“':'Nichts verstanden (leer)'):'Fehler '+r.status+' '+JSON.stringify(j).slice(0,200),!!j.text);
+  }catch(e){say('r3','Fehler: '+e.message,false)}
+};
+$('b4').onclick=()=>playTTS('r4').catch(e=>say('r4','Fehler: '+e.message,false));
+function wav(ab){const src=ab.getChannelData(0),ratio=ab.sampleRate/16000,len=Math.floor(src.length/ratio),pcm=new Int16Array(len);
+for(let i=0;i<len;i++){const a=Math.floor(i*ratio),b=Math.min(src.length,Math.floor((i+1)*ratio));let v=0;for(let j=a;j<b;j++)v+=src[j];v/=Math.max(1,b-a);pcm[i]=Math.max(-1,Math.min(1,v))*32767}
+const buf=new ArrayBuffer(44+len*2),dv=new DataView(buf),w=(p,t)=>{for(let i=0;i<t.length;i++)dv.setUint8(p+i,t.charCodeAt(i))};
+w(0,'RIFF');dv.setUint32(4,36+len*2,true);w(8,'WAVE');w(12,'fmt ');dv.setUint32(16,16,true);dv.setUint16(20,1,true);dv.setUint16(22,1,true);dv.setUint32(24,16000,true);dv.setUint32(28,32000,true);dv.setUint16(32,2,true);dv.setUint16(34,16,true);w(36,'data');dv.setUint32(40,len*2,true);
+new Int16Array(buf,44).set(pcm);const by=new Uint8Array(buf);let bin='';for(let i=0;i<by.length;i+=32768)bin+=String.fromCharCode.apply(null,by.subarray(i,i+32768));return btoa(bin)}
+</script></body></html>
