@@ -67,13 +67,13 @@
   let opened = false, loaded = false;
   function open() {
     if (opened) return; opened = true; spin = false;
+    if (!loaded) { loaded = true; loadChips(); loadQuakes(); }
     B.classList.remove('stage'); B.classList.add('open');
     map.easeTo({ center: HOME, zoom: mobile ? 0.95 : 1.9, padding: { top: mobile ? 150 : 80, bottom: mobile ? 170 : 140 }, duration: 2400, easing: t => 1 - Math.pow(1 - t, 3) });
-    ['dragPan', 'scrollZoom', 'touchZoomRotate', 'doubleClickZoom', 'dragRotate', 'keyboard'].forEach(h => map[h] && map[h].enable());
+    ['dragPan', 'scrollZoom', 'touchZoomRotate', 'doubleClickZoom', 'dragRotate', 'keyboard'].forEach(h => { try { map[h].enable(); } catch (e) {} });
     try { map.touchZoomRotate.disableRotation(); } catch (e) {}
     let f = 0; const fade = () => { f = Math.min(1, f + .05); map.setPaintProperty('lab', 'raster-opacity', .75 * f); map.setPaintProperty('home', 'circle-opacity', f); map.setPaintProperty('home', 'circle-stroke-opacity', f); if (f < 1) requestAnimationFrame(fade); }; fade();
     pulse();
-    if (!loaded) { loaded = true; loadChips(); loadQuakes(); }
   }
   function close() {
     if (!opened) return; opened = false; hideSheet();
@@ -82,7 +82,7 @@
     map.easeTo({ center: [map.getCenter().lng, 18], zoom: zStage(), padding: { top: 0, bottom: 0 }, duration: 1800 });
     setTimeout(() => { spin = true; }, 1800);
     map.setPaintProperty('lab', 'raster-opacity', 0);
-    ['dragPan', 'scrollZoom', 'touchZoomRotate', 'doubleClickZoom', 'dragRotate', 'keyboard'].forEach(h => map[h] && map[h].disable());
+    ['dragPan', 'scrollZoom', 'touchZoomRotate', 'doubleClickZoom', 'dragRotate', 'keyboard'].forEach(h => { try { map[h].disable(); } catch (e) {} });
   }
   let pulseOn = false;
   function pulse() { if (pulseOn) return; pulseOn = true; let t0 = performance.now(); const p = t => { if (!opened) { pulseOn = false; map.setPaintProperty('home-g', 'circle-opacity', 0); return; } const k = ((t - t0) % 2400) / 2400; map.setPaintProperty('home-g', 'circle-radius', 6 + k * 22); map.setPaintProperty('home-g', 'circle-opacity', .45 * (1 - k)); setTimeout(() => requestAnimationFrame(p), 50); }; requestAnimationFrame(p); }
