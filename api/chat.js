@@ -55,7 +55,7 @@ export default async function handler(req, res) {
       const k = cleanKey(process.env.GEMINI_KEY);
       st.klen = k.length; st.kpre = k.slice(0, 3);
       st.test = [];
-      for (const md of ['gemini-flash-latest', 'gemini-3.8-flash', 'gemini-flash-lite-latest']) {
+      for (const md of ['gemini-flash-lite-latest', 'gemini-flash-latest', 'gemini-3.8-flash']) {
         try { const m = await call('https://generativelanguage.googleapis.com/v1beta/openai/chat/completions', k, md, [{ role: 'user', content: 'Sag nur: bereit' }]); st.test.push(md + ' ok: ' + String(m.content).slice(0, 30)); }
         catch (e) { st.test.push(md + ' fehler: ' + String(e.message).slice(0, 90)); }
       }
@@ -75,7 +75,7 @@ export default async function handler(req, res) {
     }
   }
   if (process.env.GEMINI_KEY) {
-    for (const model of ['gemini-flash-latest', 'gemini-3.8-flash', 'gemini-flash-lite-latest']) {
+    for (const model of ['gemini-flash-lite-latest', 'gemini-flash-latest', 'gemini-3.8-flash']) {
       try { return res.status(200).json({ message: await call('https://generativelanguage.googleapis.com/v1beta/openai/chat/completions', process.env.GEMINI_KEY, model, messages), quelle: 'gemini:' + model }); }
       catch (e) { errs.push('gemini ' + model + ': ' + e.message); }
     }
