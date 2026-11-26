@@ -24,7 +24,7 @@ const sayLine = t => { const g = document.getElementById('greet'); if (g) g.text
 let ac = null, an = null, buf = null, cur = null;
 function audio() {
   if (!ac) { ac = new (window.AudioContext || window.webkitAudioContext)(); an = ac.createAnalyser(); an.fftSize = 512; an.connect(ac.destination); buf = new Uint8Array(an.fftSize); }
-  if (ac.state === 'suspended') ac.resume();
+  if (ac.state !== 'running') ac.resume().catch(() => {});   // iPhone: auch Zustand „interrupted“
   return ac;
 }
 let fakeLvl = 0;
@@ -66,9 +66,29 @@ async function synth(text) {                       // → AudioBuffer oder null
     return ab;
   } catch (e) { console.warn('synth', e); return null; }
 }
+/* iPhone: Ausgabe über ein einmal freigeschaltetes <audio>-Element (robuster als WebAudio,
+   solange das Mikrofon offen ist) */
+const SILENT = 'data:audio/wav;base64,UklGRiQAAABXQVZFZm10IBAAAAABAAEAQB8AAIA+AAACABAAZGF0YQAAAAA=';
+let player = null;
+function getPlayer() { if (!player) { player = new Audio(); player.playsInline = true; player.setAttribute('playsinline', ''); player.preload = 'auto'; } return player; }
+function playBlob(blob) {
+  return new Promise(res => {
+    const a = getPlayer(), url = URL.createObjectURL(blob); let done = false;
+    const fin = () => { if (done) return; done = true; clearInterval(iv); clearTimeout(guard); fakeLvl = 0; cur = null; URL.revokeObjectURL(url); res(true); };
+    const iv = setInterval(() => { fakeLvl = .25 + Math.random() * .45; }, 90);
+    let guard = setTimeout(fin, 30000);
+    cur = { stop() { try { a.pause(); } catch (e) {} fin(); } };
+    a.onended = fin; a.onerror = fin;
+    a.onloadedmetadata = () => { if (isFinite(a.duration)) { clearTimeout(guard); guard = setTimeout(fin, a.duration * 1000 + 2500); } };
+    a.src = url;
+    const p = a.play(); if (p && p.catch) p.catch(e => { console.warn('play', e); J.toast && J.toast('Ton blockiert – bitte einmal aufs Mikrofon tippen.'); fin(); });
+  });
+}
 function playBuf(ab) {
+  if (ab instanceof Blob) return playBlob(ab);
   return new Promise(res => { const src = audio().createBufferSource(); src.buffer = ab; src.playbackRate.value = 1; src.connect(an); cur = src;
-    src.onended = () => { cur = null; res(); }; src.start(); });
+    const guard = setTimeout(() => { try { src.stop(); } catch (e) {} cur = null; res(); }, ab.duration * 1000 + 2500);   // nie hängen bleiben
+    src.onended = () => { clearTimeout(guard); cur = null; res(); }; src.start(); });
 }
 
 /* ---------- Stimme: Google Gemini (Charon, gratis) ---------- */
@@ -79,8 +99,8 @@ async function gemSynth(text) {
   try {
     const r = await fetch(TTS, { method: 'POST', headers: { 'Content-Type': 'text/plain' }, body: JSON.stringify({ text, voice: LS('jarvis-voice') || 'Charon' }) });
     if (!r.ok) throw new Error('HTTP ' + r.status);
-    const ab = await audio().decodeAudioData(await r.arrayBuffer());
-    gemFail = 0; return ab;
+    const blob = await r.blob(); if (blob.size < 1000) throw new Error('leer');
+    gemFail = 0; return new Blob([blob], { type: 'audio/wav' });
   } catch (e) { console.warn('gemini-tts', e); gemFail++; if (gemFail === 1) J.toast && J.toast('Google-Stimme kurz ausgelastet – Ersatzstimme.'); setTimeout(() => { gemFail = 0; }, 60000); return null; }
 }
 
@@ -156,9 +176,10 @@ function earStart() {
   if (earStarting) return earStarting;
   if (!recOK) return Promise.resolve(false);
   const c = audio();
+  try { if (navigator.audioSession) navigator.audioSession.type = 'play-and-record'; } catch (e) {}
   earStarting = navigator.mediaDevices.getUserMedia({ audio: { echoCancellation: true, noiseSuppression: true, autoGainControl: true, channelCount: 1 } })
     .then(st => {
-      micStream = st; if (c.state === 'suspended') c.resume();
+      micStream = st; c.resume().catch(() => {});
       micSrc = c.createMediaStreamSource(st);
       proc = c.createScriptProcessor(4096, 1, 1);
       proc.onaudioprocess = e => { e.outputBuffer.getChannelData(0).fill(0); hear(e.inputBuffer.getChannelData(0), c.sampleRate); };
@@ -278,6 +299,7 @@ async function think(text) {
 /* iPhone: Ton und Sprachausgabe müssen direkt beim Antippen freigeschaltet werden */
 let unlocked = false;
 function unlock(sayHi) {
+  try { const a = getPlayer(); a.src = SILENT; const p = a.play(); p && p.catch && p.catch(() => {}); } catch (e) {}
   try { const c = audio(); const b = c.createBuffer(1, 1, 22050); const s = c.createBufferSource(); s.buffer = b; s.connect(c.destination); s.start(0); } catch (e) {}
   if (!sayHi) try { if (window.speechSynthesis) { speechSynthesis.cancel(); const u = new SpeechSynthesisUtterance(' '); u.lang = 'de-DE'; const v = bestVoice(); if (v) { u.voice = v; u.lang = v.lang; } u.volume = 0; u.rate = 1.03; u.pitch = .92; speechSynthesis.speak(u); } } catch (e) {}
   unlocked = true;
