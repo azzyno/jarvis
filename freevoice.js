@@ -131,7 +131,7 @@ function sentences(t) { return (t.match(/[^.!?…]+[.!?…]+["“”»]?|[^.!?�
 async function speak(text) {
   text = clean(text); if (!text) return;
   const id = ++speakId; stopRec(); setState('speaking'); sayLine(text);
-  if (IOS && earOn) { earOff(); reopen = true; }            // iPhone: Mikrofon frei geben, sonst bleibt der Lautsprecher stumm
+  if (earOn) earOff();
   diag('spricht');
   const parts = sentences(text);
   // Gemini: erster Satz sofort, Rest parallel vorbereiten
@@ -159,128 +159,87 @@ async function speak(text) {
   afterSpeak(true);
 }
 let reopen = false;
-function afterSpeak() {
-  lastAct = Date.now(); deafUntil = Date.now() + 600;
-  if (state === 'off') return;
-  if (reopen && !muted) {
-    reopen = false; setState('listening'); diag('Mikro wieder an …');
-    earStart().then(ok => { diag(ok ? 'hört zu' : 'Mikro aus – bitte tippen'); if (!ok) { state = 'off'; sayLine('Tippen Sie aufs Mikrofon, Master.'); } });
-    return;
-  }
-  setState(earOn && !muted ? 'listening' : 'idle');
-}
+function afterSpeak() { lastAct = Date.now(); if (state !== 'off') state = 'off'; diag('bereit – tippen zum Sprechen'); }
 function diag(t) { try { let d = document.getElementById('jvDiag'); if (!d) { d = document.createElement('div'); d.id = 'jvDiag'; d.style.cssText = 'position:fixed;left:8px;bottom:4px;font:10px/1.2 Inter,system-ui;color:#8a93a6;z-index:99999;pointer-events:none;opacity:.8'; document.body.appendChild(d); } d.textContent = 'JARVIS · ' + t + ' · ' + new Date().toLocaleTimeString('de-CH'); } catch (e) {} }
 function hush() { speakId++; try { cur && cur.stop(); } catch (e) {} cur = null; try { speechSynthesis.cancel(); } catch (e) {} }
 
-/* ---------- Ohr: eigenes Mikrofon (kein iPhone-Diktat, keine Pieptöne) ----------
-   Ein einziger Mikrofon-Strom bleibt offen. JARVIS erkennt selbst, wann Sie sprechen
-   und wann Ihr Satz fertig ist, und lässt ihn von Google (gratis) in Text umwandeln. */
+/* ---------- Ohr: Funkgerät-Prinzip (stabil auf dem iPhone) ----------
+   Antippen → Mikrofon an → Sie sprechen → nach kurzer Pause geht es von selbst aus.
+   Das Mikrofon ist NUR offen, während Sie sprechen. Dadurch bleibt der Lautsprecher frei,
+   es gibt kein Echo und keine Störgeräusche. Erkennung gratis über Google Gemini. */
 const STT = 'https://jarvis-iota-weld.vercel.app/api/tts';
-const recOK = !!(navigator.mediaDevices && navigator.mediaDevices.getUserMedia);
+const recOK = !!(navigator.mediaDevices && navigator.mediaDevices.getUserMedia && window.MediaRecorder);
 const IOS = /iPhone|iPad|iPod/.test(navigator.userAgent) || (navigator.platform === 'MacIntel' && navigator.maxTouchPoints > 1);
-let micCtx = null, frames = 0, peak = 0, micStream = null, micSrc = null, proc = null, earOn = false, earStarting = null;
-let deafUntil = 0, lastUser = 0, micRms = 0, sttBusy = false;
-const vad = { on: false, floor: 0.008, chunks: [], pre: [], silence: 0, dur: 0, loud: 0 };
-const gated = () => muted || state === 'speaking' || state === 'busy' || state === 'off' || sttBusy || Date.now() < deafUntil;
+let micCtx = null, micStream = null, mrec = null, anal = null, vadT = null, earOn = false, micRms = 0, sttBusy = false, lastUser = 0, deafUntil = 0;
+let earStarting = null;
+function pickMime() { for (const m of ['audio/mp4', 'audio/webm;codecs=opus', 'audio/webm', 'audio/aac']) { try { if (MediaRecorder.isTypeSupported(m)) return m; } catch (e) {} } return ''; }
 
-function earStart() {
+function earStart() {                                       // muss direkt aus dem Antippen kommen
   if (earOn) return Promise.resolve(true);
-  if (earStarting) return earStarting;
-  if (!recOK) return Promise.resolve(false);
-  if (!micCtx) micCtx = new (window.AudioContext || window.webkitAudioContext)();   // eigener Kontext fürs Mikrofon
-  const c = micCtx; c.resume().catch(() => {});
-  earStarting = navigator.mediaDevices.getUserMedia({ audio: { echoCancellation: true, noiseSuppression: true, autoGainControl: true, channelCount: 1 } })
-    .then(st => {
-      micStream = st; c.resume().catch(() => {});
-      micSrc = c.createMediaStreamSource(st);
-      proc = c.createScriptProcessor(4096, 1, 1);
-      proc.onaudioprocess = e => { frames++; e.outputBuffer.getChannelData(0).fill(0); hear(e.inputBuffer.getChannelData(0), c.sampleRate); };
-      micSrc.connect(proc); proc.connect(c.destination);
-      st.getAudioTracks()[0].onended = () => { earOff(); if (state === 'listening') state = 'off'; };
-      earOn = true; earStarting = null; return true;
-    })
-    .catch(err => {
-      earStarting = null; earOn = false;
-      const msg = 'Mikrofon blockiert: Einstellungen → Apps → Safari → Mikrofon „Erlauben“. Danach Seite neu laden. Oder unten schreiben.';
-      J.toast && J.toast(msg); sayLine(msg); console.warn('mic', err); return false;
-    });
-  return earStarting;
+  if (!recOK) { J.toast && J.toast('Dieses Gerät kann hier nicht aufnehmen – bitte unten schreiben.'); return Promise.resolve(false); }
+  if (!micCtx) micCtx = new (window.AudioContext || window.webkitAudioContext)();
+  micCtx.resume().catch(() => {});
+  earOn = true;
+  return navigator.mediaDevices.getUserMedia({ audio: { echoCancellation: true, noiseSuppression: true, autoGainControl: true } }).then(st => {
+    micStream = st;
+    const src = micCtx.createMediaStreamSource(st); anal = micCtx.createAnalyser(); anal.fftSize = 1024; src.connect(anal);
+    const mime = pickMime(); const chunks = [];
+    mrec = new MediaRecorder(st, mime ? { mimeType: mime } : undefined);
+    mrec.ondataavailable = e => { if (e.data && e.data.size) chunks.push(e.data); };
+    let spoke = 0, silent = 0, total = 0, floor = 0.01;
+    mrec.onstop = () => { const blob = new Blob(chunks, { type: mrec.mimeType || mime || 'audio/mp4' }); closeMic(); if (spoke >= 0.25) transcribe(blob); else { setState('idle'); state = 'off'; sayLine('Ich habe nichts gehört, Master. Tippen Sie und sprechen Sie.'); diag('nichts gehört'); } };
+    mrec.start();
+    setState('listening'); sayLine('Ich höre, Master …'); diag('Mikro an – sprechen Sie');
+    const data = new Float32Array(anal.fftSize);
+    vadT = setInterval(() => {
+      if (!anal) return;
+      anal.getFloatTimeDomainData(data); let s = 0; for (let i = 0; i < data.length; i++) s += data[i] * data[i];
+      const rms = Math.sqrt(s / data.length); micRms = rms; total += 0.1;
+      if (!spoke) floor = Math.min(0.03, floor * 0.9 + rms * 0.1);
+      const thr = Math.max(0.006, floor * 2.2);
+      if (rms > thr) { spoke += 0.1; silent = 0; } else if (spoke) silent += 0.1;
+      diag('Mikro an · Pegel ' + Math.round(rms * 1000));
+      if ((spoke > 0.25 && silent > 1.0) || total > 15 || (!spoke && total > 7)) stopMic();
+    }, 100);
+    return true;
+  }).catch(err => {
+    earOn = false; closeMic();
+    const msg = 'Mikrofon blockiert: Einstellungen → Apps → Safari → Mikrofon „Erlauben“. Oder unten schreiben.';
+    J.toast && J.toast(msg); sayLine(msg); diag('Mikro-Fehler ' + (err && err.name)); state = 'off'; return false;
+  });
 }
-function earOff() {
-  earOn = false; vad.on = false; vad.chunks = []; vad.pre = [];
-  try { proc && proc.disconnect(); micSrc && micSrc.disconnect(); } catch (e) {}
-  try { micStream && micStream.getTracks().forEach(t => t.stop()); } catch (e) {}
-  proc = micSrc = micStream = null;
+function stopMic() { clearInterval(vadT); vadT = null; try { if (mrec && mrec.state !== 'inactive') mrec.stop(); else closeMic(); } catch (e) { closeMic(); } }
+function closeMic() { clearInterval(vadT); vadT = null; earOn = false; micRms = 0; try { micStream && micStream.getTracks().forEach(t => t.stop()); } catch (e) {} micStream = null; anal = null; mrec = null; }
+function earOff() { if (mrec && mrec.state !== 'inactive') { mrec.onstop = () => closeMic(); try { mrec.stop(); } catch (e) { closeMic(); } } else closeMic(); }
+
+async function transcribe(blob) {
+  sttBusy = true; setState('busy'); showHeard('…'); diag('verstehe …');
+  try {
+    let b64 = '', mime = 'audio/wav';
+    try { const ab = await micCtx.decodeAudioData(await blob.arrayBuffer()); b64 = wav16k(ab); }      // in WAV umwandeln (sicherster Weg)
+    catch (e) { mime = blob.type; b64 = await new Promise((ok, no) => { const r = new FileReader(); r.onload = () => ok(String(r.result).split(',')[1] || ''); r.onerror = no; r.readAsDataURL(blob); }); }
+    const r = await fetch(STT, { method: 'POST', headers: { 'Content-Type': 'text/plain' }, body: JSON.stringify({ audio: b64, mime }) });
+    const d = await r.json().catch(() => ({}));
+    sttBusy = false;
+    const t = (d.text || '').trim();
+    if (t) { lastUser = Date.now(); showHeard(t); diag('verstanden'); state = 'idle'; think(t); }
+    else { state = 'off'; sayLine(d.error ? 'Ich konnte Sie gerade nicht verstehen, Master. Bitte nochmals tippen.' : 'Ich habe nichts verstanden, Master. Tippen Sie und sprechen Sie nochmals.'); diag(d.error ? 'Erkennung-Fehler ' + r.status : 'nichts verstanden'); }
+  } catch (e) { sttBusy = false; state = 'off'; diag('Netz-Fehler'); sayLine('Verbindung gestört, Master. Bitte nochmals tippen.'); }
 }
 
-function hear(d, sr) {
-  let s = 0; for (let i = 0; i < d.length; i++) s += d[i] * d[i];
-  const rms = Math.sqrt(s / d.length), dt = d.length / sr; micRms = rms; peak = Math.max(peak * 0.9, rms);
-  if (gated()) { vad.on = false; vad.chunks = []; vad.pre = []; vad.silence = 0; return; }
-  if (!vad.on) vad.floor = Math.max(0.004, Math.min(0.05, vad.floor * 0.97 + rms * 0.03));
-  const thr = Math.max(0.008, vad.floor * 2.5);
-  const copy = new Float32Array(d);
-  if (!vad.on) {
-    vad.pre.push(copy); if (vad.pre.length > 4) vad.pre.shift();
-    if (rms > thr) { vad.on = true; vad.chunks = vad.pre.slice(); vad.pre = []; vad.dur = 0; vad.silence = 0; vad.loud = 0; showHeard('…'); }
-    return;
-  }
-  vad.chunks.push(copy); vad.dur += dt;
-  if (rms > thr * 0.75) { vad.silence = 0; vad.loud += dt; } else vad.silence += dt;
-  if (vad.silence > 0.85 || vad.dur > 14) {
-    const chunks = vad.chunks, loud = vad.loud; vad.on = false; vad.chunks = [];
-    if (loud >= 0.25) transcribe(chunks, sr); else showHeard('Ich höre, Master …');   // zu kurz = Geräusch
-  }
-}
-
-function toWav16k(chunks, sr) {
-  let n = 0; for (const c of chunks) n += c.length;
-  const all = new Float32Array(n); let o = 0; for (const c of chunks) { all.set(c, o); o += c.length; }
-  const ratio = sr / 16000, len = Math.floor(n / ratio), pcm = new Int16Array(len);
-  for (let i = 0; i < len; i++) {
-    const a = Math.floor(i * ratio), b = Math.min(n, Math.floor((i + 1) * ratio)); let v = 0;
-    for (let j = a; j < b; j++) v += all[j]; v /= Math.max(1, b - a);
-    pcm[i] = Math.max(-1, Math.min(1, v)) * 0x7fff;
-  }
-  const buf = new ArrayBuffer(44 + pcm.length * 2), dv = new DataView(buf);
-  const w = (p, str) => { for (let i = 0; i < str.length; i++) dv.setUint8(p + i, str.charCodeAt(i)); };
-  w(0, 'RIFF'); dv.setUint32(4, 36 + pcm.length * 2, true); w(8, 'WAVE'); w(12, 'fmt ');
-  dv.setUint32(16, 16, true); dv.setUint16(20, 1, true); dv.setUint16(22, 1, true); dv.setUint32(24, 16000, true);
-  dv.setUint32(28, 32000, true); dv.setUint16(32, 2, true); dv.setUint16(34, 16, true); w(36, 'data'); dv.setUint32(40, pcm.length * 2, true);
+function wav16k(ab) {
+  const src = ab.getChannelData(0), sr = ab.sampleRate, ratio = sr / 16000, len = Math.floor(src.length / ratio), pcm = new Int16Array(len);
+  for (let i = 0; i < len; i++) { const a = Math.floor(i * ratio), b = Math.min(src.length, Math.floor((i + 1) * ratio)); let v = 0; for (let j = a; j < b; j++) v += src[j]; v /= Math.max(1, b - a); pcm[i] = Math.max(-1, Math.min(1, v)) * 0x7fff; }
+  const buf = new ArrayBuffer(44 + len * 2), dv = new DataView(buf), w = (p, t) => { for (let i = 0; i < t.length; i++) dv.setUint8(p + i, t.charCodeAt(i)); };
+  w(0, 'RIFF'); dv.setUint32(4, 36 + len * 2, true); w(8, 'WAVE'); w(12, 'fmt '); dv.setUint32(16, 16, true); dv.setUint16(20, 1, true); dv.setUint16(22, 1, true);
+  dv.setUint32(24, 16000, true); dv.setUint32(28, 32000, true); dv.setUint16(32, 2, true); dv.setUint16(34, 16, true); w(36, 'data'); dv.setUint32(40, len * 2, true);
   new Int16Array(buf, 44).set(pcm);
-  const bytes = new Uint8Array(buf); let bin = '';
-  for (let i = 0; i < bytes.length; i += 0x8000) bin += String.fromCharCode.apply(null, bytes.subarray(i, i + 0x8000));
+  const by = new Uint8Array(buf); let bin = ''; for (let i = 0; i < by.length; i += 0x8000) bin += String.fromCharCode.apply(null, by.subarray(i, i + 0x8000));
   return btoa(bin);
 }
-
-async function transcribe(chunks, sr) {
-  sttBusy = true; showHeard('…'); diag('verstehe …');
-  try {
-    const r = await fetch(STT, { method: 'POST', headers: { 'Content-Type': 'text/plain' }, body: JSON.stringify({ audio: toWav16k(chunks, sr) }) });
-    const d = await r.json().catch(() => ({}));
-    const t = (d.text || '').trim();
-    sttBusy = false;
-    if (t && state !== 'off') { lastUser = Date.now(); showHeard(t); think(t); }
-    else if (state === 'listening') showHeard('Ich höre, Master …');
-  } catch (e) { sttBusy = false; console.warn('stt', e); }
-}
-
-function showHeard(t) { const s = document.getElementById('shSay'); if (s) s.textContent = t === '…' || /^Ich höre/.test(t) ? t : '„' + t + '“'; }
-function listen() { earStart(); if (state !== 'off') setState('listening'); }
+function showHeard(t) { const s = document.getElementById('shSay'); if (s) s.textContent = t === '…' ? t : '„' + t + '“'; }
+function listen() {}
 function stopRec() {}
-
-// Mikrofon-Wächter: zeigt Pegel, weckt den Kontext, merkt fehlendes Signal
-let lastFrames = 0;
-setInterval(() => {
-  if (!earOn || state !== 'listening') return;
-  if (micCtx && micCtx.state !== 'running') micCtx.resume().catch(() => {});
-  if (frames === lastFrames) { diag('kein Mikro-Signal (' + (micCtx ? micCtx.state : '-') + ') – bitte aufs Mikrofon tippen'); }
-  else if (!vad.on && !sttBusy) diag('hört zu · Pegel ' + Math.round(peak * 1000));
-  lastFrames = frames;
-}, 1000);
-
-// Ruhe-Abschaltung nach 5 Minuten ohne Frage (Akku)
-setInterval(() => { if (earOn && state === 'listening' && Date.now() - Math.max(lastUser, lastAct) > 5 * 60000) { earOff(); state = 'off'; sayLine('Mikrofon aus – ich ruhe, Master. Tippen Sie, wenn Sie mich brauchen.'); } }, 15000);
 
 /* ---------- Gehirn ---------- */
 const extraTools = {
@@ -327,14 +286,12 @@ function unlock(sayHi) {
   unlocked = true;
 }
 async function start() {
-  if (state !== 'off') return; unlock(false); muted = false; lastUser = Date.now();
-  const micP = earStart();                                  // direkt im Antippen anfragen
-  if (!greeted) { greeted = true; setState('busy'); const f = window.__greetFacts ? await window.__greetFacts() : ''; think('[START] ' + f); micP.then(ok => { if (ok && state === 'idle') setState('listening'); }); return; }
-  setState('busy'); const ok = await micP;
-  if (state === 'off') return;
-  setState(ok ? 'listening' : 'idle'); sayLine(ok ? 'Ich höre, Master …' : 'Bitte unten schreiben, Master.');
+  if (earOn) { stopMic(); return; }                         // nochmals tippen = fertig gesprochen
+  hush(); unlock(false); muted = false;
+  if (!greeted) greeted = true;
+  await earStart();
 }
-function end() { hush(); earOff(); busyTurn = false; state = 'off'; }
+function end() { if (earOn) { stopMic(); return; } hush(); busyTurn = false; state = 'off'; }
 
 const FREE = {
   async say(context) { if (state !== 'listening' || busyTurn) return false; think('[APP-KLICK] ' + context); return true; },

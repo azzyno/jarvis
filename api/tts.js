@@ -23,20 +23,22 @@ const STT_PROMPT = 'Transkribiere diese Sprachaufnahme wörtlich (Deutsch oder S
   'Wenn nichts Verständliches gesagt wird (nur Geräusche, Atmen, Stille, Musik), gib genau "-" zurück.';
 
 
-async function stt(req, res, key, audio) {
+async function stt(req, res, key, audio, mime) {
+  mime = String(mime || 'audio/wav').split(';')[0];
+  const mimes = [...new Set([mime, ...(/mp4|m4a|aac/.test(mime) ? ['audio/aac', 'audio/mp4', 'video/mp4'] : /webm/.test(mime) ? ['audio/webm', 'video/webm', 'audio/ogg'] : [])])];
   if (!audio || audio.length < 2000) return res.status(200).json({ text: '' });
   const errs = [];
-  for (const model of STT_MODELS) {
+  for (const mt of mimes) for (const model of STT_MODELS.slice(0, mt === mimes[0] ? 3 : 1)) {
     try {
       const ac = new AbortController(); const to = setTimeout(() => ac.abort(), 15000);
       const r = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/${model}:generateContent`, {
         method: 'POST', signal: ac.signal, headers: { 'Content-Type': 'application/json', 'x-goog-api-key': key },
-        body: JSON.stringify({ contents: [{ parts: [{ text: STT_PROMPT }, { inlineData: { mimeType: 'audio/wav', data: audio } }] }],
+        body: JSON.stringify({ contents: [{ parts: [{ text: STT_PROMPT }, { inlineData: { mimeType: mt, data: audio } }] }],
           generationConfig: { temperature: 0, maxOutputTokens: 200 } }),
       });
       clearTimeout(to);
       const d = await r.json().catch(() => ({}));
-      if (!r.ok) { errs.push(model + ': ' + r.status + ' ' + ((d.error && d.error.message) || '').slice(0, 100)); continue; }
+      if (!r.ok) { errs.push(mt + ' ' + model + ': ' + r.status + ' ' + ((d.error && d.error.message) || '').slice(0, 100)); continue; }
       let t = ((d.candidates && d.candidates[0] && d.candidates[0].content && d.candidates[0].content.parts) || []).map(p => p.text || '').join('').trim();
       t = t.replace(/^["„“']+|["“”']+$/g, '').trim();
       if (t === '-' || /^[-–.\s]*$/.test(t)) t = '';
@@ -66,7 +68,7 @@ export default async function handler(req, res) {
     return stt(req, res, key, Buffer.from(await a.arrayBuffer()).toString('base64'));
   }
   let body = req.body; if (typeof body === 'string') try { body = JSON.parse(body); } catch (e) { body = {}; }
-  if (body && body.audio) return stt(req, res, key, body.audio);
+  if (body && body.audio) return stt(req, res, key, body.audio, body.mime);
   const text = String((body && body.text) || q.text || '').slice(0, 1200).trim();
   if (!text) return res.status(400).json({ error: 'kein Text' });
   const voice = VOICES.includes((body && body.voice) || q.voice) ? ((body && body.voice) || q.voice) : 'Charon';
@@ -81,7 +83,7 @@ export default async function handler(req, res) {
       });
       clearTimeout(to);
       const d = await r.json().catch(() => ({}));
-      if (!r.ok) { errs.push(model + ': ' + r.status + ' ' + ((d.error && d.error.message) || '').slice(0, 120)); continue; }
+      if (!r.ok) { errs.push(mt + ' ' + model + ': ' + r.status + ' ' + ((d.error && d.error.message) || '').slice(0, 120)); continue; }
       const part = d.candidates && d.candidates[0] && d.candidates[0].content && (d.candidates[0].content.parts || []).find(p => p.inlineData);
       if (!part) { errs.push(model + ': kein Audio'); continue; }
       const rate = +((part.inlineData.mimeType || '').match(/rate=(\d+)/) || [])[1] || 24000;
