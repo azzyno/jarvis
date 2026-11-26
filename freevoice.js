@@ -132,7 +132,6 @@ async function speak(text) {
   text = clean(text); if (!text) return;
   const id = ++speakId; stopRec(); setState('speaking'); sayLine(text);
   if (IOS && earOn) { earOff(); reopen = true; }            // iPhone: Mikrofon frei geben, sonst bleibt der Lautsprecher stumm
-  try { if (IOS && navigator.audioSession) navigator.audioSession.type = 'playback'; } catch (e) {}
   diag('spricht');
   const parts = sentences(text);
   // Gemini: erster Satz sofort, Rest parallel vorbereiten
@@ -179,7 +178,7 @@ function hush() { speakId++; try { cur && cur.stop(); } catch (e) {} cur = null;
 const STT = 'https://jarvis-iota-weld.vercel.app/api/tts';
 const recOK = !!(navigator.mediaDevices && navigator.mediaDevices.getUserMedia);
 const IOS = /iPhone|iPad|iPod/.test(navigator.userAgent) || (navigator.platform === 'MacIntel' && navigator.maxTouchPoints > 1);
-let micStream = null, micSrc = null, proc = null, earOn = false, earStarting = null;
+let micCtx = null, frames = 0, peak = 0, micStream = null, micSrc = null, proc = null, earOn = false, earStarting = null;
 let deafUntil = 0, lastUser = 0, micRms = 0, sttBusy = false;
 const vad = { on: false, floor: 0.008, chunks: [], pre: [], silence: 0, dur: 0, loud: 0 };
 const gated = () => muted || state === 'speaking' || state === 'busy' || state === 'off' || sttBusy || Date.now() < deafUntil;
@@ -188,17 +187,17 @@ function earStart() {
   if (earOn) return Promise.resolve(true);
   if (earStarting) return earStarting;
   if (!recOK) return Promise.resolve(false);
-  const c = audio();
-  try { if (navigator.audioSession) navigator.audioSession.type = 'play-and-record'; } catch (e) {}
+  if (!micCtx) micCtx = new (window.AudioContext || window.webkitAudioContext)();   // eigener Kontext fürs Mikrofon
+  const c = micCtx; c.resume().catch(() => {});
   earStarting = navigator.mediaDevices.getUserMedia({ audio: { echoCancellation: true, noiseSuppression: true, autoGainControl: true, channelCount: 1 } })
     .then(st => {
       micStream = st; c.resume().catch(() => {});
       micSrc = c.createMediaStreamSource(st);
       proc = c.createScriptProcessor(4096, 1, 1);
-      proc.onaudioprocess = e => { e.outputBuffer.getChannelData(0).fill(0); hear(e.inputBuffer.getChannelData(0), c.sampleRate); };
+      proc.onaudioprocess = e => { frames++; e.outputBuffer.getChannelData(0).fill(0); hear(e.inputBuffer.getChannelData(0), c.sampleRate); };
       micSrc.connect(proc); proc.connect(c.destination);
       st.getAudioTracks()[0].onended = () => { earOff(); if (state === 'listening') state = 'off'; };
-      earOn = true; earStarting = null; try { if (navigator.audioSession) navigator.audioSession.type = 'play-and-record'; } catch (e) {} return true;
+      earOn = true; earStarting = null; return true;
     })
     .catch(err => {
       earStarting = null; earOn = false;
@@ -216,10 +215,10 @@ function earOff() {
 
 function hear(d, sr) {
   let s = 0; for (let i = 0; i < d.length; i++) s += d[i] * d[i];
-  const rms = Math.sqrt(s / d.length), dt = d.length / sr; micRms = rms;
+  const rms = Math.sqrt(s / d.length), dt = d.length / sr; micRms = rms; peak = Math.max(peak * 0.9, rms);
   if (gated()) { vad.on = false; vad.chunks = []; vad.pre = []; vad.silence = 0; return; }
   if (!vad.on) vad.floor = Math.max(0.004, Math.min(0.05, vad.floor * 0.97 + rms * 0.03));
-  const thr = Math.max(0.018, vad.floor * 3);
+  const thr = Math.max(0.008, vad.floor * 2.5);
   const copy = new Float32Array(d);
   if (!vad.on) {
     vad.pre.push(copy); if (vad.pre.length > 4) vad.pre.shift();
@@ -230,7 +229,7 @@ function hear(d, sr) {
   if (rms > thr * 0.75) { vad.silence = 0; vad.loud += dt; } else vad.silence += dt;
   if (vad.silence > 0.85 || vad.dur > 14) {
     const chunks = vad.chunks, loud = vad.loud; vad.on = false; vad.chunks = [];
-    if (loud >= 0.3) transcribe(chunks, sr); else showHeard('Ich höre, Master …');   // zu kurz = Geräusch
+    if (loud >= 0.25) transcribe(chunks, sr); else showHeard('Ich höre, Master …');   // zu kurz = Geräusch
   }
 }
 
@@ -269,6 +268,16 @@ async function transcribe(chunks, sr) {
 function showHeard(t) { const s = document.getElementById('shSay'); if (s) s.textContent = t === '…' || /^Ich höre/.test(t) ? t : '„' + t + '“'; }
 function listen() { earStart(); if (state !== 'off') setState('listening'); }
 function stopRec() {}
+
+// Mikrofon-Wächter: zeigt Pegel, weckt den Kontext, merkt fehlendes Signal
+let lastFrames = 0;
+setInterval(() => {
+  if (!earOn || state !== 'listening') return;
+  if (micCtx && micCtx.state !== 'running') micCtx.resume().catch(() => {});
+  if (frames === lastFrames) { diag('kein Mikro-Signal (' + (micCtx ? micCtx.state : '-') + ') – bitte aufs Mikrofon tippen'); }
+  else if (!vad.on && !sttBusy) diag('hört zu · Pegel ' + Math.round(peak * 1000));
+  lastFrames = frames;
+}, 1000);
 
 // Ruhe-Abschaltung nach 5 Minuten ohne Frage (Akku)
 setInterval(() => { if (earOn && state === 'listening' && Date.now() - Math.max(lastUser, lastAct) > 5 * 60000) { earOff(); state = 'off'; sayLine('Mikrofon aus – ich ruhe, Master. Tippen Sie, wenn Sie mich brauchen.'); } }, 15000);
