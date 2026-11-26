@@ -135,37 +135,52 @@ async function speak(text) {
   afterSpeak(true);
 }
 function afterSpeak() {
-  lastAct = Date.now();
-  if (state !== 'off') { if (IOS) { state = 'off'; return; } if (!muted && recOK) { setState('pause'); setTimeout(() => state === 'pause' && listen(), 700); } else setState('idle'); }
+  lastAct = Date.now(); deafUntil = Date.now() + 700; consumed = full.length;
+  if (state !== 'off') setState(earOn && !muted ? 'listening' : 'idle');
 }
 function hush() { speakId++; try { cur && cur.stop(); } catch (e) {} cur = null; try { speechSynthesis.cancel(); } catch (e) {} }
 
-/* ---------- Ohr: Spracherkennung ---------- */
+/* ---------- Ohr: Mikrofon bleibt dauerhaft an ---------- */
 const SR = window.SpeechRecognition || window.webkitSpeechRecognition;
 const recOK = !!SR;
-let rec = null, recOn = false;
 const IOS = /iPhone|iPad|iPod/.test(navigator.userAgent) || (navigator.platform === 'MacIntel' && navigator.maxTouchPoints > 1);
-let tries = 0;
-function listen(again) {
-  if (!again) tries = 0;
-  if (!recOK || muted || state === 'off') { setState('idle'); return; }
+let rec = null, earOn = false, consumed = 0, full = '', silenceT = null, deafUntil = 0, lastUser = 0, restarts = 0;
+function showHeard(t) { const s = document.getElementById('shSay'); if (s) s.textContent = '„' + t + '“'; }
+function earStart() {
+  if (!recOK) return false;
   try { rec && rec.abort(); } catch (e) {}
-  rec = new SR(); rec.lang = 'de-CH'; rec.interimResults = true; rec.continuous = false; rec.maxAlternatives = 1;
-  let finalT = '', lastT = '';
-  rec.onresult = e => { let t = ''; for (const r of e.results) { t += r[0].transcript; if (r.isFinal) finalT = t; } lastT = t; lastAct = Date.now(); const s = document.getElementById('shSay'); if (s) s.textContent = '„' + t + '“'; };
+  rec = new SR(); rec.lang = 'de-CH'; rec.interimResults = true; rec.continuous = true; rec.maxAlternatives = 1;
+  consumed = 0; full = '';
+  rec.onresult = e => {
+    let t = ''; for (const r of e.results) t += r[0].transcript + ' ';
+    full = t.replace(/\s+/g, ' ');
+    // JARVIS spricht/denkt gerade oder hallt nach → nicht mithören
+    if (muted || state === 'speaking' || state === 'busy' || Date.now() < deafUntil) { consumed = full.length; return; }
+    const utter = full.slice(consumed).trim(); if (!utter) return;
+    showHeard(utter); lastAct = Date.now();
+    clearTimeout(silenceT);
+    silenceT = setTimeout(() => {                          // 1 Sekunde Ruhe = Satz fertig
+      const u = full.slice(consumed).trim(); consumed = full.length;
+      if (u && state !== 'speaking' && state !== 'busy') { lastUser = Date.now(); restarts = 0; think(u); }
+    }, IOS ? 1100 : 900);
+  };
   rec.onerror = e => {
     if (e.error === 'not-allowed' || e.error === 'service-not-allowed' || e.error === 'audio-capture') {
-      micErr = e.error; state = 'off';
-      const msg = e.error === 'audio-capture' ? 'Kein Mikrofon gefunden.' : 'Mikrofon blockiert: iPhone-Einstellungen → Apps → Safari → Mikrofon „Erlauben“, und Allgemein → Tastatur → „Diktierfunktion“ einschalten. Oder unten schreiben.';
+      earOn = false; if (state === 'listening') state = 'off';
+      const msg = e.error === 'audio-capture' ? 'Kein Mikrofon gefunden.' : 'Mikrofon blockiert: Einstellungen → Apps → Safari → Mikrofon „Erlauben“ und Allgemein → Tastatur → „Diktierfunktion“ an. Oder unten schreiben.';
       J.toast && J.toast(msg); sayLine(msg);
     } };
-  rec.onend = () => { recOn = false; if (state === 'off') return;
-    const said = (finalT || lastT).trim();
-    if (said) think(said);
-    else if (state === 'listening') { tries++; if (tries < 2 && !/iPhone|iPad|iPod/.test(navigator.userAgent)) setTimeout(() => state === 'listening' && listen(true), 150); else { end(); sayLine('Tippen Sie aufs Mikrofon, wenn Sie etwas brauchen, Master.'); } } };
-  try { rec.start(); recOn = true; setState('listening'); state = 'listening'; } catch (e) { setState('idle'); }
+  rec.onend = () => {                                      // Sitzung endet (iPhone nach ~1 Min.) → still neu starten
+    if (!earOn) return;
+    if (Date.now() - Math.max(lastUser, lastAct) > 5 * 60000) { earOff(); sayLine('Mikrofon aus – ich ruhe, Master. Tippen Sie, wenn Sie mich brauchen.'); if (state === 'listening') state = 'off'; return; }
+    if (++restarts > 30) { earOff(); if (state === 'listening') state = 'off'; return; }
+    setTimeout(() => { if (earOn) { try { earStart(); } catch (e) { earOff(); } } }, 250);
+  };
+  try { rec.start(); earOn = true; return true; } catch (e) { earOn = false; return false; }
 }
-function stopRec() { try { rec && rec.abort(); } catch (e) {} recOn = false; }
+function earOff() { earOn = false; clearTimeout(silenceT); try { rec && rec.abort(); } catch (e) {} rec = null; }
+function listen() { if (!earOn) earStart(); if (state !== 'off') setState('listening'); }
+function stopRec() {}                                      // Mikrofon bleibt an; Hören wird nur pausiert
 
 /* ---------- Gehirn ---------- */
 const extraTools = {
@@ -211,20 +226,17 @@ function unlock(sayHi) {
   unlocked = true;
 }
 async function start() {
-  if (state !== 'off') return; unlock(IOS); muted = false;
-  if (IOS || greeted) {                    // iPhone: Mikrofon muss direkt beim Antippen starten
-    greeted = true;
-    if (recOK) { listen(); sayLine('Ich höre, Master …'); } else { setState('idle'); J.toast && J.toast('Spracherkennung fehlt – bitte unten schreiben.'); }
-    return;
-  }
-  greeted = true; setState('busy');
-  const f = window.__greetFacts ? await window.__greetFacts() : ''; think('[START] ' + f);
+  if (state !== 'off') return; unlock(IOS); muted = false; restarts = 0; lastUser = Date.now();
+  const ok = earStart();                                   // direkt im Antippen starten (iPhone-Regel)
+  if (!ok && recOK) J.toast && J.toast('Mikrofon konnte nicht starten – bitte nochmals tippen.');
+  if (!greeted) { greeted = true; setState('busy'); const f = window.__greetFacts ? await window.__greetFacts() : ''; think('[START] ' + f); return; }
+  setState(ok ? 'listening' : 'idle'); sayLine(ok ? 'Ich höre, Master …' : 'Bitte unten schreiben, Master.');
 }
-function end() { hush(); stopRec(); busyTurn = false; state = 'off'; }
+function end() { hush(); earOff(); busyTurn = false; state = 'off'; }
 
 const FREE = {
   async say(context) { if (state !== 'listening' || busyTurn) return false; think('[APP-KLICK] ' + context); return true; },
-  start, end, mute() { muted = !muted; if (muted) { stopRec(); setState('idle'); } else listen(); },
+  start, end, mute() { muted = !muted; consumed = full.length; setState(muted ? 'idle' : 'listening'); },
   send(t) { if (!unlocked) unlock(false); if (state === 'off') { state = 'idle'; greeted = true; } think(t); },
   get state() { return state === 'idle' ? (muted ? 'muted' : 'listening') : state === 'pause' ? 'speaking' : state; },
   level,
