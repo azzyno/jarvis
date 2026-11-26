@@ -60,7 +60,8 @@ export default async function handler(req, res) {
         catch (e) { st.test.push(md + ' fehler: ' + String(e.message).slice(0, 90)); }
       }
     }
-    return res.status(200).json(st);
+    if (!(req.query && req.query.ask)) return res.status(200).json(st);
+    req.body = { messages: [{ role: 'user', content: String(req.query.ask).slice(0, 200) }] };
   }
   let body = req.body; if (typeof body === 'string') try { body = JSON.parse(body); } catch (e) { body = {}; }
   const hist = (body && Array.isArray(body.messages) ? body.messages : []).slice(-24);

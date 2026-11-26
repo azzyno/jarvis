@@ -146,7 +146,7 @@ async function runTool(name, args) {
   try { const r = await f(args || {}); return typeof r === 'string' ? r : JSON.stringify(r); } catch (e) { return 'Fehler: ' + e.message; }
 }
 async function think(text) {
-  if (busyTurn) return; busyTurn = true; stopRec(); hush(); setState('busy');
+  if (busyTurn) return; busyTurn = true; stopRec(); speakId++; try { cur && cur.stop(); } catch (e) {} cur = null; setState('busy');
   hist.push({ role: 'user', content: text });
   try {
     for (let round = 0; round < 5; round++) {
@@ -161,22 +161,29 @@ async function think(text) {
       busyTurn = false; await speak(m.content || 'Erledigt, Master.'); return;
     }
     busyTurn = false; await speak('Das war mir zu verschachtelt, Master. Fragen Sie mich bitte noch einmal kürzer.');
-  } catch (e) { console.warn(e); busyTurn = false; hist.pop(); await speak('Mein Gehirn ist gerade nicht erreichbar, Master. Versuchen Sie es gleich nochmals.'); }
+  } catch (e) { console.warn(e); J.toast && J.toast('Gehirn: ' + String(e.message || e).slice(0, 80)); busyTurn = false; hist.pop(); await speak('Mein Gehirn ist gerade nicht erreichbar, Master. Versuchen Sie es gleich nochmals.'); }
   if (hist.length > 40) hist = hist.slice(-30);
 }
 
 /* ---------- Steuerung ---------- */
+/* iPhone: Ton und Sprachausgabe müssen direkt beim Antippen freigeschaltet werden */
+let unlocked = false;
+function unlock(sayHi) {
+  try { const c = audio(); const b = c.createBuffer(1, 1, 22050); const s = c.createBufferSource(); s.buffer = b; s.connect(c.destination); s.start(0); } catch (e) {}
+  try { if (window.speechSynthesis) { speechSynthesis.cancel(); const u = new SpeechSynthesisUtterance(sayHi ? 'Ja, Master?' : ' '); u.lang = 'de-DE'; const v = bestVoice(); if (v) { u.voice = v; u.lang = v.lang; } if (!sayHi) u.volume = 0; u.rate = 1.03; u.pitch = .92; speechSynthesis.speak(u); } } catch (e) {}
+  unlocked = true;
+}
 async function start() {
-  if (state !== 'off') return; audio(); muted = false; setState('busy');
+  if (state !== 'off') return; unlock(true); muted = false; setState('busy');
   if (!greeted) { greeted = true; const f = window.__greetFacts ? await window.__greetFacts() : ''; think('[START] ' + f); }
   else if (recOK) listen(); else setState('idle');
 }
 function end() { hush(); stopRec(); busyTurn = false; state = 'off'; }
 
 const FREE = {
-  async say(context) { if (state === 'off') { audio(); state = 'idle'; } think('[APP-KLICK] ' + context); return true; },
+  async say(context) { if (state === 'off') { unlock(false); state = 'idle'; } think('[APP-KLICK] ' + context); return true; },
   start, end, mute() { muted = !muted; if (muted) { stopRec(); setState('idle'); } else listen(); },
-  send(t) { if (state === 'off') { audio(); state = 'idle'; greeted = true; } think(t); },
+  send(t) { if (!unlocked) unlock(false); if (state === 'off') { state = 'idle'; greeted = true; } think(t); },
   get state() { return state === 'idle' ? (muted ? 'muted' : 'listening') : state; },
   level,
 };
