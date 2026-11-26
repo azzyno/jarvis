@@ -16,7 +16,7 @@ let engine = LS('voice-engine') || 'free';         // 'free' | 'el'
 let piperOff = LS('piper-off') === '1';
 
 /* ---------- Zustand ---------- */
-let state = 'off', muted = false, hist = [], greeted = false, lastAct = 0, busyTurn = false;
+let micErr = '', state = 'off', muted = false, hist = [], greeted = false, lastAct = 0, busyTurn = false;
 const setState = s => { state = s; lastAct = Date.now(); };
 const sayLine = t => { const g = document.getElementById('greet'); if (g) g.textContent = t; const s = document.getElementById('shSay'); if (s) s.textContent = t; };
 
@@ -136,7 +136,7 @@ async function speak(text) {
 }
 function afterSpeak() {
   lastAct = Date.now();
-  if (state !== 'off') { if (!muted && recOK) { setState('pause'); setTimeout(() => state === 'pause' && listen(), 700); } else setState('idle'); }
+  if (state !== 'off') { if (IOS) { state = 'off'; return; } if (!muted && recOK) { setState('pause'); setTimeout(() => state === 'pause' && listen(), 700); } else setState('idle'); }
 }
 function hush() { speakId++; try { cur && cur.stop(); } catch (e) {} cur = null; try { speechSynthesis.cancel(); } catch (e) {} }
 
@@ -144,6 +144,7 @@ function hush() { speakId++; try { cur && cur.stop(); } catch (e) {} cur = null;
 const SR = window.SpeechRecognition || window.webkitSpeechRecognition;
 const recOK = !!SR;
 let rec = null, recOn = false;
+const IOS = /iPhone|iPad|iPod/.test(navigator.userAgent) || (navigator.platform === 'MacIntel' && navigator.maxTouchPoints > 1);
 let tries = 0;
 function listen(again) {
   if (!again) tries = 0;
@@ -152,7 +153,12 @@ function listen(again) {
   rec = new SR(); rec.lang = 'de-CH'; rec.interimResults = true; rec.continuous = false; rec.maxAlternatives = 1;
   let finalT = '', lastT = '';
   rec.onresult = e => { let t = ''; for (const r of e.results) { t += r[0].transcript; if (r.isFinal) finalT = t; } lastT = t; lastAct = Date.now(); const s = document.getElementById('shSay'); if (s) s.textContent = '„' + t + '“'; };
-  rec.onerror = e => { if (e.error === 'not-allowed' || e.error === 'service-not-allowed') { J.toast && J.toast('Mikrofon nicht erlaubt – bitte in Safari erlauben oder schreiben.'); muted = true; } };
+  rec.onerror = e => {
+    if (e.error === 'not-allowed' || e.error === 'service-not-allowed' || e.error === 'audio-capture') {
+      micErr = e.error; state = 'off';
+      const msg = e.error === 'audio-capture' ? 'Kein Mikrofon gefunden.' : 'Mikrofon blockiert: iPhone-Einstellungen → Apps → Safari → Mikrofon „Erlauben“, und Allgemein → Tastatur → „Diktierfunktion“ einschalten. Oder unten schreiben.';
+      J.toast && J.toast(msg); sayLine(msg);
+    } };
   rec.onend = () => { recOn = false; if (state === 'off') return;
     const said = (finalT || lastT).trim();
     if (said) think(said);
@@ -201,13 +207,18 @@ async function think(text) {
 let unlocked = false;
 function unlock(sayHi) {
   try { const c = audio(); const b = c.createBuffer(1, 1, 22050); const s = c.createBufferSource(); s.buffer = b; s.connect(c.destination); s.start(0); } catch (e) {}
-  try { if (window.speechSynthesis) { speechSynthesis.cancel(); const u = new SpeechSynthesisUtterance(' '); u.lang = 'de-DE'; const v = bestVoice(); if (v) { u.voice = v; u.lang = v.lang; } u.volume = 0; u.rate = 1.03; u.pitch = .92; speechSynthesis.speak(u); } } catch (e) {}
+  if (!sayHi) try { if (window.speechSynthesis) { speechSynthesis.cancel(); const u = new SpeechSynthesisUtterance(' '); u.lang = 'de-DE'; const v = bestVoice(); if (v) { u.voice = v; u.lang = v.lang; } u.volume = 0; u.rate = 1.03; u.pitch = .92; speechSynthesis.speak(u); } } catch (e) {}
   unlocked = true;
 }
 async function start() {
-  if (state !== 'off') return; unlock(true); muted = false; setState('busy');
-  if (!greeted) { greeted = true; const f = window.__greetFacts ? await window.__greetFacts() : ''; think('[START] ' + f); }
-  else if (recOK) listen(); else setState('idle');
+  if (state !== 'off') return; unlock(IOS); muted = false;
+  if (IOS || greeted) {                    // iPhone: Mikrofon muss direkt beim Antippen starten
+    greeted = true;
+    if (recOK) { listen(); sayLine('Ich höre, Master …'); } else { setState('idle'); J.toast && J.toast('Spracherkennung fehlt – bitte unten schreiben.'); }
+    return;
+  }
+  greeted = true; setState('busy');
+  const f = window.__greetFacts ? await window.__greetFacts() : ''; think('[START] ' + f);
 }
 function end() { hush(); stopRec(); busyTurn = false; state = 'off'; }
 
