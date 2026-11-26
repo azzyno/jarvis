@@ -28,6 +28,7 @@ const TOOLS = [
 ];
 
 async function call(url, key, model, messages) {
+  key = String(key || '').replace(/[\s"'`]/g, '');
   const ac = new AbortController(); const to = setTimeout(() => ac.abort(), 25000);
   try {
     const r = await fetch(url, { method: 'POST', signal: ac.signal, headers: { 'Content-Type': 'application/json', ...(key ? { Authorization: 'Bearer ' + key } : {}), ...(key && url.includes('googleapis') ? { 'x-goog-api-key': key } : {}) },
