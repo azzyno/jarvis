@@ -81,7 +81,7 @@ function playBlob(blob) {
     a.onended = fin; a.onerror = fin;
     a.onloadedmetadata = () => { if (isFinite(a.duration)) { clearTimeout(guard); guard = setTimeout(fin, a.duration * 1000 + 2500); } };
     a.src = url;
-    const p = a.play(); if (p && p.catch) p.catch(e => { console.warn('play', e); J.toast && J.toast('Ton blockiert – bitte einmal aufs Mikrofon tippen.'); fin(); });
+    diag('Ton läuft'); const p = a.play(); if (p && p.catch) p.catch(e => { diag('Ton blockiert: ' + (e && e.name)); console.warn('play', e); J.toast && J.toast('Ton blockiert – bitte einmal aufs Mikrofon tippen.'); fin(); });
   });
 }
 function playBuf(ab) {
@@ -101,7 +101,7 @@ async function gemSynth(text) {
     if (!r.ok) throw new Error('HTTP ' + r.status);
     const blob = await r.blob(); if (blob.size < 1000) throw new Error('leer');
     gemFail = 0; return new Blob([blob], { type: 'audio/wav' });
-  } catch (e) { console.warn('gemini-tts', e); gemFail++; if (gemFail === 1) J.toast && J.toast('Google-Stimme kurz ausgelastet – Ersatzstimme.'); setTimeout(() => { gemFail = 0; }, 60000); return null; }
+  } catch (e) { console.warn('gemini-tts', e); diag('Stimme-Fehler ' + e.message); gemFail++; if (gemFail === 1) J.toast && J.toast('Google-Stimme kurz ausgelastet – Ersatzstimme.'); setTimeout(() => { gemFail = 0; }, 60000); return null; }
 }
 
 /* ---------- Stimme: beste Systemstimme ---------- */
@@ -117,7 +117,9 @@ function sysSay(text) {
     const u = new SpeechSynthesisUtterance(text); const v = bestVoice(); if (v) { u.voice = v; u.lang = v.lang; } else u.lang = 'de-DE';
     u.rate = 1.03; u.pitch = .92;
     let iv = setInterval(() => { fakeLvl = .2 + Math.random() * .5; }, 90);
-    u.onend = u.onerror = () => { clearInterval(iv); fakeLvl = 0; res(); };
+    let ok = false; const fin = () => { if (ok) return; ok = true; clearInterval(iv); clearTimeout(g); fakeLvl = 0; res(); };
+    const g = setTimeout(fin, 2500 + text.length * 90);
+    u.onend = u.onerror = fin;
     speechSynthesis.speak(u);
   });
 }
@@ -129,6 +131,9 @@ function sentences(t) { return (t.match(/[^.!?…]+[.!?…]+["“”»]?|[^.!?�
 async function speak(text) {
   text = clean(text); if (!text) return;
   const id = ++speakId; stopRec(); setState('speaking'); sayLine(text);
+  if (IOS && earOn) { earOff(); reopen = true; }            // iPhone: Mikrofon frei geben, sonst bleibt der Lautsprecher stumm
+  try { if (IOS && navigator.audioSession) navigator.audioSession.type = 'playback'; } catch (e) {}
+  diag('spricht');
   const parts = sentences(text);
   // Gemini: erster Satz sofort, Rest parallel vorbereiten
   if (gemFail < 3) {
@@ -154,10 +159,18 @@ async function speak(text) {
   if (id !== speakId) return;
   afterSpeak(true);
 }
+let reopen = false;
 function afterSpeak() {
   lastAct = Date.now(); deafUntil = Date.now() + 600;
-  if (state !== 'off') setState(earOn && !muted ? 'listening' : 'idle');
+  if (state === 'off') return;
+  if (reopen && !muted) {
+    reopen = false; setState('listening'); diag('Mikro wieder an …');
+    earStart().then(ok => { diag(ok ? 'hört zu' : 'Mikro aus – bitte tippen'); if (!ok) { state = 'off'; sayLine('Tippen Sie aufs Mikrofon, Master.'); } });
+    return;
+  }
+  setState(earOn && !muted ? 'listening' : 'idle');
 }
+function diag(t) { try { let d = document.getElementById('jvDiag'); if (!d) { d = document.createElement('div'); d.id = 'jvDiag'; d.style.cssText = 'position:fixed;left:8px;bottom:4px;font:10px/1.2 Inter,system-ui;color:#8a93a6;z-index:99999;pointer-events:none;opacity:.8'; document.body.appendChild(d); } d.textContent = 'JARVIS · ' + t + ' · ' + new Date().toLocaleTimeString('de-CH'); } catch (e) {} }
 function hush() { speakId++; try { cur && cur.stop(); } catch (e) {} cur = null; try { speechSynthesis.cancel(); } catch (e) {} }
 
 /* ---------- Ohr: eigenes Mikrofon (kein iPhone-Diktat, keine Pieptöne) ----------
@@ -185,7 +198,7 @@ function earStart() {
       proc.onaudioprocess = e => { e.outputBuffer.getChannelData(0).fill(0); hear(e.inputBuffer.getChannelData(0), c.sampleRate); };
       micSrc.connect(proc); proc.connect(c.destination);
       st.getAudioTracks()[0].onended = () => { earOff(); if (state === 'listening') state = 'off'; };
-      earOn = true; earStarting = null; return true;
+      earOn = true; earStarting = null; try { if (navigator.audioSession) navigator.audioSession.type = 'play-and-record'; } catch (e) {} return true;
     })
     .catch(err => {
       earStarting = null; earOn = false;
@@ -242,7 +255,7 @@ function toWav16k(chunks, sr) {
 }
 
 async function transcribe(chunks, sr) {
-  sttBusy = true; showHeard('…');
+  sttBusy = true; showHeard('…'); diag('verstehe …');
   try {
     const r = await fetch(STT, { method: 'POST', headers: { 'Content-Type': 'text/plain' }, body: JSON.stringify({ audio: toWav16k(chunks, sr) }) });
     const d = await r.json().catch(() => ({}));
