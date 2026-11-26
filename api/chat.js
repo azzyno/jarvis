@@ -27,8 +27,14 @@ const TOOLS = [
   fn('jarvis_vision', 'Sichtmodus der Erde umschalten.', { modus: { type: 'string', enum: ['normal', 'thermal', 'night', 'scope'] } }, ['modus']),
 ];
 
+function cleanKey(v) {
+  v = String(v || '');
+  const m = v.match(/AIza[0-9A-Za-z_\-]{20,}|AQ\.[A-Za-z0-9_\-.]{20,}/);
+  return m ? m[0] : v.replace(/[\s"'`]/g, '');
+}
+
 async function call(url, key, model, messages) {
-  key = String(key || '').replace(/[\s"'`]/g, '');
+  key = cleanKey(key);
   const ac = new AbortController(); const to = setTimeout(() => ac.abort(), 25000);
   try {
     const r = await fetch(url, { method: 'POST', signal: ac.signal, headers: { 'Content-Type': 'application/json', ...(key ? { Authorization: 'Bearer ' + key } : {}) },
@@ -46,7 +52,7 @@ export default async function handler(req, res) {
   if (req.method === 'GET') {
     const st = { groq: !!process.env.GROQ_KEY, gemini: !!process.env.GEMINI_KEY };
     if (req.query && req.query.test && process.env.GEMINI_KEY) {
-      const k = String(process.env.GEMINI_KEY).replace(/[\s"'`]/g, '');
+      const k = cleanKey(process.env.GEMINI_KEY);
       st.klen = k.length; st.kpre = k.slice(0, 3);
       try { const m = await call('https://generativelanguage.googleapis.com/v1beta/openai/chat/completions', k, 'gemini-2.5-flash', [{ role: 'user', content: 'Sag nur: bereit' }]); st.test = 'ok: ' + String(m.content).slice(0, 40); }
       catch (e) { st.test = 'fehler: ' + String(e.message).slice(0, 200); }
