@@ -67,7 +67,7 @@ async function synth(text) {                       // → AudioBuffer oder null
   } catch (e) { console.warn('synth', e); return null; }
 }
 function playBuf(ab) {
-  return new Promise(res => { const src = audio().createBufferSource(); src.buffer = ab; src.playbackRate.value = 1.04; src.connect(an); cur = src;
+  return new Promise(res => { const src = audio().createBufferSource(); src.buffer = ab; src.playbackRate.value = 1; src.connect(an); cur = src;
     src.onended = () => { cur = null; res(); }; src.start(); });
 }
 
@@ -81,7 +81,7 @@ async function gemSynth(text) {
     if (!r.ok) throw new Error('HTTP ' + r.status);
     const ab = await audio().decodeAudioData(await r.arrayBuffer());
     gemFail = 0; return ab;
-  } catch (e) { console.warn('gemini-tts', e); gemFail++; return null; }
+  } catch (e) { console.warn('gemini-tts', e); gemFail++; if (gemFail === 1) J.toast && J.toast('Google-Stimme kurz ausgelastet – Ersatzstimme.'); setTimeout(() => { gemFail = 0; }, 60000); return null; }
 }
 
 /* ---------- Stimme: beste Systemstimme ---------- */
@@ -112,7 +112,7 @@ async function speak(text) {
   const parts = sentences(text);
   // Gemini: erster Satz sofort, Rest parallel vorbereiten
   if (gemFail < 3) {
-    const chunks = parts.length > 1 ? [parts[0], parts.slice(1).join(' ')] : [text];
+    const chunks = parts.length > 1 && text.length > 240 ? [parts[0], parts.slice(1).join(' ')] : [text];
     const jobs = chunks.map(gemSynth);
     let ok = true;
     for (let i = 0; i < chunks.length; i++) {
@@ -136,7 +136,7 @@ async function speak(text) {
 }
 function afterSpeak() {
   lastAct = Date.now();
-  if (state !== 'off') { if (!muted && recOK) setTimeout(() => state === 'speaking' && listen(), 250); else setState('idle'); }
+  if (state !== 'off') { if (!muted && recOK) { setState('pause'); setTimeout(() => state === 'pause' && listen(), 700); } else setState('idle'); }
 }
 function hush() { speakId++; try { cur && cur.stop(); } catch (e) {} cur = null; try { speechSynthesis.cancel(); } catch (e) {} }
 
@@ -144,7 +144,9 @@ function hush() { speakId++; try { cur && cur.stop(); } catch (e) {} cur = null;
 const SR = window.SpeechRecognition || window.webkitSpeechRecognition;
 const recOK = !!SR;
 let rec = null, recOn = false;
-function listen() {
+let tries = 0;
+function listen(again) {
+  if (!again) tries = 0;
   if (!recOK || muted || state === 'off') { setState('idle'); return; }
   try { rec && rec.abort(); } catch (e) {}
   rec = new SR(); rec.lang = 'de-CH'; rec.interimResults = true; rec.continuous = false; rec.maxAlternatives = 1;
@@ -154,8 +156,7 @@ function listen() {
   rec.onend = () => { recOn = false; if (state === 'off') return;
     const said = (finalT || lastT).trim();
     if (said) think(said);
-    else if (state === 'listening' && Date.now() - lastAct < 45000) setTimeout(() => state === 'listening' && listen(), 150);
-    else if (state === 'listening') { end(); J.toast && J.toast('JARVIS ruht – zum Sprechen aufs Mikrofon tippen.'); } };
+    else if (state === 'listening') { tries++; if (tries < 2 && !/iPhone|iPad|iPod/.test(navigator.userAgent)) setTimeout(() => state === 'listening' && listen(true), 150); else { end(); sayLine('Tippen Sie aufs Mikrofon, wenn Sie etwas brauchen, Master.'); } } };
   try { rec.start(); recOn = true; setState('listening'); state = 'listening'; } catch (e) { setState('idle'); }
 }
 function stopRec() { try { rec && rec.abort(); } catch (e) {} recOn = false; }
@@ -211,10 +212,10 @@ async function start() {
 function end() { hush(); stopRec(); busyTurn = false; state = 'off'; }
 
 const FREE = {
-  async say(context) { if (state === 'off') { unlock(false); state = 'idle'; } think('[APP-KLICK] ' + context); return true; },
+  async say(context) { if (state !== 'listening' || busyTurn) return false; think('[APP-KLICK] ' + context); return true; },
   start, end, mute() { muted = !muted; if (muted) { stopRec(); setState('idle'); } else listen(); },
   send(t) { if (!unlocked) unlock(false); if (state === 'off') { state = 'idle'; greeted = true; } think(t); },
-  get state() { return state === 'idle' ? (muted ? 'muted' : 'listening') : state; },
+  get state() { return state === 'idle' ? (muted ? 'muted' : 'listening') : state === 'pause' ? 'speaking' : state; },
   level,
 };
 window.JARVIS = new Proxy({}, { get: (_, k) => (engine === 'el' && EL ? EL : FREE)[k] });
