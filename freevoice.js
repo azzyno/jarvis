@@ -230,6 +230,6 @@ window.JARVIS_VOICE = {
 (function ui() {
   const mf = document.querySelector('#osMenu .mf'); if (!mf) return setTimeout(ui, 400);
   const b = document.createElement('button'); b.id = 'voiceSel'; mf.prepend(b);
-  const lbl = () => { b.textContent = engine === 'el' ? 'Stimme: ElevenLabs' : 'Stimme: Thorsten · gratis'; };
+  const lbl = () => { b.textContent = engine === 'el' ? 'Stimme: ElevenLabs' : 'Stimme: JARVIS · gratis'; };
   lbl(); b.onclick = e => { e.stopPropagation(); window.JARVIS_VOICE.set(engine === 'el' ? 'free' : 'el'); lbl(); J.toast && J.toast(engine === 'el' ? 'ElevenLabs-Stimme aktiv (braucht Guthaben).' : 'Gratis-Stimme aktiv.'); };
 })();
