@@ -111,6 +111,7 @@ window.JARVIS = {
 
 // Beim Öffnen (Tipp auf „Eintreten“) begrüsst JARVIS den Master – mit echten Live-Fakten
 let greeted = false;
+window.__greetFacts = () => greetFacts();
 async function greetFacts() {
   const now = new Date();
   const f = [`Uhrzeit Bern ${now.toLocaleTimeString('de-CH', { timeZone: 'Europe/Zurich', hour: '2-digit', minute: '2-digit' })}, ${now.toLocaleDateString('de-CH', { timeZone: 'Europe/Zurich', weekday: 'long' })}.`];
@@ -151,6 +152,7 @@ const clientTools = {
   jarvis_weather: async ({ ort }) => { try { const d = await window.TRAVEL.weather(ort); return JSON.stringify(window.TRAVEL.short.weather(d)).slice(0, 5000); } catch (e) { return 'Wetter nicht verfügbar: ' + e.message; } },
   jarvis_prepare_order: async (p) => { J.go('port'); const r = await order.prepare(p); return JSON.stringify(r).slice(0, 4000); },
 };
+window.__jarvisTools = clientTools;
 
 /* ============ MARKET INTELLIGENCE ============ */
 const market = {

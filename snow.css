@@ -512,3 +512,23 @@ body.bar-hid #barTog svg{transform:rotate(180deg)}
 #barTog svg{width:18px;height:18px}
 @media (max-width:899px){body.v-cockpit.pan:not(.pan-min) #barTog{opacity:1!important;pointer-events:auto!important}}
 @media (max-width:899px){body.v-cockpit.pan.bar-force #atlasBar{opacity:1!important;pointer-events:auto!important;z-index:8}}
+
+/* ===== EPISCHES SCHNEEWEISS ===== */
+#snowFx{position:fixed;inset:0;width:100%;height:100%;z-index:4;pointer-events:none}
+body::before{content:'';display:block!important;position:fixed;inset:-20% -10% auto;height:70vh;z-index:0;pointer-events:none;
+  background:radial-gradient(60% 50% at 20% 0%,rgba(168,134,74,.16),transparent 70%),radial-gradient(50% 45% at 85% 10%,rgba(120,150,210,.16),transparent 70%),radial-gradient(40% 40% at 50% 0%,rgba(255,255,255,.9),transparent 70%);
+  filter:blur(10px);animation:aurora 18s ease-in-out infinite alternate}
+@keyframes aurora{to{transform:translate3d(4%,2%,0) scale(1.06)}}
+.sh-greet small{background:linear-gradient(100deg,var(--ink) 0%,var(--ink) 40%,#6b7fa6 50%,var(--ink) 60%);background-size:250% 100%;-webkit-background-clip:text;background-clip:text;color:transparent!important;animation:shine 9s ease-in-out infinite}
+.sh-greet b{text-shadow:0 2px 24px rgba(168,134,74,.25)}
+@keyframes shine{0%,60%{background-position:100% 0}100%{background-position:-50% 0}}
+body:is(.vis-thermal,.vis-night,.vis-scope) .sh-greet small{background:none;color:#fff!important}
+.sc,.sh-cmds.dock,#shAsk,#atlasBar{border:1px solid rgba(255,255,255,.95)!important;outline:.5px solid rgba(168,134,74,.18);outline-offset:-1px}
+#shTalk{background:radial-gradient(circle at 35% 30%,#2c4170,#1c2b4a 60%,#121d33)!important;box-shadow:0 12px 34px rgba(28,43,74,.35),0 0 0 6px rgba(255,255,255,.7),0 0 0 7px rgba(168,134,74,.35)!important}
+body.voice-speaking #shTalk{box-shadow:0 12px 34px rgba(28,43,74,.35),0 0 0 6px rgba(255,255,255,.7),0 0 0 7px rgba(168,134,74,.35),0 0 40px rgba(168,134,74,.55)!important}
+#voiceSel{border:.5px solid var(--line2);background:#fff;color:var(--ink);font:500 12px var(--sans);letter-spacing:0;padding:8px 14px;border-radius:999px;cursor:pointer;margin-right:auto}
+#osMenu .mf{align-items:center;gap:12px}
+#boot .sn-t{background:linear-gradient(100deg,var(--ink) 30%,#7b8db3 50%,var(--ink) 70%);background-size:250% 100%;-webkit-background-clip:text;background-clip:text;color:transparent;animation:shine 6s ease-in-out infinite}
+#boot .sn-t i{-webkit-text-fill-color:var(--ch)}
+@media (max-width:899px),(hover:none){body::before{filter:none;animation:none}}
+body:is(.vis-thermal,.vis-night,.vis-scope) #shSay{color:#fff}
