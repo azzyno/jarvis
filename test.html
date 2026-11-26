@@ -12,6 +12,7 @@ button{width:100%;border:0;border-radius:14px;background:#1c2b4a;color:#fff;font
 <h1>JARVIS · SELBSTTEST</h1><p class="s">Bitte die Tests der Reihe nach antippen, dann einen Screenshot schicken.</p>
 <div class="t"><button id="b1">1 · Ton testen</button><div class="r" id="r1"></div></div>
 <div class="t"><button id="b2">2 · Mikrofon testen (3 Sek. sprechen)</button><div class="bar"><i id="lv"></i></div><div class="r" id="r2"></div></div>
+<div class="t"><button id="b2b">2b · Mikrofon OHNE Filter testen</button><div class="r" id="r2b"></div></div>
 <div class="t"><button id="b3">3 · Erkennung testen</button><div class="r" id="r3"></div></div>
 <div class="t"><button id="b4">4 · Ton nach Mikrofon testen</button><div class="r" id="r4"></div></div>
 <div class="r" id="info" style="color:#8a93a6;font-size:12px"></div>
@@ -32,10 +33,11 @@ async function playTTS(id){
   catch(e){say(id,'Ton blockiert: '+e.name+' '+e.message,false)}
 }
 $('b1').onclick=()=>{player.src='data:audio/wav;base64,UklGRiQAAABXQVZFZm10IBAAAAABAAEAQB8AAIA+AAACABAAZGF0YQAAAAA=';player.play().catch(()=>{});playTTS('r1').catch(e=>say('r1','Fehler: '+e.message,false))};
+let RAW=false;$('b2b').onclick=()=>{RAW=true;$('b2').onclick().finally(()=>{RAW=false;say('r2b',$('r2').textContent+' (ohne Filter) – kamen Geräusche?',true)})};
 $('b2').onclick=async()=>{
   try{
     say('r2','Frage nach Mikrofon …');
-    const st=await navigator.mediaDevices.getUserMedia({audio:{echoCancellation:true,noiseSuppression:true,autoGainControl:true}});
+    const st=await navigator.mediaDevices.getUserMedia({audio:RAW?{echoCancellation:false,noiseSuppression:false,autoGainControl:false}:{echoCancellation:true,noiseSuppression:true,autoGainControl:true}});
     const ctx=new (window.AudioContext||window.webkitAudioContext)();await ctx.resume();
     const an=ctx.createAnalyser();an.fftSize=1024;ctx.createMediaStreamSource(st).connect(an);
     const mime=['audio/mp4','audio/webm;codecs=opus','audio/webm'].find(m=>{try{return MediaRecorder.isTypeSupported(m)}catch(e){return false}})||'';
