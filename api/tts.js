@@ -6,7 +6,7 @@ function cleanKey(v) {
   const m = v.match(/AIza[0-9A-Za-z_\-]{20,}|AQ\.[A-Za-z0-9_\-.]{20,}/);
   return m ? m[0] : v.replace(/[\s"'`]/g, '');
 }
-const MODELS = ['gemini-flash-tts-latest', 'gemini-3.8-flash-tts', 'gemini-2.5-flash-preview-tts', 'gemini-2.5-pro-preview-tts'];
+const MODELS = ['gemini-3.8-flash-tts', 'gemini-3.8-flash-lite-tts', 'gemini-3.1-flash-tts-preview', 'gemini-2.5-flash-preview-tts'];
 const VOICES = ['Charon', 'Orus', 'Iapetus', 'Algenib', 'Fenrir', 'Rasalgethi', 'Sadaltager', 'Alnilam'];
 
 function wav(pcm, rate = 24000) {
