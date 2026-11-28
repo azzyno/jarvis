@@ -1,37 +1,35 @@
 /* JARVIS OMEGA · Tresor: Anmeldung, verschlüsseltes Gedächtnis, Verbindungen, Protokoll */
 (() => {
   const OS = 'https://jarvis-iota-weld.vercel.app/api/os';
-  const SK = 'jv-sess';
+  const SK = 'jv-tok';
   const esc = s => String(s ?? '').replace(/[&<>"]/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c]));
-  let cfg = null, sess = null, kats = [], tab = 'mem', filt = '';
-  try { sess = JSON.parse(localStorage.getItem(SK) || 'null'); } catch (e) {}
-  const saveSess = s => { sess = s; try { s ? localStorage.setItem(SK, JSON.stringify(s)) : localStorage.removeItem(SK); } catch (e) {} };
-
-  // Rückkehr vom Anmelde-Link: Tokens stehen im #-Teil der Adresse
-  if (/access_token=/.test(location.hash)) {
-    const h = new URLSearchParams(location.hash.slice(1));
-    saveSess({ at: h.get('access_token'), rt: h.get('refresh_token'), exp: Date.now() + (+h.get('expires_in') || 3600) * 1000 });
-    history.replaceState(null, '', location.pathname + location.search);
-    setTimeout(() => open(), 900);
-  } else if (/error_description=/.test(location.hash)) {
-    const h = new URLSearchParams(location.hash.slice(1)); history.replaceState(null, '', location.pathname + location.search);
-    setTimeout(() => { open(); msg('Anmeldung fehlgeschlagen: ' + h.get('error_description')); }, 900);
+  let tok = null, kats = [], tab = 'mem', filt = '';
+  try { tok = localStorage.getItem(SK); } catch (e) {}
+  const setTok = t => { tok = t; try { t ? localStorage.setItem(SK, t) : localStorage.removeItem(SK); } catch (e) {} };
+  const b64u = b => btoa(String.fromCharCode(...new Uint8Array(b))).replace(/\+/g, '-').replace(/\//g, '_').replace(/=+$/, '');
+  const unb64u = s => Uint8Array.from(atob(s.replace(/-/g, '+').replace(/_/g, '/') + '==='.slice((s.length + 3) % 4)), c => c.charCodeAt(0));
+  async function post(a, body, auth) {
+    const r = await fetch(`${OS}?a=${a}`, { method: 'POST', headers: { 'Content-Type': 'application/json', ...(auth && tok ? { Authorization: 'Bearer ' + tok } : {}) }, body: JSON.stringify(body || {}) });
+    const d = await r.json().catch(() => ({})); if (!r.ok) throw Object.assign(new Error(d.error || 'Fehler ' + r.status), { code: r.status, d }); return d;
   }
-
-  async function config() { if (!cfg) cfg = await (await fetch(OS + '?a=config')).json(); return cfg; }
-  async function token() {
-    if (!sess) return null;
-    if (Date.now() < sess.exp - 60000) return sess.at;
-    const c = await config();
-    const r = await fetch(`${c.url}/auth/v1/token?grant_type=refresh_token`, { method: 'POST', headers: { apikey: c.anon, 'Content-Type': 'application/json' }, body: JSON.stringify({ refresh_token: sess.rt }) });
-    if (!r.ok) { saveSess(null); return null; }
-    const d = await r.json(); saveSess({ at: d.access_token, rt: d.refresh_token, exp: Date.now() + d.expires_in * 1000 }); return d.access_token;
+  async function passkeyRegister() {
+    const o = await post('reg-start', {}, true);
+    const c = await navigator.credentials.create({ publicKey: { ...o, challenge: unb64u(o.challenge), user: { ...o.user, id: unb64u(o.user.id) }, excludeCredentials: o.excludeCredentials.map(x => ({ ...x, id: unb64u(x.id) })) } });
+    const geraet = /iPhone/.test(navigator.userAgent) ? 'iPhone' : /iPad/.test(navigator.userAgent) ? 'iPad' : /Mac/.test(navigator.userAgent) ? 'Mac' : /Windows/.test(navigator.userAgent) ? 'Windows' : 'Gerät';
+    const d = await post('reg-finish', { clientDataJSON: b64u(c.response.clientDataJSON), attestationObject: b64u(c.response.attestationObject), geraet }, true);
+    setTok(d.token);
+  }
+  async function passkeyLogin() {
+    const o = await post('login-start');
+    const c = await navigator.credentials.get({ publicKey: { ...o, challenge: unb64u(o.challenge), allowCredentials: o.allowCredentials.map(x => ({ ...x, id: unb64u(x.id) })) } });
+    const d = await post('login-finish', { id: b64u(c.rawId), clientDataJSON: b64u(c.response.clientDataJSON), authenticatorData: b64u(c.response.authenticatorData), signature: b64u(c.response.signature) });
+    setTok(d.token);
   }
   async function call(a, body, q = '') {
-    const t = await token(); if (!t) throw Object.assign(new Error('Bitte anmelden.'), { code: 401 });
-    const r = await fetch(`${OS}?a=${a}${q}`, { method: body ? 'POST' : 'GET', headers: { Authorization: 'Bearer ' + t, ...(body ? { 'Content-Type': 'application/json' } : {}) }, body: body ? JSON.stringify(body) : undefined });
+    if (!tok) throw Object.assign(new Error('Bitte anmelden.'), { code: 401 });
+    const r = await fetch(`${OS}?a=${a}${q}`, { method: body ? 'POST' : 'GET', headers: { Authorization: 'Bearer ' + tok, ...(body ? { 'Content-Type': 'application/json' } : {}) }, body: body ? JSON.stringify(body) : undefined });
     const d = await r.json().catch(() => ({}));
-    if (r.status === 401) { saveSess(null); }
+    if (r.status === 401) setTok(null);
     if (!r.ok && r.status !== 409) throw Object.assign(new Error(d.error || 'Fehler ' + r.status), { code: r.status });
     return Object.assign(d, { _status: r.status });
   }
@@ -51,42 +49,34 @@
   async function render() {
     const B = body(); B.innerHTML = '<p class="vs">Lade …</p>';
     let h; try { h = await (await fetch(OS + '?a=health&t=' + Date.now())).json(); } catch (e) { B.innerHTML = '<p class="vs">Server nicht erreichbar.</p>'; return; }
-    if (!(h.supabase_url && h.anon && h.service && h.owner && h.vault && h.tabellen)) {
-      B.innerHTML = `<p>Der Tresor ist noch nicht eingerichtet.</p><div class="vbadge" style="--c:#e7cb92">VERBINDUNG ERFORDERLICH</div><p class="vs">Fehlt: ${[['Supabase-Adresse', h.supabase_url], ['öffentlicher Schlüssel', h.anon], ['geheimer Schlüssel', h.service], ['Eigentümer-E-Mail', h.owner], ['Tresor-Schlüssel', h.vault], ['Tabellen', h.tabellen]].filter(x => !x[1]).map(x => x[0]).join(', ')}</p><a class="vbtn" href="setup.html">Einrichtung Schritt für Schritt →</a>`;
+    if (!(h.datenbank && h.tabellen && h.vault)) {
+      B.innerHTML = `<p>Der Tresor braucht noch eine Datenbank.</p><div class="vbadge" style="--c:#e7cb92">VERBINDUNG ERFORDERLICH</div>${h.fehler ? `<p class="vs">Fehler: ${esc(h.fehler)}</p>` : ''}<a class="vbtn" href="setup.html">Einrichtung (1 Schritt) →</a>`;
       return;
     }
-    if (!sess) return loginView();
+    if (!tok) return loginView(h.eigner);
     try {
       if (tab === 'mem') return await memView();
       if (tab === 'con') return await conView();
       if (tab === 'log') return await logView();
-    } catch (e) { if (e.code === 401) return loginView(); if (e.code === 403) { B.innerHTML = `<p>Dieses Konto ist nicht als Eigentümer eingetragen.</p><button class="vbtn alt" id="vout">Abmelden</button>`; B.querySelector('#vout').onclick = () => { saveSess(null); render(); }; return; } B.innerHTML = `<p class="vs">${esc(e.message)}</p>`; }
+    } catch (e) { if (e.code === 401) return loginView(true); B.innerHTML = `<p class="vs">${esc(e.message)}</p>`; }
   }
 
-  function loginView() {
+  function loginView(eigner) {
     const B = body();
-    B.innerHTML = `<p>Nur Sie haben Zugang. Sie bekommen einen Anmelde-Link per E-Mail – ohne Passwort.</p>
-      <input id="vmail" type="email" placeholder="Ihre E-Mail-Adresse" autocomplete="email"><button class="vbtn" id="vsend">Anmelde-Link senden</button>
-      <div id="vcodeBox" style="display:none"><p class="vs">Öffnen Sie den Link in der E-Mail auf <b>diesem Gerät</b>. Steht dort ein 6-stelliger Code, geben Sie ihn hier ein:</p><input id="vcode" inputmode="numeric" placeholder="Code"><button class="vbtn alt" id="vver">Code bestätigen</button></div>`;
-    B.querySelector('#vsend').onclick = async () => {
-      const email = B.querySelector('#vmail').value.trim(); if (!/.+@.+\..+/.test(email)) return msg('Bitte gültige E-Mail eingeben.');
-      const c = await config();
-      const r = await fetch(`${c.url}/auth/v1/otp?redirect_to=${encodeURIComponent(location.origin + location.pathname)}`, { method: 'POST', headers: { apikey: c.anon, 'Content-Type': 'application/json' }, body: JSON.stringify({ email, create_user: true }) });
-      if (!r.ok) { const d = await r.json().catch(() => ({})); return msg('Nicht gesendet: ' + (d.msg || d.error_description || r.status)); }
-      B.querySelector('#vcodeBox').style.display = ''; msg('E-Mail ist unterwegs.');
-      B.querySelector('#vver').onclick = async () => {
-        const r2 = await fetch(`${c.url}/auth/v1/verify`, { method: 'POST', headers: { apikey: c.anon, 'Content-Type': 'application/json' }, body: JSON.stringify({ type: 'email', email, token: B.querySelector('#vcode').value.trim() }) });
-        const d = await r2.json().catch(() => ({}));
-        if (!r2.ok || !d.access_token) return msg('Code ungültig oder abgelaufen.');
-        saveSess({ at: d.access_token, rt: d.refresh_token, exp: Date.now() + d.expires_in * 1000 }); render();
-      };
+    if (!window.PublicKeyCredential) { B.innerHTML = '<p>Dieser Browser kann keine Passkeys. Bitte Safari auf dem iPhone verwenden.</p>'; return; }
+    B.innerHTML = eigner
+      ? `<p>Nur Sie haben Zugang – mit Face ID.</p><button class="vbtn" id="vpk">Mit Face ID anmelden</button>`
+      : `<p>Richten Sie jetzt Ihren persönlichen Zugang ein. Ab dann öffnet nur <b>Ihr Face ID</b> diesen Tresor – kein Passwort, nichts zu merken.</p><button class="vbtn" id="vpk">Face ID einrichten</button><p class="vs">Der Schlüssel liegt sicher in Ihrem iCloud-Schlüsselbund und funktioniert dadurch auch auf Ihrem Mac.</p>`;
+    B.querySelector('#vpk').onclick = async () => {
+      try { if (eigner) await passkeyLogin(); else await passkeyRegister(); msg(eigner ? 'Willkommen zurück, Boss.' : 'Eingerichtet. Willkommen, Boss.'); render(); }
+      catch (e) { msg(e.name === 'NotAllowedError' ? 'Abgebrochen.' : (e.message || 'Fehlgeschlagen.')); }
     };
   }
 
   async function memView() {
     const me = await call('me'); kats = me.kategorien;
     const B = body();
-    B.innerHTML = `<div class="vrow"><span class="vs">Angemeldet: ${esc(me.email)}</span><button class="vlink" id="vout">Abmelden</button></div>
+    B.innerHTML = `<div class="vrow"><span class="vs">Angemeldet mit Face ID · ${me.geraete.map(g => esc(g.geraet || 'Gerät')).join(', ')}</span><button class="vlink" id="vout">Abmelden</button></div>
       <div class="vbadge" style="--c:#5fcf8f">LIVE · VERSCHLÜSSELT</div>
       <details class="vadd"><summary>+ Neuer Eintrag</summary>
         <select id="vkat">${kats.map(k => `<option>${k}</option>`).join('')}</select>
@@ -100,8 +90,9 @@
         <button class="vbtn" id="vimpb">Importieren</button></details>
       <div class="vrow"><input id="vq" placeholder="Suchen …" value="${esc(filt)}"><select id="vfk"><option value="">Alle</option>${kats.map(k => `<option>${k}</option>`).join('')}</select></div>
       <div id="vlist"><p class="vs">Lade …</p></div>
-      <button class="vbtn alt" id="vexp">Alles exportieren (JSON)</button>`;
-    B.querySelector('#vout').onclick = () => { saveSess(null); render(); };
+      <button class="vbtn alt" id="vexp">Alles exportieren (JSON)</button><button class="vbtn alt" id="vdev">Weiteres Gerät hinzufügen (Passkey)</button>`;
+    B.querySelector('#vdev').onclick = async () => { try { await passkeyRegister(); msg('Gerät hinzugefügt.'); render(); } catch (e) { msg(e.name === 'NotAllowedError' ? 'Abgebrochen.' : e.message); } };
+    B.querySelector('#vout').onclick = async () => { try { await call('logout', {}); } catch (e) {} setTok(null); render(); };
     const list = async () => {
       const q = B.querySelector('#vq').value.trim(), k = B.querySelector('#vfk').value; filt = q;
       const d = await call('list', null, (q ? '&q=' + encodeURIComponent(q) : '') + (k ? '&kat=' + encodeURIComponent(k) : ''));
@@ -144,8 +135,8 @@
   /* ---------- Werkzeuge für die Stimme ---------- */
   const T = window.APP && APP.tools;
   if (T) {
-    T.jarvis_memory_search = async ({ frage }) => { try { const d = await call('list', null, '&q=' + encodeURIComponent(frage || '')); return JSON.stringify({ treffer: d.anzahl, eintraege: d.eintraege.slice(0, 12).map(m => ({ kategorie: m.kategorie, thema: m.thema, inhalt: m.inhalt, stand: m.aktualisiert })) }); } catch (e) { return e.code === 401 ? 'Nicht angemeldet – der Boss muss sich im Tresor (Mond) anmelden.' : e.code === 503 ? 'Gedächtnis ist noch nicht eingerichtet.' : 'Fehler: ' + e.message; } };
-    T.jarvis_memory_save = async ({ kategorie, thema, inhalt }) => { try { const d = await call('save', { kategorie, thema, inhalt, quelle: 'Gespräch' }); if (d._status === 409) return JSON.stringify({ widerspruch: true, bisher: d.bisher.inhalt, hinweis: 'Nicht gespeichert. Frag den Boss, ob der alte Eintrag ersetzt werden soll; wenn ja, sag ihm, er soll es im Tresor bestätigen.' }); return d.unveraendert ? 'War schon gespeichert.' : 'Gespeichert.'; } catch (e) { return e.code === 401 ? 'Nicht angemeldet – Tresor (Mond) öffnen und anmelden.' : 'Fehler: ' + e.message; } };
+    T.jarvis_memory_search = async ({ frage }) => { try { const d = await call('list', null, '&q=' + encodeURIComponent(frage || '')); return JSON.stringify({ treffer: d.anzahl, eintraege: d.eintraege.slice(0, 12).map(m => ({ kategorie: m.kategorie, thema: m.thema, inhalt: m.inhalt, stand: m.aktualisiert })) }); } catch (e) { return e.code === 401 ? 'Nicht angemeldet – der Boss muss den Tresor (Mond) mit Face ID öffnen.' : e.code === 503 ? 'Gedächtnis ist noch nicht eingerichtet.' : 'Fehler: ' + e.message; } };
+    T.jarvis_memory_save = async ({ kategorie, thema, inhalt }) => { try { const d = await call('save', { kategorie, thema, inhalt, quelle: 'Gespräch' }); if (d._status === 409) return JSON.stringify({ widerspruch: true, bisher: d.bisher.inhalt, hinweis: 'Nicht gespeichert. Frag den Boss, ob der alte Eintrag ersetzt werden soll; wenn ja, sag ihm, er soll es im Tresor bestätigen.' }); return d.unveraendert ? 'War schon gespeichert.' : 'Gespeichert.'; } catch (e) { return e.code === 401 ? 'Nicht angemeldet – Tresor (Mond) mit Face ID öffnen.' : 'Fehler: ' + e.message; } };
     T.jarvis_open_vault = async () => { open(); return 'Tresor geöffnet.'; };
   }
   window.VAULT = { open, close };

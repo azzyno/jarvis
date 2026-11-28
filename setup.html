@@ -18,50 +18,33 @@ button.alt{background:rgba(255,255,255,.08);color:#efe9dd}
 .ok{color:#5fcf8f}.no{color:#ff7a66}#res>div{display:flex;justify-content:space-between;padding:7px 0;border-top:1px solid rgba(255,255,255,.06);font-size:14px}
 .warn{font-size:12px;color:#e7cb92;margin-top:6px}
 </style></head><body>
-<h1>JARVIS <i>OMEGA</i></h1><div class="sub">Einrichtung des privaten Gedächtnisses · ca. 10 Minuten · kostenlos</div>
+<h1>JARVIS <i>OMEGA</i></h1><div class="sub">Einrichtung des privaten Gedächtnisses · 2 Minuten · kostenlos</div>
 
-<div class="st"><h3><b class="n">1</b>Supabase-Projekt anlegen</h3><ol>
-<li>Öffnen Sie <a href="https://supabase.com/dashboard/sign-up" target="_blank">supabase.com</a> und melden Sie sich mit <b>Continue with GitHub</b> an.</li>
-<li>Tippen Sie auf <b>New project</b>. Name: <code>jarvis</code>. Region: <b>Central EU (Frankfurt)</b> oder <b>Zürich</b>, falls angeboten.</li>
-<li>Ein Datenbank-Passwort wird verlangt: Lassen Sie es mit <b>Generate</b> erzeugen. Sie brauchen es nicht – schicken Sie es niemandem.</li>
-<li><b>Create new project</b> – etwa 1 Minute warten.</li></ol></div>
+<div class="st"><h3><b class="n">1</b>Datenbank verbinden (ein Schritt)</h3><ol>
+<li>Öffnen Sie <a href="https://vercel.com/d?to=/[team]/[project]/stores" target="_blank">Vercel → jarvis → Storage</a>.</li>
+<li>Tippen Sie auf <b>Create Database</b> und wählen Sie <b>Neon</b> (Serverless Postgres). Falls nicht da: <b>Supabase</b>.</li>
+<li><b>Continue</b> → Plan <b>Free</b> → Region <b>Frankfurt</b> → <b>Create</b>.</li>
+<li>Beim Fenster <b>Connect Project</b>: Projekt <b>jarvis</b>, alle Umgebungen angehakt → <b>Connect</b>.</li>
+<li>Schreiben Sie mir „fertig“ – ich starte JARVIS neu. Tabellen legt JARVIS selbst an.</li></ol>
+<p class="warn">Die Supabase-Einträge von vorhin brauchen Sie nicht mehr.</p></div>
 
-<div class="st"><h3><b class="n">2</b>Tabellen erstellen</h3>
-<p>Kopieren Sie diesen Befehl, öffnen Sie im Projekt links <b>SQL Editor</b>, fügen Sie ihn ein und tippen Sie auf <b>Run</b>.</p>
-<button id="cSql">SQL-Befehl kopieren</button><div class="warn" id="sqlMsg"></div></div>
+<div class="st"><h3><b class="n">2</b>Face ID einrichten</h3><p>Öffnen Sie JARVIS, tippen Sie auf den <b>Mond</b> → <b>Tresor öffnen</b> → <b>Face ID einrichten</b>. Ab dann öffnet nur Ihr Gesicht den Tresor.</p></div>
 
-<div class="st"><h3><b class="n">3</b>Geheimen Tresor-Schlüssel erzeugen</h3>
-<p>Damit wird Ihr Gedächtnis verschlüsselt. Er entsteht nur hier auf Ihrem iPhone und wird nirgends gespeichert.</p>
+<details class="st"><summary style="color:var(--g)">Optional: eigener Tresor-Schlüssel (noch stärker)</summary>
+<p>Ohne diesen Schritt wird der Schlüssel aus dem Datenbank-Passwort abgeleitet. Mit eigenem Schlüssel sind Ihre Daten auch dann unlesbar, wenn jemand Datenbank <i>und</i> Passwort hätte. <b>Nur vor dem ersten Eintrag setzen</b> – später gesetzt, werden alte Einträge unlesbar.</p>
 <button id="gen">Schlüssel erzeugen</button><div class="key" id="vk"></div><button class="alt" id="cVk">Kopieren</button>
-<div class="warn">Nur in Vercel einfügen – nie in einen Chat oder Screenshot. Geht er verloren, sind die Einträge nicht mehr lesbar.</div></div>
+<p>In Vercel als <code>VAULT_KEY</code> eintragen (Production angehakt).</p><div class="warn">Nie in einen Chat oder Screenshot.</div></details>
 
-<div class="st"><h3><b class="n">4</b>Fünf Einträge in Vercel</h3>
-<p>Öffnen Sie <a href="https://vercel.com/d?to=/[team]/[project]/settings/environment-variables" target="_blank">Vercel → jarvis → Environment Variables</a> und legen Sie an:</p>
-<ol>
-<li><code>VAULT_KEY</code> = der Schlüssel aus Schritt 3</li>
-<li><code>OWNER_EMAIL</code> = Ihre E-Mail-Adresse (nur damit dürfen Sie sich anmelden)</li>
-<li><code>SUPABASE_URL</code> = in Supabase: <b>Project Settings → Data API → Project URL</b></li>
-<li><code>SUPABASE_ANON_KEY</code> = <b>Project Settings → API Keys</b> → <b>Publishable key</b> (oder „anon public“)</li>
-<li><code>SUPABASE_SERVICE_KEY</code> = gleiche Seite → <b>Secret key</b> (oder „service_role“) – streng geheim</li>
-</ol><p>Danach in Vercel <b>Deployments → ⋯ → Redeploy</b>.</p></div>
-
-<div class="st"><h3><b class="n">5</b>Anmelde-Link erlauben</h3><ol>
-<li>In Supabase links <b>Authentication → URL Configuration</b>.</li>
-<li><b>Site URL</b>: <code>https://azzyno.github.io/jarvis/</code> → <b>Save</b>.</li>
-<li>Unter <b>Redirect URLs</b> dasselbe hinzufügen.</li></ol></div>
-
-<div class="st chk"><h3><b class="n">6</b>Prüfen</h3><button id="chk">Einrichtung prüfen</button><div id="res"></div></div>
+<div class="st chk"><h3><b class="n">3</b>Prüfen</h3><button id="chk">Einrichtung prüfen</button><div id="res"></div></div>
 
 <script>
 const $=i=>document.getElementById(i);
 const copy=async(t,el)=>{try{await navigator.clipboard.writeText(t);el.textContent='Kopiert ✓'}catch(e){el.textContent='Bitte lange tippen und kopieren.'}};
-let sql='';fetch('setup/supabase.sql').then(r=>r.text()).then(t=>sql=t);
-$('cSql').onclick=()=>copy(sql,$('sqlMsg'));
 $('gen').onclick=()=>{const b=new Uint8Array(32);crypto.getRandomValues(b);$('vk').textContent=btoa(String.fromCharCode(...b))};
 $('cVk').onclick=()=>{const t=$('vk').textContent;if(t)copy(t,$('cVk'))};
 $('chk').onclick=async()=>{$('res').innerHTML='<div>Prüfe …</div>';
  try{const d=await (await fetch('https://jarvis-iota-weld.vercel.app/api/os?a=health&t='+Date.now())).json();
-  const L=[['SUPABASE_URL',d.supabase_url],['SUPABASE_ANON_KEY',d.anon],['SUPABASE_SERVICE_KEY',d.service],['OWNER_EMAIL',d.owner],['VAULT_KEY (Verschlüsselung)',d.vault],['Tabellen (Schritt 2)',d.tabellen]];
-  $('res').innerHTML=L.map(([n,v])=>`<div><span>${n}</span><b class="${v?'ok':'no'}">${v?'✓ bereit':'✗ fehlt'}</b></div>`).join('')+(L.every(x=>x[1])?'<p class="ok" style="margin-top:10px">Alles bereit. Öffnen Sie JARVIS und tippen Sie auf den Mond.</p>':'');
+  const L=[['Datenbank verbunden',d.datenbank],['Tabellen angelegt',d.tabellen],['Verschlüsselung',d.vault],['Face ID eingerichtet',d.eigner]];
+  $('res').innerHTML=L.map(([n,v])=>`<div><span>${n}</span><b class="${v?'ok':'no'}">${v?'✓ bereit':'✗ fehlt'}</b></div>`).join('')+(d.fehler?`<div class="no">${d.fehler}</div>`:'')+(L.slice(0,3).every(x=>x[1])?'<p class="ok" style="margin-top:10px">Alles bereit, Boss.</p>':'');
  }catch(e){$('res').innerHTML='<div class="no">Server nicht erreichbar – Redeploy abwarten und nochmals prüfen.</div>'}};
 </script></body></html>

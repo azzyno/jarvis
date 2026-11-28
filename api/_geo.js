@@ -1,5 +1,5 @@
 // Gemeinsame Helfer: Ortssuche (Open-Meteo Geocoding) und Wetter (Open-Meteo Forecast).
-export const ALLOWED = ['https://azzyno.github.io'];
+export const ALLOWED = ['https://azzyno.github.io', ...(process.env.EXTRA_ORIGIN ? [process.env.EXTRA_ORIGIN] : [])];
 export function cors(req, res) {
   const o = req.headers.origin || '';
   if (ALLOWED.includes(o)) { res.setHeader('Access-Control-Allow-Origin', o); res.setHeader('Vary', 'Origin'); }

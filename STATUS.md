@@ -70,16 +70,17 @@ Grenze: Die Herkunftsprüfung hält Fremdseiten und einfache Skripte ab, ist abe
 
 | Teil | Status | Datei |
 |---|---|---|
-| Anmeldung nur für den Eigentümer (E-Mail-Link, Prüfung gegen OWNER_EMAIL) | gebaut, VERBINDUNG ERFORDERLICH | `api/os.js`, `v2/vault.js` |
+| Anmeldung nur für den Eigentümer mit Passkey (Face ID), erstes Gerät = Eigentümer | gebaut + getestet (virtueller Authenticator) | `api/os.js`, `v2/vault.js` |
 | Gedächtnis mit Kategorie, Quelle, Datum, Status (gültig/veraltet/ungültig) | gebaut | `api/os.js` |
-| Verschlüsselung AES-256-GCM auf dem Server (VAULT_KEY nur in Vercel) | gebaut + getestet | `api/os.js` |
+| Verschlüsselung AES-256-GCM auf dem Server (VAULT_KEY optional, sonst aus DB-Passwort abgeleitet) | gebaut + getestet mit echter Postgres | `api/os.js` |
 | Widerspruchserkennung: gleiches Thema, anderer Inhalt → Rückfrage, alter Eintrag wird „veraltet“ | gebaut + getestet | `api/os.js` |
 | Import (Notizen, Text, exportierte KI-Erinnerungen, JSON) und Export | gebaut | `v2/vault.js` |
 | Verbindungszentrale (echt geprüft) und Zugriffsprotokoll | gebaut | `api/os.js` |
 | JARVIS kann sich per Stimme erinnern und Neues merken | gebaut | `jarvis_memory_search/save` |
-| Datenbank ohne Zugriff für Browser (Row Level Security, nur Server) | SQL bereit | `setup/supabase.sql` |
+| Datenbank: jede Postgres (Vercel Storage → Neon/Supabase), Tabellen legt JARVIS selbst an | gebaut + getestet | `api/os.js` |
 | Einrichtungsseite mit Live-Prüfung | gebaut | `setup.html` |
-| Passkeys / Zwei-Faktor | offen (nächster Schritt) | – |
+| Weitere Geräte per Passkey hinzufügen | gebaut | `v2/vault.js` |
+| Notfall: Passkey verloren → Tabelle `jv_keys` in der Datenbank leeren, dann neu einrichten | dokumentiert | – |
 
 ## 6. Regeln, die fest eingebaut bleiben
 
