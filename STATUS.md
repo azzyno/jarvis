@@ -1,6 +1,6 @@
 # JARVIS OMEGA · INFINITY OS — Bestandsaufnahme & Fahrplan
 
-Stand: 28. November 2026 · Phase 1 abgeschlossen · Phase 2 (Gedächtnis) gebaut, wartet auf Supabase-Einrichtung
+Stand: 28. November 2026 · Phase 1 abgeschlossen · Phase 2 (Gedächtnis) LIVE – Neon-Datenbank verbunden, Eigentümer per Face ID eingerichtet
 Wiederherstellungspunkt: Branch `backup-vor-omega-phase1`
 
 > Dieses Repository ist **öffentlich**. Hier stehen nie private Daten, Schlüssel, Beträge oder Vertragsnummern.
