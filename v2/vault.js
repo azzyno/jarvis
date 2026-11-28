@@ -140,4 +140,5 @@
     T.jarvis_open_vault = async () => { open(); return 'Tresor geöffnet.'; };
   }
   window.VAULT = { open, close };
+  if (/[?&]tresor/.test(location.search)) setTimeout(open, 600);   // direkter Link: …/jarvis/?tresor
 })();
