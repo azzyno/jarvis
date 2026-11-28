@@ -13,7 +13,7 @@
 
   /* ---------- Begrüssung ---------- */
   const greet = () => { const h = +new Date().toLocaleString('de-CH', { hour: 'numeric', hour12: false, timeZone: 'Europe/Zurich' }); return h < 5 ? 'Noch wach,' : h < 11 ? 'Guten Morgen,' : h < 17 ? 'Guten Tag,' : h < 22 ? 'Guten Abend,' : 'Noch wach,'; };
-  $('#hl1').textContent = greet();
+  $('#hl1').textContent = greet(); { const g = document.getElementById('cg1'); if (g) g.textContent = greet(); }
   const dateLine = () => new Date().toLocaleDateString('de-CH', { weekday: 'long', day: 'numeric', month: 'long', timeZone: 'Europe/Zurich' }) + ' · ' + new Date().toLocaleTimeString('de-CH', { hour: '2-digit', minute: '2-digit', timeZone: 'Europe/Zurich' });
   let wxLine = 'Bern';
   const paintLine = () => { $('#hl3').textContent = dateLine() + ' · ' + wxLine; };
@@ -44,7 +44,7 @@
         { id: 'home-g', type: 'circle', source: 'home', paint: { 'circle-radius': 14, 'circle-color': '#a8864a', 'circle-opacity': 0 } },
         { id: 'home', type: 'circle', source: 'home', paint: { 'circle-radius': 5, 'circle-color': '#1c2b4a', 'circle-stroke-width': 2.5, 'circle-stroke-color': '#fff', 'circle-opacity': 0, 'circle-stroke-opacity': 0 } },
       ],
-      sky: { 'sky-color': '#ffffff', 'horizon-color': '#f1f4f9', 'fog-color': '#fbfbfd', 'sky-horizon-blend': .5, 'horizon-fog-blend': .8, 'fog-ground-blend': .3, 'atmosphere-blend': ['interpolate', ['linear'], ['zoom'], 0, 1, 5, 1, 8, 0] },
+      sky: B.classList.contains('dark') ? { 'sky-color': '#000000', 'horizon-color': '#2a3550', 'fog-color': '#05070c', 'sky-horizon-blend': .6, 'horizon-fog-blend': .7, 'fog-ground-blend': .3, 'atmosphere-blend': ['interpolate', ['linear'], ['zoom'], 0, 1, 5, 1, 8, 0] } : { 'sky-color': '#ffffff', 'horizon-color': '#f1f4f9', 'fog-color': '#fbfbfd', 'sky-horizon-blend': .5, 'horizon-fog-blend': .8, 'fog-ground-blend': .3, 'atmosphere-blend': ['interpolate', ['linear'], ['zoom'], 0, 1, 5, 1, 8, 0] },
     },
   });
   } catch (e) {               // ohne 3D-Grafik läuft trotzdem alles andere
@@ -56,7 +56,7 @@
 
   // langsames Drehen (nur im Ruhezustand, 30 Bilder/s – schont den Akku)
   let spin = true, lastT = 0;
-  const turn = t => { if (spin && !document.hidden) { if (t - lastT > 33) { const c = map.getCenter(); map.jumpTo({ center: [c.lng + (t - (lastT || t)) * 0.0045, 18] }); lastT = t; } } else lastT = 0; requestAnimationFrame(turn); };
+  const turn = t => { if (spin && !document.hidden && !B.classList.contains('cosmos')) { if (t - lastT > 33) { const c = map.getCenter(); map.jumpTo({ center: [c.lng + (t - (lastT || t)) * 0.0045, 18] }); lastT = t; } } else lastT = 0; requestAnimationFrame(turn); };
   map.on('load', () => requestAnimationFrame(turn));
   // Schatten-Ring passt sich der Grösse der Erde an
   const halo = document.getElementById('halo');
@@ -88,7 +88,7 @@
   function pulse() { if (pulseOn) return; pulseOn = true; let t0 = performance.now(); const p = t => { if (!opened) { pulseOn = false; map.setPaintProperty('home-g', 'circle-opacity', 0); return; } const k = ((t - t0) % 2400) / 2400; map.setPaintProperty('home-g', 'circle-radius', 6 + k * 22); map.setPaintProperty('home-g', 'circle-opacity', .45 * (1 - k)); setTimeout(() => requestAnimationFrame(p), 50); }; requestAnimationFrame(p); }
   $('#orbit').addEventListener('click', () => { if (!opened) open(); });
   $('#hint').addEventListener('click', open);
-  $('#mark').addEventListener('click', () => opened ? close() : open());
+  $('#mark').addEventListener('click', () => { if (B.classList.contains('cosmos')) return; if (window.COSMOS) { hideSheet(); close(); setTimeout(() => COSMOS.exit(), 350); } else opened ? close() : open(); });
 
   /* ---------- Live-Kacheln ---------- */
   async function loadChips() {
@@ -227,6 +227,7 @@
       jarvis_flights: async ({ ort } = {}) => { open(); const o = await geo(ort); flyTo(o.lon, o.lat, 6.5); const d = await flights(o.lat, o.lon, 60); plOn = true; $('[data-a=flights]').classList.add('on'); const ac = d.ac || []; return J({ ort: o.name, anzahl: d.total, beispiele: ac.filter(a => a.c).slice(0, 8).map(a => ({ flug: a.c, typ: a.t, hoehe_ft: a.al, kmh: a.gs ? Math.round(a.gs * 1.852) : null })), notfall: ac.filter(a => a.em).map(a => a.c + ' ' + a.em), quelle: d.quelle }); },
       jarvis_market_lookup: async ({ query }) => { open(); const l = await showMarkets(query); return J(l); },
       jarvis_route: async ({ ziel, start }) => { open(); const d = await get('route?to=' + encodeURIComponent(ziel) + (start ? '&from=' + encodeURIComponent(start) : '')); return J(d); },
+      jarvis_planet: async ({ planet }) => JSON.stringify(window.COSMOS_FACTS ? COSMOS_FACTS(planet) : 'nicht verfügbar'),
       jarvis_satellites: async () => J(await get('sats')),
       jarvis_show_module: async ({ module }) => { if (module === 'core') { open(); return 'Erde geöffnet.'; } setTimeout(() => location.href = 'classic.html', 2500); return 'Ich öffne die klassische Ansicht mit allen Bereichen.'; },
       jarvis_vision: async () => 'Sichtmodi gibt es in der klassischen Ansicht (Menü „Mehr“).',

@@ -3,14 +3,22 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover,maximum-scale=1">
-<meta name="theme-color" content="#f6f7fa">
+<meta name="theme-color" content="#000000">
 <title>JARVIS</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link href="https://fonts.googleapis.com/css2?family=Inter:wght@200;300;400;500&family=Cormorant+Garamond:ital,wght@0,300;0,400;1,300;1,400&display=swap" rel="stylesheet">
 <link rel="stylesheet" href="lib/maplibre-gl.css">
-<link rel="stylesheet" href="v2/app.css?v=3">
+<link rel="stylesheet" href="v2/app.css?v=4">
 </head>
-<body class="stage">
+<body class="stage cosmos dark">
+<canvas id="cosmos"></canvas>
+<div id="cosmoUI">
+  <div class="cg1" id="cg1">Guten Abend,</div><div class="cg2">Master.</div>
+  <div class="cg3">Tippen Sie einen Planeten an – oder die Erde, um einzutreten.</div>
+</div>
+<div id="etag"><i></i><span>Erde</span></div>
+<div id="pcard"></div>
+<div id="flash"></div>
 <div id="sky"><i></i><i></i><i></i></div>
 <div id="orbit"><div id="globe"></div></div>
 <div id="halo"></div>
@@ -48,8 +56,11 @@
 <aside id="sheet"><div class="sh-top"><button id="shX" aria-label="Schliessen">✕</button><i class="grip"></i></div><div id="shB"></div></aside>
 <div id="toast"></div>
 
+<script src="lib/three/three.min.js"></script>
+<script src="lib/three/CopyShader.js"></script><script src="lib/three/LuminosityHighPassShader.js"></script><script src="lib/three/EffectComposer.js"></script><script src="lib/three/RenderPass.js"></script><script src="lib/three/ShaderPass.js"></script><script src="lib/three/MaskPass.js"></script><script src="lib/three/UnrealBloomPass.js"></script>
 <script src="lib/maplibre-gl.js"></script>
-<script src="v2/app.js?v=5"></script>
-<script src="v2/voice.js?v=1"></script>
+<script src="v2/app.js?v=6"></script>
+<script src="v2/voice.js?v=2"></script>
+<script src="v2/cosmos.js?v=2"></script>
 </body>
 </html>
