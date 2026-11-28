@@ -4,6 +4,20 @@ export function cors(req, res) {
   const o = req.headers.origin || '';
   if (ALLOWED.includes(o)) { res.setHeader('Access-Control-Allow-Origin', o); res.setHeader('Vary', 'Origin'); }
 }
+/* Schutz für kostenpflichtige/kontingentierte Endpunkte (Gemini):
+   nur Aufrufe aus JARVIS selbst, Mengenbegrenzung pro IP (pro Server-Instanz). */
+const HITS = new Map();
+export function guard(req, res, { perMin = 30 } = {}) {
+  const o = req.headers.origin || '', ref = req.headers.referer || '';
+  const own = ALLOWED.includes(o) || ALLOWED.some(a => ref.startsWith(a + '/'));
+  if (!own) { res.status(403).json({ error: 'Nur aus JARVIS erlaubt.' }); return false; }
+  const ip = String(req.headers['x-forwarded-for'] || '').split(',')[0].trim() || 'x';
+  const now = Date.now(), win = HITS.get(ip) || [];
+  const recent = win.filter(t => now - t < 60000); recent.push(now); HITS.set(ip, recent);
+  if (HITS.size > 5000) HITS.clear();
+  if (recent.length > perMin) { res.status(429).json({ error: 'Zu viele Anfragen – kurz warten.' }); return false; }
+  return true;
+}
 export async function getJson(u, ms = 7000, headers = {}) {
   const ac = new AbortController(); const t = setTimeout(() => ac.abort(), ms);
   try { const r = await fetch(u, { signal: ac.signal, headers: { 'User-Agent': 'JARVIS-Omega/1.0', ...headers } }); if (!r.ok) throw new Error(u.split('/')[2] + ' ' + r.status); return await r.json(); }

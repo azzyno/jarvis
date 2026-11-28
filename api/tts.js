@@ -1,5 +1,5 @@
 // JARVIS · Stimme über Google Gemini (gratis-Stufe) → liefert WAV
-import { cors } from './_geo.js';
+import { cors, guard } from './_geo.js';
 
 function cleanKey(v) {
   v = String(v || '');
@@ -55,18 +55,10 @@ let goodModel = null;
 export default async function handler(req, res) {
   cors(req, res);
   if (req.method === 'OPTIONS') return res.status(204).end();
+  if (!guard(req, res, { perMin: 60 })) return;
   const key = cleanKey(process.env.GEMINI_KEY);
   if (!key) return res.status(503).json({ error: 'kein GEMINI_KEY' });
   const q = req.query || {};
-  if (q.models) {
-    const r = await fetch('https://generativelanguage.googleapis.com/v1beta/models?pageSize=200', { headers: { 'x-goog-api-key': key } });
-    const d = await r.json().catch(() => ({}));
-    return res.status(200).json({ tts: (d.models || []).map(m => m.name).filter(n => /tts|audio|speech/i.test(n)), status: r.status });
-  }
-  if (q.selftest) {
-    const a = await fetch('https://jarvis-iota-weld.vercel.app/api/tts?text=' + encodeURIComponent('Wie ist das Wetter morgen in Bern?'));
-    return stt(req, res, key, Buffer.from(await a.arrayBuffer()).toString('base64'));
-  }
   let body = req.body; if (typeof body === 'string') try { body = JSON.parse(body); } catch (e) { body = {}; }
   if (body && body.audio) return stt(req, res, key, body.audio, body.mime);
   const text = String((body && body.text) || q.text || '').slice(0, 1200).trim();

@@ -163,3 +163,9 @@ body.dark .up,body.dark .chip b.up{color:#5fcf8f}body.dark .dn,body.dark .chip b
 body.dark #mark{color:#e9dcc0}
 body.dark #toast{background:rgba(212,181,122,.95);color:#14100a}
 body.dark .maplibregl-ctrl-attrib{color:#888}
+
+#pcard{max-height:calc(100vh - 220px);overflow:auto}
+#pcard .pmod{margin-top:10px;padding-top:6px}
+#pcard .pmt{font:400 20px 'Cormorant Garamond',serif;margin:2px 0 4px;color:#f1d9a4}
+#pcard .pr span{max-width:62%}
+.stc{flex:none;font-size:8.5px;letter-spacing:.14em;padding:3px 7px;border-radius:9px;color:var(--c);border:1px solid color-mix(in srgb,var(--c) 45%,transparent);white-space:nowrap;align-self:center}

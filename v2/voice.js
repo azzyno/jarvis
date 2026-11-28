@@ -60,11 +60,11 @@
           }
           continue;
         }
-        return speak(clean(m.content) || 'Erledigt, Master.', id);
+        return speak(clean(m.content) || 'Erledigt, Boss.', id);
       }
-      return speak('Das war mir zu verschachtelt, Master. Bitte kürzer.', id);
+      return speak('Das war mir zu verschachtelt, Boss. Bitte kürzer.', id);
     } catch (e) {
-      hist.pop(); if (id === turn) { say('Mein Gehirn ist kurz nicht erreichbar, Master. Bitte nochmals.'); set('idle', 'Fehler – nochmals tippen'); }
+      hist.pop(); if (id === turn) { say('Mein Gehirn ist kurz nicht erreichbar, Boss. Bitte nochmals.'); set('idle', 'Fehler – nochmals tippen'); }
     } finally { if (hist.length > 40) hist = hist.slice(-30); }
   }
 
@@ -92,7 +92,7 @@
     rec.onstop = async () => {
       clearInterval(vadT); level = 0; try { stream.getTracks().forEach(t => t.stop()); } catch (e) {} stream = null;
       if (state !== 'listening') return;
-      if (spoke < .25) { set('idle', 'Nichts gehört'); say('Ich habe nichts gehört, Master. Tippen Sie und sprechen Sie.'); return; }
+      if (spoke < .25) { set('idle', 'Nichts gehört'); say('Ich habe nichts gehört, Boss. Tippen Sie und sprechen Sie.'); return; }
       set('thinking', 'Verstehe …');
       try {
         const blob = new Blob(chunks, { type: rec.mimeType || mime }); let audio, m = 'audio/wav';
@@ -100,10 +100,10 @@
         catch (e) { m = blob.type; audio = await new Promise(ok => { const r = new FileReader(); r.onload = () => ok(String(r.result).split(',')[1]); r.readAsDataURL(blob); }); }
         const r = await fetch(API + 'tts', { method: 'POST', headers: { 'Content-Type': 'text/plain' }, body: JSON.stringify({ audio, mime: m }) });
         const j = await r.json().catch(() => ({}));
-        if (j.text) think(j.text); else { set('idle', 'Nicht verstanden'); say('Ich habe Sie nicht verstanden, Master. Bitte nochmals.'); }
-      } catch (e) { set('idle', 'Verbindung gestört'); say('Verbindung gestört, Master. Bitte nochmals tippen.'); }
+        if (j.text) think(j.text); else { set('idle', 'Nicht verstanden'); say('Ich habe Sie nicht verstanden, Boss. Bitte nochmals.'); }
+      } catch (e) { set('idle', 'Verbindung gestört'); say('Verbindung gestört, Boss. Bitte nochmals tippen.'); }
     };
-    rec.start(); set('listening'); say('Ich höre, Master …');
+    rec.start(); set('listening'); say('Ich höre, Boss …');
     vadT = setInterval(() => {
       an.getFloatTimeDomainData(d); let s = 0; for (const v of d) s += v * v; const rms = Math.sqrt(s / d.length);
       level = Math.min(1, rms * 9); total += .1;

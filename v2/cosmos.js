@@ -62,7 +62,7 @@
   const P = [
     { n: 'Merkur', d: 20, r: .9, t: 0, c1: [.55, .52, .5], c2: [.35, .33, .32], a: .387, e: .2056, L: 252.25, w: 77.46, per: 87.97, info: 'Kleinster Planet, ohne Mond.' },
     { n: 'Venus', d: 28, r: 1.6, t: 1, c1: [.93, .82, .6], c2: [.8, .62, .38], a: .723, e: .0068, L: 181.98, w: 131.6, per: 224.7, info: 'Heissester Planet – 465 °C.' },
-    { n: 'Erde', d: 37, r: 1.75, t: 2, a: 1, e: .0167, L: 100.46, w: 102.94, per: 365.256, info: 'Ihre Heimat, Master.' },
+    { n: 'Erde', d: 37, r: 1.75, t: 2, a: 1, e: .0167, L: 100.46, w: 102.94, per: 365.256, info: 'Ihre Heimat, Boss.' },
     { n: 'Mars', d: 46, r: 1.15, t: 0, c1: [.78, .38, .2], c2: [.5, .2, .1], a: 1.524, e: .0934, L: 355.45, w: 336.04, per: 686.98, info: 'Der rote Planet.' },
     { n: 'Jupiter', d: 64, r: 5.2, t: 3, c1: [.86, .74, .58], c2: [.62, .45, .32], a: 5.203, e: .0484, L: 34.4, w: 14.75, per: 4332.6, info: 'Grösster Planet, 95 bekannte Monde.' },
     { n: 'Saturn', d: 84, r: 4.4, t: 3, ring: 1, c1: [.9, .82, .62], c2: [.72, .62, .42], a: 9.537, e: .0539, L: 49.94, w: 92.43, per: 10759, info: 'Ringe aus Eis und Gestein.' },
@@ -120,7 +120,7 @@
   const earth = planets[2];
   // Mond
   const moon = new T.Mesh(new T.SphereGeometry(.42, 24, 24), new T.ShaderMaterial({ uniforms: { ty: { value: 0 }, c1: { value: new T.Color(.7, .7, .7) }, c2: { value: new T.Color(.42, .42, .44) }, t: { value: 0 }, seed: { value: 2 } }, vertexShader: planetVS, fragmentShader: planetFS }));
-  S.add(moon);
+  moon.userData = { n: 'Mond', r: .42, info: 'Gedächtnis & Dokumente.' }; S.add(moon);
 
   /* ---------- Staubscheibe ---------- */
   const DISK = 150;
@@ -189,6 +189,43 @@
   }
   window.COSMOS_FACTS = n => { const p = P.find(x => x.n.toLowerCase() === String(n).toLowerCase()); return p ? Object.assign({ planet: p.n }, facts(p)) : null; };
 
+  /* ---------- Planeten = Funktionsbereiche (ehrlicher Status) ---------- */
+  const ST = { LIVE: ['LIVE', '#5fcf8f'], VERB: ['VERBINDUNG ERFORDERLICH', '#e7cb92'], DEV: ['IN ENTWICKLUNG', '#8fa7ff'], DEMO: ['DEMO', '#c9a0ff'], NO: ['NICHT UNTERSTÜTZT', '#ff7a66'] };
+  const MOD = {
+    Erde: { t: 'Weltlage', parts: [['Nachrichten & Brennpunkte (GDELT)', 'LIVE'], ['Erdbeben (USGS)', 'LIVE'], ['Flugverkehr (adsb.lol)', 'LIVE'], ['Webcams (Windy)', 'LIVE'], ['Wetter (Open-Meteo)', 'LIVE'], ['Kurdistan-Zentrum', 'DEV'], ['Schiffe, Waldbrände, Luftqualität', 'DEV']] },
+    Mars: { t: 'Onlyhair · Unternehmen', parts: [['Umsätze, Termine, Auslastung (Salonkee)', 'VERB'], ['Preisvergleich der 4 Standorte', 'VERB'], ['Dienstpläne', 'DEV'], ['Samsung VXT Bildschirme', 'VERB']] },
+    Neptun: { t: 'AZZYNO · Musik', parts: [['Streams & Hörer (Spotify for Artists)', 'VERB'], ['YouTube / TikTok / Instagram', 'VERB'], ['Release-Planer', 'DEV']] },
+    Jupiter: { t: 'Finanzen & Wirtschaft', parts: [['Börsenkurse (Yahoo)', 'LIVE'], ['Saxo-Depot (Simulation)', 'VERB'], ['Budget, Rechnungen, Verträge', 'DEV']] },
+    Venus: { t: 'Leben & Wohnung', parts: [['Einrichtungsliste & Preisalarm', 'DEV'], ['Smart Home (Home Assistant)', 'VERB']] },
+    Saturn: { t: 'Fahrzeuge & Reisen', parts: [['Route & Verkehr', 'LIVE'], ['Audi S3 (myAudi)', 'VERB'], ['BMW M235i (ConnectedDrive)', 'VERB']] },
+    Merkur: { t: 'Kommunikation & Termine', parts: [['E-Mail, Kalender, Kontakte', 'VERB']] },
+    Uranus: { t: 'System & Agenten', parts: [['Systemprüfung', 'LIVE'], ['Agenten-Team', 'DEV']], sys: 1 },
+    Mond: { t: 'Gedächtnis & Dokumente', parts: [['Verschlüsseltes Gedächtnis (braucht Anmeldung)', 'DEV'], ['Import von Notizen & Chats', 'DEV']] },
+  };
+  const chip = k => `<span class="stc" style="--c:${ST[k][1]}">${ST[k][0]}</span>`;
+  const modHTML = n => { const m = MOD[n]; if (!m) return ''; return `<div class="pmod"><div class="pk">Bereich</div><div class="pmt">${m.t}</div>${m.parts.map(([a, k]) => `<div class="pr"><span>${a}</span>${chip(k)}</div>`).join('')}</div>`; };
+  // echte Systemprüfung: ruft jeden Dienst wirklich auf
+  const API = 'https://jarvis-iota-weld.vercel.app/api/';
+  const CHECKS = [
+    ['Gehirn (Gemini)', () => fetch(API + 'chat').then(r => r.json()).then(d => d.gemini || d.groq)],
+    ['Stimme & Ohr', () => fetch(API + 'tts', { method: 'POST', headers: { 'Content-Type': 'text/plain' }, body: '{}' }).then(r => r.status === 400)],
+    ['Wetter', () => fetch(API + 'weather?lat=46.95&lon=7.45').then(r => r.ok)],
+    ['Flugverkehr', () => fetch(API + 'flights?lat=46.95&lon=7.45&nm=30').then(r => r.ok)],
+    ['Börsenkurse', () => fetch(API + 'quotes?s=^SSMI').then(r => r.ok)],
+    ['Webcams', () => fetch(API + 'webcams?lat=46.95&lon=7.45&r=20').then(r => r.ok)],
+    ['Satelliten', () => fetch(API + 'sats').then(r => r.ok)],
+    ['Weltnachrichten', () => fetch(API + 'news').then(r => r.ok)],
+    ['Erdbeben (USGS)', () => fetch('https://earthquake.usgs.gov/earthquakes/feed/v1.0/summary/2.5_day.geojson').then(r => r.ok)],
+  ];
+  async function sysCheck() {
+    card.innerHTML = `<div class="pk">Uranus · Systemprüfung</div><h3>INFINITY OS</h3><p>Ich prüfe jeden Dienst gerade wirklich, Boss.</p><div id="sysl">${CHECKS.map(([n], i) => `<div class="pr" id="sc${i}"><span>${n}</span><b>…</b></div>`).join('')}</div>`;
+    card.classList.add('on');
+    let ok = 0;
+    await Promise.all(CHECKS.map(async ([n, f], i) => { const t0 = performance.now(); let good = false; try { good = await Promise.race([f(), new Promise((_, x) => setTimeout(() => x(), 15000))]); } catch (e) {} const el = document.getElementById('sc' + i); if (good) ok++; if (el) el.lastChild.outerHTML = good ? `<b style="color:#5fcf8f">● ${Math.round(performance.now() - t0)} ms</b>` : '<b style="color:#ff7a66">● gestört</b>'; }));
+    card.insertAdjacentHTML('beforeend', `<p style="margin-top:10px">${ok} von ${CHECKS.length} Diensten laufen. Stand ${new Date().toLocaleTimeString('de-CH')}.</p>`);
+  }
+  window.SYSCHECK = sysCheck;
+
   /* ---------- Antippen ---------- */
   const ray = new T.Raycaster(), v2 = new T.Vector2();
   const card = $('#pcard'), tag = $('#etag');
@@ -196,19 +233,23 @@
     v2.set(e.clientX / innerWidth * 2 - 1, -(e.clientY / innerHeight) * 2 + 1); ray.setFromCamera(v2, cam);
     // grosszügige Trefferzone auf dem Handy
     let best = null, bd = 1e9;
-    planets.forEach(m => { const s = m.position.clone().project(cam); const dx = (s.x - v2.x) * innerWidth / 2, dy = (s.y - v2.y) * innerHeight / 2; const d = Math.hypot(dx, dy); const rad = Math.max(26, m.userData.r * 9); if (d < rad && d < bd) { bd = d; best = m; } });
+    [...planets, moon].forEach(m => { const s = m.position.clone().project(cam); const dx = (s.x - v2.x) * innerWidth / 2, dy = (s.y - v2.y) * innerHeight / 2; const d = Math.hypot(dx, dy); const rad = Math.max(m === moon ? 18 : 26, (m.userData.r || .4) * 9); if (d < rad && d < bd) { bd = d; best = m; } });
     return best;
   }
   const fmt = n => Math.round(n).toLocaleString('de-CH');
   function showCard(m) {
-    const p = m.userData, f = facts(p);
+    const p = m.userData;
+    if (p.n === 'Mond') { card.innerHTML = `<div class="pk">Mond</div><h3>Mond</h3><p>Rund 384'400 km von Ihnen entfernt.</p>${modHTML('Mond')}`; card.classList.add('on'); return; }
+    const f = facts(p);
     const lt = f.licht < 3600 ? Math.round(f.licht / 60) + ' Lichtminuten' : (f.licht / 3600).toFixed(1).replace('.', ',') + ' Lichtstunden';
     card.innerHTML = `<div class="pk">Live · ${new Date().toLocaleTimeString('de-CH', { hour: '2-digit', minute: '2-digit' })}</div><h3>${p.n}</h3><p>${p.info}</p>
       <div class="pr"><span>Zur Sonne</span><b>${fmt(f.sonne / 1e6)} Mio. km</b></div>
       ${p.n === 'Erde' ? '' : `<div class="pr"><span>Zu Ihnen</span><b>${fmt(f.erde / 1e6)} Mio. km</b></div><div class="pr"><span>Funk braucht</span><b>${lt}</b></div>`}
-      ${p.n === 'Erde' ? '<button id="pgo">Eintreten →</button>' : ''}`;
+      ${modHTML(p.n)}
+      ${p.n === 'Erde' ? '<button id="pgo">Eintreten →</button>' : MOD[p.n] && MOD[p.n].sys ? '<button id="psys">Systemprüfung starten</button>' : ''}`;
     card.classList.add('on');
     const go = $('#pgo'); if (go) go.onclick = ev => { ev.stopPropagation(); enter(); };
+    const sy = $('#psys'); if (sy) sy.onclick = ev => { ev.stopPropagation(); sysCheck(); };
   }
   cv.addEventListener('click', e => {
     if (fly) return;
