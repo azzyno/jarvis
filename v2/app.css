@@ -196,3 +196,7 @@ body.dark .maplibregl-ctrl-attrib{color:#888}
 .vlog{font-size:12px;padding:6px 0;border-top:1px solid rgba(255,255,255,.05)}
 #vmsg{position:sticky;bottom:0;text-align:center;color:#f1d9a4;font-size:13px;padding-top:8px}
 #pcard #pvault{margin-top:12px;width:100%;padding:12px;border-radius:14px;background:linear-gradient(100deg,#b58d48,#e7cb92);color:#14100a;font-weight:500}
+
+#vaultBtn{position:fixed;z-index:42;top:calc(var(--st) + 14px);right:14px;display:flex;align-items:center;gap:6px;padding:9px 13px;border-radius:20px;background:rgba(18,20,28,.55);backdrop-filter:blur(16px);-webkit-backdrop-filter:blur(16px);border:1px solid rgba(241,217,164,.25);color:#f1d9a4;font-size:13px}
+#vaultBtn svg{width:16px;height:16px;fill:none;stroke:currentColor;stroke-width:1.6;stroke-linecap:round}
+body:not(.cosmos) #vaultBtn{display:none}

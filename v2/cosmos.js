@@ -233,7 +233,7 @@
     v2.set(e.clientX / innerWidth * 2 - 1, -(e.clientY / innerHeight) * 2 + 1); ray.setFromCamera(v2, cam);
     // grosszügige Trefferzone auf dem Handy
     let best = null, bd = 1e9;
-    [...planets, moon].forEach(m => { const s = m.position.clone().project(cam); const dx = (s.x - v2.x) * innerWidth / 2, dy = (s.y - v2.y) * innerHeight / 2; const d = Math.hypot(dx, dy); const rad = Math.max(m === moon ? 18 : 26, (m.userData.r || .4) * 9); if (d < rad && d < bd) { bd = d; best = m; } });
+    [...planets, moon].forEach(m => { const s = m.position.clone().project(cam); const dx = (s.x - v2.x) * innerWidth / 2, dy = (s.y - v2.y) * innerHeight / 2; const d = Math.hypot(dx, dy); const rad = Math.max(m === moon ? 30 : 26, (m.userData.r || .4) * 9); if (d < rad && d < bd) { bd = d; best = m; } });
     return best;
   }
   const fmt = n => Math.round(n).toLocaleString('de-CH');
@@ -260,6 +260,7 @@
   });
   let focus = null; function focusOn(m) { focus = m; }
   tag.addEventListener('click', e => { e.stopPropagation(); enter(); });
+  const vb = document.getElementById('vaultBtn'); if (vb) vb.addEventListener('click', e => { e.stopPropagation(); window.VAULT && VAULT.open(); });
 
   /* ---------- Flug in die Erde ---------- */
   function enter() {
