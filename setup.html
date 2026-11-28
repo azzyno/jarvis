@@ -1,0 +1,67 @@
+<!DOCTYPE html>
+<html lang="de"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<title>JARVIS OMEGA · Einrichtung</title>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500&family=Cormorant+Garamond:ital,wght@0,400;1,400&display=swap" rel="stylesheet">
+<style>
+:root{--g:#d4b57a}
+body{margin:0;background:#000;color:#efe9dd;font:15px/1.5 Inter,-apple-system,sans-serif;padding:28px 16px 80px;max-width:640px;margin:0 auto}
+h1{font:400 34px/1.1 'Cormorant Garamond',serif;margin:0}h1 i{color:var(--g)}
+.sub{color:rgba(239,233,221,.55);font-size:13px;margin:6px 0 24px}
+.st{background:rgba(255,255,255,.04);border:1px solid rgba(212,181,122,.16);border-radius:20px;padding:16px;margin-bottom:12px}
+.st b.n{display:inline-grid;place-items:center;width:26px;height:26px;border-radius:50%;background:linear-gradient(140deg,#b58d48,#e7cb92);color:#14100a;font-size:13px;margin-right:8px}
+.st h3{display:flex;align-items:center;margin:0 0 8px;font-weight:500;font-size:16px}
+.st p,.st li{color:rgba(239,233,221,.8);font-size:14px}.st ol{padding-left:20px;margin:6px 0}
+a{color:var(--g)}code{background:rgba(255,255,255,.08);padding:2px 6px;border-radius:6px;font-size:13px;word-break:break-all}
+button{border:0;border-radius:14px;padding:12px 16px;font:500 15px Inter;background:linear-gradient(140deg,#b58d48,#e7cb92);color:#14100a;width:100%;margin-top:8px}
+button.alt{background:rgba(255,255,255,.08);color:#efe9dd}
+.key{font:13px ui-monospace,monospace;background:rgba(255,255,255,.06);border-radius:12px;padding:12px;word-break:break-all;margin-top:8px;min-height:20px}
+.ok{color:#5fcf8f}.no{color:#ff7a66}.chk div{display:flex;justify-content:space-between;padding:7px 0;border-top:1px solid rgba(255,255,255,.06);font-size:14px}
+.warn{font-size:12px;color:#e7cb92;margin-top:6px}
+</style></head><body>
+<h1>JARVIS <i>OMEGA</i></h1><div class="sub">Einrichtung des privaten Gedächtnisses · ca. 10 Minuten · kostenlos</div>
+
+<div class="st"><h3><b class="n">1</b>Supabase-Projekt anlegen</h3><ol>
+<li>Öffnen Sie <a href="https://supabase.com/dashboard/sign-up" target="_blank">supabase.com</a> und melden Sie sich mit <b>Continue with GitHub</b> an.</li>
+<li>Tippen Sie auf <b>New project</b>. Name: <code>jarvis</code>. Region: <b>Central EU (Frankfurt)</b> oder <b>Zürich</b>, falls angeboten.</li>
+<li>Ein Datenbank-Passwort wird verlangt: Lassen Sie es mit <b>Generate</b> erzeugen. Sie brauchen es nicht – schicken Sie es niemandem.</li>
+<li><b>Create new project</b> – etwa 1 Minute warten.</li></ol></div>
+
+<div class="st"><h3><b class="n">2</b>Tabellen erstellen</h3>
+<p>Kopieren Sie diesen Befehl, öffnen Sie im Projekt links <b>SQL Editor</b>, fügen Sie ihn ein und tippen Sie auf <b>Run</b>.</p>
+<button id="cSql">SQL-Befehl kopieren</button><div class="warn" id="sqlMsg"></div></div>
+
+<div class="st"><h3><b class="n">3</b>Geheimen Tresor-Schlüssel erzeugen</h3>
+<p>Damit wird Ihr Gedächtnis verschlüsselt. Er entsteht nur hier auf Ihrem iPhone und wird nirgends gespeichert.</p>
+<button id="gen">Schlüssel erzeugen</button><div class="key" id="vk"></div><button class="alt" id="cVk">Kopieren</button>
+<div class="warn">Nur in Vercel einfügen – nie in einen Chat oder Screenshot. Geht er verloren, sind die Einträge nicht mehr lesbar.</div></div>
+
+<div class="st"><h3><b class="n">4</b>Fünf Einträge in Vercel</h3>
+<p>Öffnen Sie <a href="https://vercel.com/d?to=/[team]/[project]/settings/environment-variables" target="_blank">Vercel → jarvis → Environment Variables</a> und legen Sie an:</p>
+<ol>
+<li><code>VAULT_KEY</code> = der Schlüssel aus Schritt 3</li>
+<li><code>OWNER_EMAIL</code> = Ihre E-Mail-Adresse (nur damit dürfen Sie sich anmelden)</li>
+<li><code>SUPABASE_URL</code> = in Supabase: <b>Project Settings → Data API → Project URL</b></li>
+<li><code>SUPABASE_ANON_KEY</code> = <b>Project Settings → API Keys</b> → <b>Publishable key</b> (oder „anon public“)</li>
+<li><code>SUPABASE_SERVICE_KEY</code> = gleiche Seite → <b>Secret key</b> (oder „service_role“) – streng geheim</li>
+</ol><p>Danach in Vercel <b>Deployments → ⋯ → Redeploy</b>.</p></div>
+
+<div class="st"><h3><b class="n">5</b>Anmelde-Link erlauben</h3><ol>
+<li>In Supabase links <b>Authentication → URL Configuration</b>.</li>
+<li><b>Site URL</b>: <code>https://azzyno.github.io/jarvis/</code> → <b>Save</b>.</li>
+<li>Unter <b>Redirect URLs</b> dasselbe hinzufügen.</li></ol></div>
+
+<div class="st chk"><h3><b class="n">6</b>Prüfen</h3><button id="chk">Einrichtung prüfen</button><div id="res"></div></div>
+
+<script>
+const $=i=>document.getElementById(i);
+const copy=async(t,el)=>{try{await navigator.clipboard.writeText(t);el.textContent='Kopiert ✓'}catch(e){el.textContent='Bitte lange tippen und kopieren.'}};
+let sql='';fetch('setup/supabase.sql').then(r=>r.text()).then(t=>sql=t);
+$('cSql').onclick=()=>copy(sql,$('sqlMsg'));
+$('gen').onclick=()=>{const b=new Uint8Array(32);crypto.getRandomValues(b);$('vk').textContent=btoa(String.fromCharCode(...b))};
+$('cVk').onclick=()=>{const t=$('vk').textContent;if(t)copy(t,$('cVk'))};
+$('chk').onclick=async()=>{$('res').innerHTML='<div>Prüfe …</div>';
+ try{const d=await (await fetch('https://jarvis-iota-weld.vercel.app/api/os?a=health&t='+Date.now())).json();
+  const L=[['SUPABASE_URL',d.supabase_url],['SUPABASE_ANON_KEY',d.anon],['SUPABASE_SERVICE_KEY',d.service],['OWNER_EMAIL',d.owner],['VAULT_KEY (Verschlüsselung)',d.vault],['Tabellen (Schritt 2)',d.tabellen]];
+  $('res').innerHTML=L.map(([n,v])=>`<div><span>${n}</span><b class="${v?'ok':'no'}">${v?'✓ bereit':'✗ fehlt'}</b></div>`).join('')+(L.every(x=>x[1])?'<p class="ok" style="margin-top:10px">Alles bereit. Öffnen Sie JARVIS und tippen Sie auf den Mond.</p>':'');
+ }catch(e){$('res').innerHTML='<div class="no">Server nicht erreichbar – Redeploy abwarten und nochmals prüfen.</div>'}};
+</script></body></html>

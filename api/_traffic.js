@@ -8,7 +8,7 @@ async function get(url, ms = 12000) {
   finally { clearTimeout(to); }
 }
 
-export default async function handler(req, res) {
+export async function trafficHandler(req, res) {
   cors(req, res);
   if (req.method === 'OPTIONS') return res.status(204).end();
   const [nyc, tfl] = await Promise.all([

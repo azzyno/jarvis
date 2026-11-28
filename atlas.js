@@ -160,7 +160,7 @@
   /* ---------- Verkehrskameras (NYC, London) ---------- */
   let traffic = [];
   async function loadTraffic() {
-    try { const r = await fetch(API + 'trafficcams'); if (!r.ok) return; const d = await r.json(); traffic = d.kameras || [];
+    try { const r = await fetch(API + 'webcams?typ=verkehr'); if (!r.ok) return; const d = await r.json(); traffic = d.kameras || [];
       map.getSource('at-traffic').setData(FC(traffic.map(c => ({ type: 'Feature', properties: { id: c.id }, geometry: { type: 'Point', coordinates: [c.lo, c.la] } }))));
       cnt('traffic', traffic.length);
     } catch (e) {}

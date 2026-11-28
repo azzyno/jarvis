@@ -169,3 +169,30 @@ body.dark .maplibregl-ctrl-attrib{color:#888}
 #pcard .pmt{font:400 20px 'Cormorant Garamond',serif;margin:2px 0 4px;color:#f1d9a4}
 #pcard .pr span{max-width:62%}
 .stc{flex:none;font-size:8.5px;letter-spacing:.14em;padding:3px 7px;border-radius:9px;color:var(--c);border:1px solid color-mix(in srgb,var(--c) 45%,transparent);white-space:nowrap;align-self:center}
+
+/* =================== TRESOR =================== */
+#vault{position:fixed;inset:0;z-index:60;background:rgba(0,0,0,.55);backdrop-filter:blur(10px);-webkit-backdrop-filter:blur(10px);opacity:0;pointer-events:none;transition:opacity .4s}
+#vault.on{opacity:1;pointer-events:auto}
+#vault .vx{position:absolute;left:10px;right:10px;top:calc(var(--st) + 14px);bottom:calc(var(--sb) + 10px);max-width:620px;margin:0 auto;overflow:auto;-webkit-overflow-scrolling:touch;padding:18px 18px 28px;border-radius:28px;background:rgba(14,16,22,.9);border:1px solid rgba(241,217,164,.16);color:#efe9dd;box-shadow:0 30px 90px rgba(0,0,0,.7);transform:translateY(20px);transition:transform .5s var(--ease)}
+#vault.on .vx{transform:none}
+.vclose{position:sticky;top:0;float:right;width:38px;height:38px;border-radius:50%;background:linear-gradient(140deg,#b58d48,#e7cb92);color:#14100a;z-index:2}
+#vault .vk{font-size:10px;letter-spacing:.3em;text-transform:uppercase;color:#c9a86a}
+#vault h2{font:400 32px/1.1 'Cormorant Garamond',serif;margin:4px 0 12px}
+.vtabs{display:flex;gap:6px;margin-bottom:14px}.vtabs button{flex:1;padding:9px 4px;border-radius:12px;background:rgba(255,255,255,.05);font-size:13px;color:#efe9dd}
+.vtabs button.on{background:rgba(212,181,122,.18);color:#f1d9a4}
+#vault input,#vault textarea,#vault select{width:100%;box-sizing:border-box;margin:6px 0;padding:11px 13px;border-radius:12px;border:1px solid rgba(255,255,255,.1);background:rgba(255,255,255,.04);color:#efe9dd;font:15px Inter,sans-serif}
+#vault select option{color:#000}
+.vbtn{display:block;text-align:center;text-decoration:none;width:100%;margin:8px 0;padding:12px;border-radius:14px;background:linear-gradient(140deg,#b58d48,#e7cb92);color:#14100a;font-weight:500}
+.vbtn.alt{background:rgba(255,255,255,.07);color:#efe9dd}
+.vs{font-size:12px;color:rgba(239,233,221,.55)}
+.vrow{display:flex;gap:8px;align-items:center;justify-content:space-between}.vrow input{flex:1}.vrow select{width:auto!important}
+.vlink{color:#e7cb92;font-size:13px}
+.vbadge{display:inline-block;font-size:9px;letter-spacing:.14em;padding:3px 8px;border-radius:9px;color:var(--c);border:1px solid color-mix(in srgb,var(--c) 45%,transparent);margin:4px 0 8px}
+.vadd{margin:8px 0;padding:10px 12px;border-radius:14px;background:rgba(255,255,255,.03)}.vadd summary{cursor:pointer;color:#f1d9a4;font-size:14px}
+.vitem{padding:11px 0;border-top:1px solid rgba(255,255,255,.07)}.vitem p{margin:4px 0;font-size:14px;color:rgba(239,233,221,.85);white-space:pre-wrap}
+.vih{display:flex;justify-content:space-between;align-items:center;gap:8px}
+.vcat{font-size:10px;letter-spacing:.12em;text-transform:uppercase;color:#c9a86a}
+.vact{display:flex;gap:14px}.vact button{font-size:12px;color:rgba(239,233,221,.5)}
+.vlog{font-size:12px;padding:6px 0;border-top:1px solid rgba(255,255,255,.05)}
+#vmsg{position:sticky;bottom:0;text-align:center;color:#f1d9a4;font-size:13px;padding-top:8px}
+#pcard #pvault{margin-top:12px;width:100%;padding:12px;border-radius:14px;background:linear-gradient(100deg,#b58d48,#e7cb92);color:#14100a;font-weight:500}

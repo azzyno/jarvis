@@ -199,8 +199,8 @@
     Venus: { t: 'Leben & Wohnung', parts: [['Einrichtungsliste & Preisalarm', 'DEV'], ['Smart Home (Home Assistant)', 'VERB']] },
     Saturn: { t: 'Fahrzeuge & Reisen', parts: [['Route & Verkehr', 'LIVE'], ['Audi S3 (myAudi)', 'VERB'], ['BMW M235i (ConnectedDrive)', 'VERB']] },
     Merkur: { t: 'Kommunikation & Termine', parts: [['E-Mail, Kalender, Kontakte', 'VERB']] },
-    Uranus: { t: 'System & Agenten', parts: [['Systemprüfung', 'LIVE'], ['Agenten-Team', 'DEV']], sys: 1 },
-    Mond: { t: 'Gedächtnis & Dokumente', parts: [['Verschlüsseltes Gedächtnis (braucht Anmeldung)', 'DEV'], ['Import von Notizen & Chats', 'DEV']] },
+    Uranus: { t: 'System & Agenten', parts: [['Systemprüfung', 'LIVE'], ['Verbindungszentrale', 'LIVE'], ['Zugriffsprotokoll', 'LIVE'], ['Agenten-Team', 'DEV']], sys: 1 },
+    Mond: { t: 'Gedächtnis & Dokumente', parts: [['Verschlüsseltes Gedächtnis', 'LIVE'], ['Import von Notizen & KI-Erinnerungen', 'LIVE'], ['Dokumente (PDF) durchsuchen', 'DEV']] },
   };
   const chip = k => `<span class="stc" style="--c:${ST[k][1]}">${ST[k][0]}</span>`;
   const modHTML = n => { const m = MOD[n]; if (!m) return ''; return `<div class="pmod"><div class="pk">Bereich</div><div class="pmt">${m.t}</div>${m.parts.map(([a, k]) => `<div class="pr"><span>${a}</span>${chip(k)}</div>`).join('')}</div>`; };
@@ -239,7 +239,7 @@
   const fmt = n => Math.round(n).toLocaleString('de-CH');
   function showCard(m) {
     const p = m.userData;
-    if (p.n === 'Mond') { card.innerHTML = `<div class="pk">Mond</div><h3>Mond</h3><p>Rund 384'400 km von Ihnen entfernt.</p>${modHTML('Mond')}`; card.classList.add('on'); return; }
+    if (p.n === 'Mond') { card.innerHTML = `<div class="pk">Mond</div><h3>Mond</h3><p>Rund 384'400 km von Ihnen entfernt.</p>${modHTML('Mond')}<button id="pvault">Tresor öffnen</button>`; card.classList.add('on'); $('#pvault').onclick = ev => { ev.stopPropagation(); window.VAULT && VAULT.open(); }; return; }
     const f = facts(p);
     const lt = f.licht < 3600 ? Math.round(f.licht / 60) + ' Lichtminuten' : (f.licht / 3600).toFixed(1).replace('.', ',') + ' Lichtstunden';
     card.innerHTML = `<div class="pk">Live · ${new Date().toLocaleTimeString('de-CH', { hour: '2-digit', minute: '2-digit' })}</div><h3>${p.n}</h3><p>${p.info}</p>

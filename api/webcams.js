@@ -3,7 +3,9 @@
 // Bild-Links von Windy laufen nach kurzer Zeit ab, deshalb nur 10 Minuten Cache.
 import { cors } from './_geo.js';
 
+import { trafficHandler } from './_traffic.js';
 export default async function handler(req, res) {
+  if (req.query && req.query.typ === 'verkehr') return trafficHandler(req, res);
   cors(req, res);
   if (req.method === 'OPTIONS') return res.status(204).end();
   const key = process.env.WINDY_KEY;

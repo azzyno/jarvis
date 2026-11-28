@@ -1,6 +1,6 @@
 # JARVIS OMEGA · INFINITY OS — Bestandsaufnahme & Fahrplan
 
-Stand: 28. November 2026 · Phase 1 abgeschlossen
+Stand: 28. November 2026 · Phase 1 abgeschlossen · Phase 2 (Gedächtnis) gebaut, wartet auf Supabase-Einrichtung
 Wiederherstellungspunkt: Branch `backup-vor-omega-phase1`
 
 > Dieses Repository ist **öffentlich**. Hier stehen nie private Daten, Schlüssel, Beträge oder Vertragsnummern.
@@ -65,6 +65,21 @@ Grenze: Die Herkunftsprüfung hält Fremdseiten und einfache Skripte ab, ist abe
 | 4 | Finanzen | CSV/PDF-Import der Kontoauszüge; Open Banking nur über lizenzierte Anbieter |
 | 5 | Kurdistan-Zentrum, mehr Weltdaten | grösstenteils gratis (GDELT, RSS von Rudaw/Kurdistan24/ANF) |
 | 6 | Desktop-Agent, Smart Home | Home Assistant im Heimnetz; lokales Programm auf Ihrem Computer |
+
+## 5b. Phase 2 – was gebaut ist
+
+| Teil | Status | Datei |
+|---|---|---|
+| Anmeldung nur für den Eigentümer (E-Mail-Link, Prüfung gegen OWNER_EMAIL) | gebaut, VERBINDUNG ERFORDERLICH | `api/os.js`, `v2/vault.js` |
+| Gedächtnis mit Kategorie, Quelle, Datum, Status (gültig/veraltet/ungültig) | gebaut | `api/os.js` |
+| Verschlüsselung AES-256-GCM auf dem Server (VAULT_KEY nur in Vercel) | gebaut + getestet | `api/os.js` |
+| Widerspruchserkennung: gleiches Thema, anderer Inhalt → Rückfrage, alter Eintrag wird „veraltet“ | gebaut + getestet | `api/os.js` |
+| Import (Notizen, Text, exportierte KI-Erinnerungen, JSON) und Export | gebaut | `v2/vault.js` |
+| Verbindungszentrale (echt geprüft) und Zugriffsprotokoll | gebaut | `api/os.js` |
+| JARVIS kann sich per Stimme erinnern und Neues merken | gebaut | `jarvis_memory_search/save` |
+| Datenbank ohne Zugriff für Browser (Row Level Security, nur Server) | SQL bereit | `setup/supabase.sql` |
+| Einrichtungsseite mit Live-Prüfung | gebaut | `setup.html` |
+| Passkeys / Zwei-Faktor | offen (nächster Schritt) | – |
 
 ## 6. Regeln, die fest eingebaut bleiben
 

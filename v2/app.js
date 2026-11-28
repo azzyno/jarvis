@@ -207,7 +207,12 @@
   const ACTIONS = {
     lage: showLage, wx: () => showWeather(), cams: () => showCams(), mk: () => showMarkets(),
     flights: () => toggleFlights().then(() => $('[data-a=flights]').classList.toggle('on', plOn)),
-    classic: () => { location.href = 'classic.html'; },
+    classic: () => { showSheet(`<div class="k">INFINITY OS</div><h2>Mehr</h2>
+      <div class="row hot" data-m="vault"><span>Gedächtnis · Tresor<br><span class="s">verschlüsselt, nur für Sie</span></span><span>→</span></div>
+      <div class="row hot" data-m="con"><span>Verbindungen<br><span class="s">welche Dienste wirklich verbunden sind</span></span><span>→</span></div>
+      <div class="row hot" data-m="classic"><span>Klassische Ansicht<br><span class="s">Satelliten, Finanzen, Atrium, Sichtmodi</span></span><span>→</span></div>
+      <div class="row hot" data-m="setup"><span>Einrichtung<br><span class="s">Gedächtnis Schritt für Schritt einrichten</span></span><span>→</span></div>`);
+      document.querySelectorAll('#shB [data-m]').forEach(r => r.onclick = () => { const m = r.dataset.m; if (m === 'classic') location.href = 'classic.html'; else if (m === 'setup') location.href = 'setup.html'; else { hideSheet(); VAULT.open(); if (m === 'con') setTimeout(() => document.querySelector('.vtabs [data-t=con]').click(), 50); } }); },
   };
   document.querySelectorAll('#dock button').forEach(b => b.onclick = () => {
     const a = b.dataset.a; if (a !== 'flights') { document.querySelectorAll('#dock button').forEach(x => x !== b && a !== 'flights' && x.dataset.a !== 'flights' && x.classList.remove('on')); b.classList.add('on'); }
